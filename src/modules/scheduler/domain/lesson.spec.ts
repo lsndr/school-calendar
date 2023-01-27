@@ -1,0 +1,303 @@
+import { DateTime } from 'luxon';
+import { Lesson } from './lesson';
+import { LessonId } from './lesson-id';
+import { Group } from './group';
+import { GroupId } from './group-id';
+import { Teacher } from './teacher';
+import { TeacherId } from './teacher-id';
+import { ExactDate } from './exact-date';
+import { School } from './school';
+import { SchoolId } from './school-id';
+import { WeekDay, WeeklyPeriodicity } from './periodicity';
+import { RequiredTeachers } from './required-teachers';
+import { TimeInterval } from './time-interval';
+import { TimeZone } from './time-zone';
+import { Subject } from './subject';
+import { SubjectId } from './subject-id';
+
+describe('Lesson', () => {
+  let school: School;
+  let school2: School;
+  let subject: Subject;
+  let subject2: Subject;
+  let group: Group;
+  let group2: Group;
+  let teacher1: Teacher;
+  let teacher2: Teacher;
+  let teacher3: Teacher;
+  let teacher4: Teacher;
+
+  beforeEach(() => {
+    school = School.create({
+      id: SchoolId.create(),
+      name: 'Test School',
+      timeZone: TimeZone.create('Europe/Moscow'),
+      now: DateTime.now(),
+    });
+
+    school2 = School.create({
+      id: SchoolId.create(),
+      name: 'Test School 2',
+      timeZone: TimeZone.create('Europe/Moscow'),
+      now: DateTime.now(),
+    });
+  });
+
+  beforeEach(() => {
+    group = Group.create({
+      id: GroupId.create(),
+      name: 'Test Group',
+      school: school,
+      now: DateTime.now(),
+    });
+
+    group2 = Group.create({
+      id: GroupId.create(),
+      name: 'Test Group 2',
+      school: school2,
+      now: DateTime.now(),
+    });
+  });
+
+  beforeEach(() => {
+    const weekDays: WeekDay[] = [1, 0];
+
+    const periodicity = WeeklyPeriodicity.create(weekDays);
+    const timeInterval = TimeInterval.create({
+      startsAt: 0,
+      duration: 120,
+    });
+    const requiredTeachers = RequiredTeachers.create(2);
+
+    subject = Subject.create({
+      id: SubjectId.create(),
+      group,
+      school,
+      periodicity,
+      name: 'Test Subject',
+      timeInterval,
+      requiredTeachers,
+      now: DateTime.fromISO('2023-01-20T00:00:00.000Z'),
+    });
+
+    subject2 = Subject.create({
+      id: SubjectId.create(),
+      group: group2,
+      school: school2,
+      periodicity,
+      name: 'Test Subject',
+      timeInterval,
+      requiredTeachers,
+      now: DateTime.fromISO('2023-01-20T00:00:00.000Z'),
+    });
+  });
+
+  beforeEach(() => {
+    const id1 = TeacherId.create();
+    const id2 = TeacherId.create();
+    const id3 = TeacherId.create();
+
+    teacher1 = Teacher.create({
+      id: id1,
+      name: 'Teacher 1',
+      now: DateTime.now(),
+      school,
+    });
+
+    teacher2 = Teacher.create({
+      id: id2,
+      name: 'Teacher 2',
+      now: DateTime.now(),
+      school,
+    });
+
+    teacher3 = Teacher.create({
+      id: id3,
+      name: 'Teacher 3',
+      now: DateTime.now(),
+      school,
+    });
+
+    teacher4 = Teacher.create({
+      id: id3,
+      name: 'Teacher 4',
+      now: DateTime.now(),
+      school: school2,
+    });
+  });
+
+  it("should fail to add an teacher if number of teachers exceeds number of subject's required teachers", () => {
+    const now = DateTime.fromISO('2023-01-20T12:00:00.000Z');
+    const date = ExactDate.create({
+      day: 21,
+      month: 1,
+      year: 2023,
+    });
+    const id = LessonId.create(subject.id, date);
+    const timeInterval = TimeInterval.create({
+      startsAt: 0,
+      duration: 60,
+    });
+    const lesson = Lesson.create({
+      id,
+      timeInterval,
+      school,
+      now,
+    });
+    lesson.assignTeacher(teacher1, subject, school, now);
+    lesson.assignTeacher(teacher2, subject, school, now);
+
+    const act = () => lesson.assignTeacher(teacher3, subject, school, now);
+
+    expect(act).toThrow('Too many teachers assigned');
+  });
+
+  it('should fail to add an teacher if subject belong to another school', () => {
+    const now = DateTime.fromISO('2023-01-20T12:00:00.000Z');
+    const date = ExactDate.create({
+      day: 21,
+      month: 1,
+      year: 2023,
+    });
+    const id = LessonId.create(subject.id, date);
+    const timeInterval = TimeInterval.create({
+      startsAt: 0,
+      duration: 60,
+    });
+    const lesson = Lesson.create({
+      id,
+      timeInterval,
+      school,
+      now,
+    });
+
+    const act = () => lesson.assignTeacher(teacher3, subject2, school, now);
+
+    expect(act).toThrow("Subject must belong to the lesson's school");
+  });
+
+  it('should fail to add an teacher school reference has different id', () => {
+    const now = DateTime.fromISO('2023-01-20T12:00:00.000Z');
+    const date = ExactDate.create({
+      day: 21,
+      month: 1,
+      year: 2023,
+    });
+    const id = LessonId.create(subject.id, date);
+    const timeInterval = TimeInterval.create({
+      startsAt: 0,
+      duration: 60,
+    });
+    const lesson = Lesson.create({
+      id,
+      timeInterval,
+      school,
+      now,
+    });
+
+    const act = () => lesson.assignTeacher(teacher3, subject, school2, now);
+
+    expect(act).toThrow("School must the same as the lesson's school");
+  });
+
+  it('should fail to add an teacher if it belongs to another school', () => {
+    const now = DateTime.fromISO('2023-01-20T12:00:00.000Z');
+    const date = ExactDate.create({
+      day: 21,
+      month: 1,
+      year: 2023,
+    });
+    const id = LessonId.create(subject.id, date);
+    const timeInterval = TimeInterval.create({
+      startsAt: 0,
+      duration: 60,
+    });
+    const lesson = Lesson.create({
+      id,
+      timeInterval,
+      school,
+      now,
+    });
+
+    const act = () => lesson.assignTeacher(teacher4, subject, school, now);
+
+    expect(act).toThrow("Teacher must belong to the lesson's school");
+  });
+
+  it('should fail to create an lesson in past', () => {
+    const now = DateTime.fromISO('2023-01-20T12:00:00.000Z');
+    const date = ExactDate.create({
+      day: 20,
+      month: 1,
+      year: 2023,
+    });
+    const id = LessonId.create(subject.id, date);
+    const timeInterval = TimeInterval.create({
+      startsAt: 0,
+      duration: 60,
+    });
+
+    const act = () =>
+      Lesson.create({
+        id,
+        school,
+        timeInterval,
+        now,
+      });
+
+    expect(act).toThrow('Lesson in past can not be modified or created');
+  });
+
+  it('should fail to add an teacher to an lesson in past', () => {
+    const nowInPast = DateTime.fromISO('2023-01-20T12:00:00.000Z');
+    const nowInFuture = DateTime.fromISO('2023-01-22T12:00:00.000Z');
+    const date = ExactDate.create({
+      day: 21,
+      month: 1,
+      year: 2023,
+    });
+    const id = LessonId.create(subject.id, date);
+    const timeInterval = TimeInterval.create({
+      startsAt: 0,
+      duration: 60,
+    });
+    const lesson = Lesson.create({
+      id,
+      school,
+      timeInterval,
+      now: nowInPast,
+    });
+
+    const act = () =>
+      lesson.assignTeacher(teacher1, subject, school, nowInFuture);
+
+    expect(act).toThrow('Lesson in past can not be modified or created');
+  });
+
+  it('should add an teacher', () => {
+    const now = DateTime.fromISO('2023-01-20T12:00:00.000Z');
+    const date = ExactDate.create({
+      day: 21,
+      month: 1,
+      year: 2023,
+    });
+    const id = LessonId.create(subject.id, date);
+    const timeInterval = TimeInterval.create({
+      startsAt: 0,
+      duration: 60,
+    });
+    const lesson = Lesson.create({
+      id,
+      school,
+      timeInterval,
+      now,
+    });
+
+    lesson.assignTeacher(teacher1, subject, school, now);
+
+    expect(lesson.teacherIds.length).toBe(1);
+    expect(
+      lesson.teacherIds.find((id) => id.value === teacher1.id.value),
+    ).not.toBeUndefined();
+  });
+});
