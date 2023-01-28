@@ -6,5 +6,8 @@
     },
     "[javascript]": {
       "editor.defaultFormatter": "dbaeumer.vscode-eslint"
-    }
+    },
+    "conventionalCommits.scopes": [
+      "calendar"
+    ]
   }

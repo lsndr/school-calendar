@@ -12,7 +12,7 @@ import { CalendarEmployeeDto } from './calendar-employee.dto';
 import { EmployeesCalendarDto } from './employees-calendar.dto';
 import { VisitVersion, VisitVersionsLoader } from './visit-versions.loader';
 
-export type EmployeesCalendarPeriod = {
+export type EmployeesCalendarPeriodOptions = {
   officeId: string;
   timeZone: string;
   from: DateTime;
@@ -28,39 +28,27 @@ export class EmployeesCalendarLoader {
   ) {}
 
   async forPeriod(
-    period: EmployeesCalendarPeriod,
+    options: EmployeesCalendarPeriodOptions,
   ): Promise<EmployeesCalendarDto> {
-    const [versionsIterator, employees] = await Promise.all([
-      this.visitVersionsLoader.load(period),
-      this.getEmployees(period.officeId),
-    ]);
+    const [versionsIterator, employees, attendancesIterator] =
+      await Promise.all([
+        this.visitVersionsLoader.load(options),
+        this.getEmployees(options.officeId),
+        this.attendancesLoader.load(options),
+      ]);
 
     const versions: VisitVersion[] = [];
-    const attendancesDates = new Map<string, AttendanceDates>();
 
     for await (const version of versionsIterator) {
-      const attendanceDates = attendancesDates.get(version.id) || {
-        visitId: version.id,
-        dates: [],
-      };
-
-      attendanceDates.dates.push(version.date);
-      attendancesDates.set(version.id, attendanceDates);
-
       versions.push(version);
     }
 
-    const assignmentsIterator = await this.attendancesLoader.load(
-      period.timeZone,
-      attendancesDates.values(),
-    );
-
     const attendancesMap = new Map<string, Assignment>();
 
-    for await (const assignment of assignmentsIterator) {
+    for await (const attendance of attendancesIterator) {
       attendancesMap.set(
-        `${assignment.visitId}-${assignment.date.toSQLDate()}`,
-        assignment,
+        `${attendance.visitId}-${attendance.date.toSQLDate()}`,
+        attendance,
       );
     }
 
@@ -74,8 +62,6 @@ export class EmployeesCalendarLoader {
       const numberOfAssignedEmployees = attendance?.employeeIds.length || 0;
       const numberOfUnassignedEmployees =
         version.requiredEmployees - numberOfAssignedEmployees;
-
-      // если существует атенданс, то берем его время
 
       const startsAt = version.date
         .startOf('day')

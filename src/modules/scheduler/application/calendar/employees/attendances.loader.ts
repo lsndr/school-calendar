@@ -3,6 +3,13 @@ import { Knex } from 'knex';
 import { DateTime } from 'luxon';
 import { KNEX_PROVIDER } from '../../../../shared/database';
 
+export type AttendancesLoaderOptions = {
+  officeId: string;
+  timeZone: string;
+  from: DateTime;
+  to: DateTime;
+};
+
 export type AttendanceDates = {
   visitId: string;
   dates: DateTime[];
@@ -21,10 +28,9 @@ export class AttendancesLoader {
   constructor(@Inject(KNEX_PROVIDER) private readonly knex: Knex) {}
 
   async load(
-    timeZone: string,
-    visitDates: Iterable<AttendanceDates>,
+    options: AttendancesLoaderOptions,
   ): Promise<Generator<Assignment>> {
-    const assignmentsQuery = this.knex
+    const attendances = await this.knex
       .select([
         'attendances.visit_id',
         'attendances.starts_at',
@@ -41,29 +47,29 @@ export class AttendancesLoader {
           )
           .as('employee_ids'),
       ])
-      .from('attendances');
-
-    assignmentsQuery.where((query1) => {
-      for (const visitDate of visitDates) {
-        query1.orWhere((query2) => {
-          query2.where('attendances.visit_id', visitDate.visitId).whereIn(
-            'attendances.date',
-            visitDate.dates.map((date) => date.setZone(timeZone).toSQLDate()),
-          );
-        });
-      }
-    });
-
-    const assignments = await assignmentsQuery;
+      .from('attendances')
+      .where(
+        'attendances.date',
+        '>=',
+        options.from.setZone(options.timeZone).toSQLDate(),
+      )
+      .andWhere(
+        'attendances.date',
+        '<',
+        options.to.setZone(options.timeZone).toSQLDate(),
+      )
+      .andWhere('attendances.office_id', options.officeId);
 
     return (function* () {
-      for (const assignment of assignments) {
+      for (const attendance of attendances) {
         yield {
-          visitId: assignment.visit_id,
-          startsAt: assignment.starts_at,
-          duration: assignment.duration,
-          date: assignment.date.setZone(timeZone, { keepLocalTime: true }),
-          employeeIds: assignment.employee_ids,
+          visitId: attendance.visit_id,
+          startsAt: attendance.starts_at,
+          duration: attendance.duration,
+          date: attendance.date.setZone(options.timeZone, {
+            keepLocalTime: true,
+          }),
+          employeeIds: attendance.employee_ids,
         };
       }
     })();

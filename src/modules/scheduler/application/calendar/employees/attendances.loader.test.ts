@@ -176,27 +176,16 @@ describe('AttendancesLoader', () => {
   });
 
   it('should load visit 1 since visit 1 version 2 starts later', async () => {
-    const attendances = await loader.load('Europe/Moscow', [
-      {
-        visitId: visit1.id.value,
-        dates: [
-          DateTime.fromISO('2023-01-26T00:00:00', {
-            zone: 'Europe/Moscow',
-          }),
-          DateTime.fromISO('2023-01-28T00:00:00', {
-            zone: 'Europe/Moscow',
-          }),
-        ],
-      },
-      {
-        visitId: visit2.id.value,
-        dates: [
-          DateTime.fromISO('2023-01-28T00:00:00', {
-            zone: 'Europe/Moscow',
-          }),
-        ],
-      },
-    ]);
+    const attendances = await loader.load({
+      timeZone: 'Europe/Moscow',
+      officeId: visit1.officeId.value,
+      from: DateTime.fromISO('2023-01-26T00:00:00', {
+        zone: 'Europe/Moscow',
+      }),
+      to: DateTime.fromISO('2023-01-29T00:00:00', {
+        zone: 'Europe/Moscow',
+      }),
+    });
 
     expect(Array.from(attendances)).toEqual([
       {
