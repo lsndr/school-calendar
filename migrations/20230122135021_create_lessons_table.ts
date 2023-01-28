@@ -5,8 +5,8 @@ export async function up(knex: Knex): Promise<void> {
     table.text('subject_id');
     table.text('school_id').notNullable().index();
     table.date('date').notNullable();
-    table.smallint('starts_at').notNullable();
-    table.smallint('duration').notNullable();
+    table.smallint('time_starts_at').notNullable();
+    table.smallint('time_duration').notNullable();
     table.smallint('version').notNullable();
     table.dateTime('created_at', { useTz: false }).notNullable();
     table.dateTime('updated_at', { useTz: false }).notNullable();

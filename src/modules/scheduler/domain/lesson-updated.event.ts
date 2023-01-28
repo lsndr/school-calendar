@@ -7,7 +7,7 @@ export class LessonUpdatedEvent {
       year: number;
     };
   };
-  timeInterval: {
+  time: {
     startsAt: number;
     duration: number;
   };
@@ -17,7 +17,7 @@ export class LessonUpdatedEvent {
 
   constructor(event: LessonUpdatedEvent) {
     this.id = event.id;
-    this.timeInterval = event.timeInterval;
+    this.time = event.time;
     this.teacherIds = event.teacherIds;
     this.createdAt = event.createdAt;
     this.updatedAt = event.updatedAt;

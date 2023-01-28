@@ -18,13 +18,13 @@ import { Subject } from './subject';
 
 export type CreateLesson = {
   id: LessonId;
-  timeInterval: TimeInterval;
+  time: TimeInterval;
   school: School;
   now: DateTime;
 };
 
 export interface LessonState extends AggregateState<LessonId> {
-  timeInterval: TimeInterval;
+  time: TimeInterval;
   schoolId: SchoolId;
   teacherIds: Map<string, TeacherId>;
   createdAt: DateTime;
@@ -32,8 +32,8 @@ export interface LessonState extends AggregateState<LessonId> {
 }
 
 export class Lesson extends Aggregate<LessonId, LessonState> {
-  get timeInterval() {
-    return this.state.timeInterval;
+  get time() {
+    return this.state.time;
   }
 
   get teacherIds(): ReadonlyArray<TeacherId> {
@@ -53,18 +53,13 @@ export class Lesson extends Aggregate<LessonId, LessonState> {
   }
 
   static create(data: CreateLesson) {
-    this.assertNotInPast(
-      data.id.date,
-      data.timeInterval,
-      data.school,
-      data.now,
-    );
+    this.assertNotInPast(data.id.date, data.time, data.school, data.now);
 
     const eventsManager = new AggregateEvents();
     const lesson = new this(
       {
         id: data.id,
-        timeInterval: data.timeInterval,
+        time: data.time,
         schoolId: data.school.id,
         teacherIds: new Map(),
         createdAt: data.now,
@@ -83,7 +78,7 @@ export class Lesson extends Aggregate<LessonId, LessonState> {
             year: lesson.id.date.year,
           },
         },
-        timeInterval: lesson.timeInterval,
+        time: lesson.time,
         teacherIds: Array.from(lesson.teacherIds).map((id) => id.value),
         createdAt: lesson.createdAt.toISO(),
         updatedAt: lesson.updatedAt.toISO(),
@@ -94,7 +89,7 @@ export class Lesson extends Aggregate<LessonId, LessonState> {
   }
 
   protected assertLessonNotInPast(school: School, now: DateTime) {
-    Lesson.assertNotInPast(this.id.date, this.timeInterval, school, now);
+    Lesson.assertNotInPast(this.id.date, this.time, school, now);
   }
 
   assignTeacher(
@@ -140,8 +135,8 @@ export class Lesson extends Aggregate<LessonId, LessonState> {
     this.addOrReplaceUpdatedEvent();
   }
 
-  setTimeInterval(timeInterval: TimeInterval, now: DateTime) {
-    this.state.timeInterval = timeInterval;
+  setTime(time: TimeInterval, now: DateTime) {
+    this.state.time = time;
     this.state.updatedAt = now;
 
     this.addOrReplaceUpdatedEvent();
@@ -157,7 +152,7 @@ export class Lesson extends Aggregate<LessonId, LessonState> {
           year: this.id.date.year,
         },
       },
-      timeInterval: this.timeInterval,
+      time: this.time,
       teacherIds: Array.from(this.teacherIds).map((id) => id.value),
       createdAt: this.createdAt.toISO(),
       updatedAt: this.updatedAt.toISO(),

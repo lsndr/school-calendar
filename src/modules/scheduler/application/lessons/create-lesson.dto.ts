@@ -29,11 +29,11 @@ export class CreateLessonDto {
   })
   @ValidateNested()
   @Type(() => TimeIntervalDto)
-  timeInterval: TimeIntervalDto;
+  time: TimeIntervalDto;
 
   constructor(dto: CreateLessonDto) {
     this.date = dto?.date;
     this.teacherIds = dto?.teacherIds;
-    this.timeInterval = dto?.timeInterval;
+    this.time = dto?.time;
   }
 }

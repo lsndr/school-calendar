@@ -91,7 +91,7 @@ describe('Lessons Service', () => {
       school,
       group,
       periodicity: WeeklyPeriodicity.create([1, 2, 4]),
-      timeInterval: TimeInterval.create({
+      time: TimeInterval.create({
         startsAt: 120,
         duration: 60,
       }),
@@ -129,7 +129,7 @@ describe('Lessons Service', () => {
       {
         date: '2023-01-24',
         teacherIds: [teacher.id.value],
-        timeInterval: {
+        time: {
           startsAt: 45,
           duration: 123,
         },
@@ -148,7 +148,7 @@ describe('Lessons Service', () => {
       createdAt: '2023-01-23T14:00:28.460+00:00',
       updatedAt: '2023-01-23T14:00:28.460+00:00',
       teacherIds: [teacher.id.value],
-      timeInterval: expect.objectContaining({
+      time: expect.objectContaining({
         duration: 123,
         startsAt: 45,
       }),
@@ -159,7 +159,7 @@ describe('Lessons Service', () => {
       createdAt: '2023-01-23T14:00:28.460+00:00',
       updatedAt: '2023-01-23T14:00:28.460+00:00',
       teacherIds: [teacher.id.value],
-      timeInterval: expect.objectContaining({
+      time: expect.objectContaining({
         duration: 123,
         startsAt: 45,
       }),

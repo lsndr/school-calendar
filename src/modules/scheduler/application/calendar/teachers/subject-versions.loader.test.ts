@@ -82,7 +82,7 @@ describe('SubjectVersionLoader', () => {
         school,
         name: 'Subject 1',
         periodicity: DailyPeriodicity.create(),
-        timeInterval: TimeInterval.create({
+        time: TimeInterval.create({
           startsAt: 720,
           duration: 60,
         }),
@@ -96,7 +96,7 @@ describe('SubjectVersionLoader', () => {
         school,
         name: 'Subject 2',
         periodicity: WeeklyPeriodicity.create([0, 4]),
-        timeInterval: TimeInterval.create({
+        time: TimeInterval.create({
           startsAt: 960,
           duration: 120,
         }),
@@ -123,7 +123,7 @@ describe('SubjectVersionLoader', () => {
       }
 
       subject.setName('Subject 1 Version 2', now);
-      subject.setTimeInterval(
+      subject.setTime(
         TimeInterval.create({
           startsAt: 120,
           duration: 600,

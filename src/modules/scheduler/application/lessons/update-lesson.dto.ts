@@ -23,10 +23,10 @@ export class UpdateLessonDto {
   })
   @ValidateNested()
   @Type(() => TimeIntervalDto)
-  timeInterval?: TimeIntervalDto;
+  time?: TimeIntervalDto;
 
   constructor(dto: UpdateLessonDto) {
     this.teacherIds = dto?.teacherIds;
-    this.timeInterval = dto?.timeInterval;
+    this.time = dto?.time;
   }
 }

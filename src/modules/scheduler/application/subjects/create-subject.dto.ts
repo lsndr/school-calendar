@@ -68,7 +68,7 @@ export class CreateSubjectDto {
     type: TimeIntervalDto,
   })
   @Type(() => TimeIntervalDto)
-  timeInterval: TimeIntervalDto;
+  time: TimeIntervalDto;
 
   @ApiProperty()
   @IsString()
@@ -83,7 +83,7 @@ export class CreateSubjectDto {
   constructor(dto: CreateSubjectDto) {
     this.name = dto?.name;
     this.periodicity = dto?.periodicity;
-    this.timeInterval = dto?.timeInterval;
+    this.time = dto?.time;
     this.groupId = dto?.groupId;
     this.requiredTeachers = dto?.requiredTeachers;
   }

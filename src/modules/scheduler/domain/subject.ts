@@ -26,7 +26,7 @@ export interface SubjectState extends AggregateState<SubjectId> {
   schoolId: SchoolId;
   name: string;
   periodicity: SubjectPeriodicity;
-  timeInterval: TimeInterval;
+  time: TimeInterval;
   groupId: GroupId;
   requiredTeachers: RequiredTeachers;
   createdAt: DateTime;
@@ -38,7 +38,7 @@ type CreateSubject = {
   name: string;
   school: School;
   periodicity: SubjectPeriodicity;
-  timeInterval: TimeInterval;
+  time: TimeInterval;
   group: Group;
   requiredTeachers: RequiredTeachers;
   now: DateTime;
@@ -65,8 +65,8 @@ export class Subject extends Aggregate<SubjectId, SubjectState> {
     return this.state.requiredTeachers;
   }
 
-  get timeInterval() {
-    return this.state.timeInterval;
+  get time() {
+    return this.state.time;
   }
 
   get createdAt() {
@@ -90,7 +90,7 @@ export class Subject extends Aggregate<SubjectId, SubjectState> {
       name: data.name,
       requiredTeachers: data.requiredTeachers,
       periodicity: data.periodicity,
-      timeInterval: data.timeInterval,
+      time: data.time,
       createdAt: data.now,
       updatedAt: data.now,
     });
@@ -106,8 +106,8 @@ export class Subject extends Aggregate<SubjectId, SubjectState> {
     this.state.updatedAt = updatedAt;
   }
 
-  setTimeInterval(timeInterval: TimeInterval, updatedAt: DateTime) {
-    this.state.timeInterval = timeInterval;
+  setTime(time: TimeInterval, updatedAt: DateTime) {
+    this.state.time = time;
     this.state.updatedAt = updatedAt;
   }
 }

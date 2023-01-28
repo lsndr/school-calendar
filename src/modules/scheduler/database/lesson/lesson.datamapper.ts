@@ -22,8 +22,8 @@ export class LessonDataMapper extends DataMapper<Lesson> {
         'subject_id',
         'date',
         'school_id',
-        'starts_at',
-        'duration',
+        'time_starts_at',
+        'time_duration',
         'version',
         'created_at',
         'updated_at',
@@ -74,8 +74,8 @@ export class LessonDataMapper extends DataMapper<Lesson> {
         subject_id: lesson.id.subjectId.value,
         school_id: lesson.schoolId.value,
         date: lesson.id.date.toDateTime().toSQL(),
-        starts_at: lesson.timeInterval.startsAt,
-        duration: lesson.timeInterval.duration,
+        time_starts_at: lesson.time.startsAt,
+        time_duration: lesson.time.duration,
         updated_at: lesson.updatedAt.toUTC().toSQL(),
         created_at: lesson.createdAt.toUTC().toSQL(),
         version,
@@ -132,9 +132,9 @@ export class LessonDataMapper extends DataMapper<Lesson> {
     });
     const id = new LessonIdHydrator(lessonRecord.subject_id, date);
     const schoolId = new SchoolIdHydrator(lessonRecord.school_id);
-    const timeInterval = new TimeIntervalHydartor({
-      startsAt: lessonRecord.starts_at,
-      duration: lessonRecord.duration,
+    const time = new TimeIntervalHydartor({
+      startsAt: lessonRecord.time_starts_at,
+      duration: lessonRecord.time_duration,
     });
     const createdAt = lessonRecord.created_at;
     const updatedAt = lessonRecord.updated_at;
@@ -151,7 +151,7 @@ export class LessonDataMapper extends DataMapper<Lesson> {
 
     return new LessonHydrator({
       id,
-      timeInterval,
+      time,
       schoolId,
       teacherIds,
       createdAt,

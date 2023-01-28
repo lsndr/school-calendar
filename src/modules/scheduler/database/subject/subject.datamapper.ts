@@ -22,8 +22,8 @@ export class SubjectDataMapper extends DataMapper<Subject> {
         'school_id',
         'periodicity_type',
         'periodicity_data',
-        'starts_at',
-        'duration',
+        'time_starts_at',
+        'time_duration',
         'group_id',
         'required_teachers',
         'version',
@@ -72,8 +72,8 @@ export class SubjectDataMapper extends DataMapper<Subject> {
           school_id: subject.schoolId.value,
           periodicity_type: subject.periodicity.type,
           periodicity_data: mapPeriodicityToRaw(subject.periodicity),
-          starts_at: subject.timeInterval.startsAt,
-          duration: subject.timeInterval.duration,
+          time_starts_at: subject.time.startsAt,
+          time_duration: subject.time.duration,
           group_id: subject.groupId.value,
           required_teachers: subject.requiredTeachers.amount,
           created_at: subject.createdAt.toJSDate(),
@@ -91,8 +91,8 @@ export class SubjectDataMapper extends DataMapper<Subject> {
           name: subject.name,
           periodicity_type: subject.periodicity.type,
           periodicity_data: subject.periodicity,
-          starts_at: subject.timeInterval.startsAt,
-          duration: subject.timeInterval.duration,
+          time_starts_at: subject.time.startsAt,
+          time_duration: subject.time.duration,
           required_teachers: subject.requiredTeachers.amount,
           created_at: subject.updatedAt.toJSDate(),
         })
@@ -122,9 +122,9 @@ export class SubjectDataMapper extends DataMapper<Subject> {
       record.periodicity_type,
       record.periodicity_data,
     );
-    const timeInterval = new TimeIntervalHydartor({
-      startsAt: record.starts_at,
-      duration: record.duration,
+    const time = new TimeIntervalHydartor({
+      startsAt: record.time_starts_at,
+      duration: record.time_duration,
     });
     const groupId = new GroupIdHydrator(record.group_id);
     const requiredTeachers = new RequiredTeachersHydrator(
@@ -138,7 +138,7 @@ export class SubjectDataMapper extends DataMapper<Subject> {
       schoolId,
       name,
       periodicity,
-      timeInterval,
+      time,
       groupId,
       requiredTeachers,
       createdAt,

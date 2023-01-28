@@ -63,7 +63,7 @@ describe('Lesson', () => {
     const weekDays: WeekDay[] = [1, 0];
 
     const periodicity = WeeklyPeriodicity.create(weekDays);
-    const timeInterval = TimeInterval.create({
+    const time = TimeInterval.create({
       startsAt: 0,
       duration: 120,
     });
@@ -75,7 +75,7 @@ describe('Lesson', () => {
       school,
       periodicity,
       name: 'Test Subject',
-      timeInterval,
+      time,
       requiredTeachers,
       now: DateTime.fromISO('2023-01-20T00:00:00.000Z'),
     });
@@ -86,7 +86,7 @@ describe('Lesson', () => {
       school: school2,
       periodicity,
       name: 'Test Subject',
-      timeInterval,
+      time,
       requiredTeachers,
       now: DateTime.fromISO('2023-01-20T00:00:00.000Z'),
     });
@@ -134,13 +134,13 @@ describe('Lesson', () => {
       year: 2023,
     });
     const id = LessonId.create(subject.id, date);
-    const timeInterval = TimeInterval.create({
+    const time = TimeInterval.create({
       startsAt: 0,
       duration: 60,
     });
     const lesson = Lesson.create({
       id,
-      timeInterval,
+      time,
       school,
       now,
     });
@@ -160,13 +160,13 @@ describe('Lesson', () => {
       year: 2023,
     });
     const id = LessonId.create(subject.id, date);
-    const timeInterval = TimeInterval.create({
+    const time = TimeInterval.create({
       startsAt: 0,
       duration: 60,
     });
     const lesson = Lesson.create({
       id,
-      timeInterval,
+      time,
       school,
       now,
     });
@@ -184,13 +184,13 @@ describe('Lesson', () => {
       year: 2023,
     });
     const id = LessonId.create(subject.id, date);
-    const timeInterval = TimeInterval.create({
+    const time = TimeInterval.create({
       startsAt: 0,
       duration: 60,
     });
     const lesson = Lesson.create({
       id,
-      timeInterval,
+      time,
       school,
       now,
     });
@@ -208,13 +208,13 @@ describe('Lesson', () => {
       year: 2023,
     });
     const id = LessonId.create(subject.id, date);
-    const timeInterval = TimeInterval.create({
+    const time = TimeInterval.create({
       startsAt: 0,
       duration: 60,
     });
     const lesson = Lesson.create({
       id,
-      timeInterval,
+      time,
       school,
       now,
     });
@@ -232,7 +232,7 @@ describe('Lesson', () => {
       year: 2023,
     });
     const id = LessonId.create(subject.id, date);
-    const timeInterval = TimeInterval.create({
+    const time = TimeInterval.create({
       startsAt: 0,
       duration: 60,
     });
@@ -241,7 +241,7 @@ describe('Lesson', () => {
       Lesson.create({
         id,
         school,
-        timeInterval,
+        time,
         now,
       });
 
@@ -257,14 +257,14 @@ describe('Lesson', () => {
       year: 2023,
     });
     const id = LessonId.create(subject.id, date);
-    const timeInterval = TimeInterval.create({
+    const time = TimeInterval.create({
       startsAt: 0,
       duration: 60,
     });
     const lesson = Lesson.create({
       id,
       school,
-      timeInterval,
+      time,
       now: nowInPast,
     });
 
@@ -282,14 +282,14 @@ describe('Lesson', () => {
       year: 2023,
     });
     const id = LessonId.create(subject.id, date);
-    const timeInterval = TimeInterval.create({
+    const time = TimeInterval.create({
       startsAt: 0,
       duration: 60,
     });
     const lesson = Lesson.create({
       id,
       school,
-      timeInterval,
+      time,
       now,
     });
 

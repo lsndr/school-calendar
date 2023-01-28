@@ -61,13 +61,13 @@ export class LessonsService {
 
       const date = ExactDate.createFromISO(dto.date);
       const id = LessonId.create(subject.id, date);
-      const timeInterval = TimeInterval.create(dto.timeInterval);
+      const time = TimeInterval.create(dto.time);
       const now = DateTime.now();
 
       const lesson = Lesson.create({
         id,
         school,
-        timeInterval,
+        time,
         now,
       });
 
@@ -83,7 +83,7 @@ export class LessonsService {
         subjectId: lesson.id.subjectId.value,
         date: lesson.id.date.toDateTime().toISODate(),
         teacherIds,
-        timeInterval: new TimeIntervalDto(lesson.timeInterval),
+        time: new TimeIntervalDto(lesson.time),
         updatedAt: lesson.updatedAt.toISO(),
         createdAt: lesson.createdAt.toISO(),
       });
@@ -136,9 +136,9 @@ export class LessonsService {
 
       const now = DateTime.now();
 
-      if (dto.timeInterval !== undefined) {
-        const timeInterval = TimeInterval.create(dto.timeInterval);
-        lesson.setTimeInterval(timeInterval, now);
+      if (dto.time !== undefined) {
+        const time = TimeInterval.create(dto.time);
+        lesson.setTime(time, now);
       }
 
       if (dto.teacherIds !== undefined) {
@@ -166,7 +166,7 @@ export class LessonsService {
         subjectId: lesson.id.subjectId.value,
         date: lesson.id.date.toDateTime().toISODate(),
         teacherIds,
-        timeInterval: new TimeIntervalDto(lesson.timeInterval),
+        time: new TimeIntervalDto(lesson.time),
         updatedAt: lesson.updatedAt.toISO(),
         createdAt: lesson.createdAt.toISO(),
       });
@@ -229,7 +229,7 @@ export class LessonsService {
         subjectId: lesson.id.subjectId.value,
         date: lesson.id.date.toDateTime().toISODate(),
         teacherIds,
-        timeInterval: new TimeIntervalDto(lesson.timeInterval),
+        time: new TimeIntervalDto(lesson.time),
         updatedAt: lesson.updatedAt.toISO(),
         createdAt: lesson.createdAt.toISO(),
       });
@@ -279,7 +279,7 @@ export class LessonsService {
         subjectId: lesson.id.subjectId.value,
         date: lesson.id.date.toDateTime().toISODate(),
         teacherIds,
-        timeInterval: new TimeIntervalDto(lesson.timeInterval),
+        time: new TimeIntervalDto(lesson.time),
         updatedAt: lesson.updatedAt.toISO(),
         createdAt: lesson.createdAt.toISO(),
       });
@@ -294,8 +294,8 @@ export class LessonsService {
         .select([
           'lessons.date',
           'lessons.subject_id',
-          'lessons.starts_at',
-          'lessons.duration',
+          'lessons.time_starts_at',
+          'lessons.time_duration',
           'lessons.created_at',
           'lessons.updated_at',
         ])
@@ -321,9 +321,9 @@ export class LessonsService {
       teacherIds,
       subjectId: lessonRecord.subject_id,
       date: lessonRecord.date.toISODate(),
-      timeInterval: new TimeIntervalDto({
-        startsAt: lessonRecord.starts_at,
-        duration: lessonRecord.duration,
+      time: new TimeIntervalDto({
+        startsAt: lessonRecord.time_starts_at,
+        duration: lessonRecord.time_duration,
       }),
       updatedAt: lessonRecord.updated_at.toISO(),
       createdAt: lessonRecord.created_at.toISO(),

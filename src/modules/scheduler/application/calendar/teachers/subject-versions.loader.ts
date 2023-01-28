@@ -37,13 +37,13 @@ export class SubjectVersionsLoader {
           .select([
             'subjects.id',
             'subjects.group_id',
-            'subjects_log.name',
-            'subjects_log.starts_at',
-            'subjects_log.periodicity_type',
-            'subjects_log.periodicity_data',
-            'subjects_log.duration',
-            'subjects_log.required_teachers',
-            'subjects_log.created_at as active_since',
+            'subjects.name',
+            'subjects.time_starts_at',
+            'subjects.periodicity_type',
+            'subjects.periodicity_data',
+            'subjects.time_duration',
+            'subjects.required_teachers',
+            'subjects.created_at as active_since',
             this.knex.raw(
               'LEAD(subjects_log.created_at) OVER (PARTITION BY subjects_log.subject_id ORDER BY subjects_log.created_at ASC) as active_till',
             ),
@@ -109,7 +109,7 @@ export class SubjectVersionsLoader {
           const start = date
             .setZone(options.timeZone)
             .startOf('day')
-            .plus({ minutes: subject.starts_at });
+            .plus({ minutes: subject.time_starts_at });
 
           const key = `${subject.id}-${start.toISODate()}`;
 
@@ -124,8 +124,8 @@ export class SubjectVersionsLoader {
               groupId: subject.group_id,
               requiredTeachers: subject.required_teachers,
               name: subject.name,
-              startsAt: subject.starts_at,
-              duration: subject.duration,
+              startsAt: subject.time_starts_at,
+              duration: subject.time_duration,
               date,
             };
           }

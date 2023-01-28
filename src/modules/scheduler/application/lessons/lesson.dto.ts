@@ -18,7 +18,7 @@ export class LessonDto {
   @ApiProperty({
     type: TimeIntervalDto,
   })
-  timeInterval: TimeIntervalDto;
+  time: TimeIntervalDto;
 
   @ApiProperty({
     format: 'date-time',
@@ -31,7 +31,7 @@ export class LessonDto {
   createdAt: string;
 
   constructor(dto: LessonDto) {
-    this.timeInterval = dto.timeInterval;
+    this.time = dto.time;
     this.subjectId = dto.subjectId;
     this.date = dto.date;
     this.teacherIds = dto.teacherIds;

@@ -29,7 +29,7 @@ export class SubjectDto {
   @ApiProperty({
     type: TimeIntervalDto,
   })
-  timeInterval: TimeIntervalDto;
+  time: TimeIntervalDto;
 
   @ApiProperty()
   groupId: string;
@@ -53,7 +53,7 @@ export class SubjectDto {
     this.id = dto?.id;
     this.name = dto?.name;
     this.periodicity = dto?.periodicity;
-    this.timeInterval = dto?.timeInterval;
+    this.time = dto?.time;
     this.groupId = dto?.groupId;
     this.requiredTeachers = dto?.requiredTeachers;
     this.createdAt = dto?.createdAt;

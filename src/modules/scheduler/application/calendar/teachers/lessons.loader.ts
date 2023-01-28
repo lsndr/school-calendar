@@ -31,8 +31,8 @@ export class LessonsLoader {
     const lessons = await this.knex
       .select([
         'lessons.subject_id',
-        'lessons.starts_at',
-        'lessons.duration',
+        'lessons.time_starts_at',
+        'lessons.time_duration',
         'lessons.date',
         this.knex
           .select(this.knex.raw('ARRAY_AGG(lessons_teachers.teacher_id)'))
@@ -59,8 +59,8 @@ export class LessonsLoader {
       for (const lesson of lessons) {
         yield {
           subjectId: lesson.subject_id,
-          startsAt: lesson.starts_at,
-          duration: lesson.duration,
+          startsAt: lesson.time_starts_at,
+          duration: lesson.time_duration,
           date: lesson.date.setZone(options.timeZone, {
             keepLocalTime: true,
           }),
