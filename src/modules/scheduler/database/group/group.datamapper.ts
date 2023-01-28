@@ -60,8 +60,8 @@ export class GroupDataMapper extends DataMapper<Group> {
         name: group.name,
         school_id: group.schoolId.value,
         version,
-        created_at: group.createdAt.toSQL(),
-        updated_at: group.updatedAt.toSQL(),
+        created_at: group.createdAt.toUTC().toSQL(),
+        updated_at: group.updatedAt.toUTC().toSQL(),
       })
       .into('groups')
       .onConflict('id')

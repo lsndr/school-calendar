@@ -76,8 +76,8 @@ export class LessonDataMapper extends DataMapper<Lesson> {
         date: lesson.id.date.toDateTime().toSQL(),
         starts_at: lesson.timeInterval.startsAt,
         duration: lesson.timeInterval.duration,
-        updated_at: lesson.updatedAt.toSQL(),
-        created_at: lesson.createdAt.toSQL(),
+        updated_at: lesson.updatedAt.toUTC().toSQL(),
+        created_at: lesson.createdAt.toUTC().toSQL(),
         version,
       })
       .into('lessons')
