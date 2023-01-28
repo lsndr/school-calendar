@@ -38,10 +38,10 @@ export class VisitVersionsLoader {
             'visits.id',
             'visits.client_id',
             'visits_log.name',
-            'visits_log.starts_at',
+            'visits_log.time_starts_at',
             'visits_log.periodicity_type',
             'visits_log.periodicity_data',
-            'visits_log.duration',
+            'visits_log.time_duration',
             'visits_log.required_employees',
             'visits_log.created_at as active_since',
             this.knex.raw(
@@ -109,7 +109,7 @@ export class VisitVersionsLoader {
           const start = date
             .setZone(options.timeZone)
             .startOf('day')
-            .plus({ minutes: visit.starts_at });
+            .plus({ minutes: visit.time_starts_at });
 
           const key = `${visit.id}-${start.toISODate()}`;
 
@@ -124,8 +124,8 @@ export class VisitVersionsLoader {
               clientId: visit.client_id,
               requiredEmployees: visit.required_employees,
               name: visit.name,
-              startsAt: visit.starts_at,
-              duration: visit.duration,
+              startsAt: visit.time_starts_at,
+              duration: visit.time_duration,
               date,
             };
           }

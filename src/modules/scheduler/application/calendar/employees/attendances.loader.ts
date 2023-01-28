@@ -33,8 +33,8 @@ export class AttendancesLoader {
     const attendances = await this.knex
       .select([
         'attendances.visit_id',
-        'attendances.starts_at',
-        'attendances.duration',
+        'attendances.time_starts_at',
+        'attendances.time_duration',
         'attendances.date',
         this.knex
           .select(this.knex.raw('ARRAY_AGG(attendances_employees.employee_id)'))
@@ -64,8 +64,8 @@ export class AttendancesLoader {
       for (const attendance of attendances) {
         yield {
           visitId: attendance.visit_id,
-          startsAt: attendance.starts_at,
-          duration: attendance.duration,
+          startsAt: attendance.time_starts_at,
+          duration: attendance.time_duration,
           date: attendance.date.setZone(options.timeZone, {
             keepLocalTime: true,
           }),

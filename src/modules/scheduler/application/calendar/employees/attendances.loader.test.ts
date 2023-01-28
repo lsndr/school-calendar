@@ -91,7 +91,7 @@ describe('AttendancesLoader', () => {
         office,
         name: 'Visit 1',
         periodicity: DailyPeriodicity.create(),
-        timeInterval: TimeInterval.create({
+        time: TimeInterval.create({
           startsAt: 720,
           duration: 60,
         }),
@@ -105,7 +105,7 @@ describe('AttendancesLoader', () => {
         office,
         name: 'Visit 2',
         periodicity: WeeklyPeriodicity.create([0, 4]),
-        timeInterval: TimeInterval.create({
+        time: TimeInterval.create({
           startsAt: 960,
           duration: 120,
         }),
@@ -123,7 +123,7 @@ describe('AttendancesLoader', () => {
             year: 2023,
           }),
         ),
-        timeInterval: visit1.timeInterval,
+        time: visit1.time,
         office,
         now,
       });
@@ -137,7 +137,7 @@ describe('AttendancesLoader', () => {
             year: 2023,
           }),
         ),
-        timeInterval: TimeInterval.create({
+        time: TimeInterval.create({
           startsAt: 0,
           duration: 120,
         }),
@@ -165,7 +165,7 @@ describe('AttendancesLoader', () => {
       }
 
       visit.setName('Visit 1 Version 2', now);
-      visit.setTimeInterval(
+      visit.setTime(
         TimeInterval.create({
           startsAt: 120,
           duration: 600,

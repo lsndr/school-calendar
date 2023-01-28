@@ -49,7 +49,7 @@ export class VisitsService {
       const name = dto.name;
       const requiredEmployees = RequiredEmployees.create(dto.requiredEmployees);
       const periodicity = mapDtoToPeriodicity(dto.periodicity);
-      const timeInterval = TimeInterval.create(dto.timeInterval);
+      const time = TimeInterval.create(dto.time);
       const now = DateTime.now();
 
       const visit = Visit.create({
@@ -58,7 +58,7 @@ export class VisitsService {
         office,
         requiredEmployees,
         periodicity,
-        timeInterval,
+        time,
         client,
         now,
       });
@@ -70,7 +70,7 @@ export class VisitsService {
         id: visit.id.value,
         name: visit.name,
         periodicity: mapPeriodicityToDto(visit.periodicity),
-        timeInterval: new TimeIntervalDto(visit.timeInterval),
+        time: new TimeIntervalDto(visit.time),
         clientId: visit.clientId.value,
         requiredEmployees: visit.requiredEmployees.amount,
         createdAt: visit.createdAt.toISO(),
@@ -86,8 +86,8 @@ export class VisitsService {
         'name',
         'periodicity_type',
         'periodicity_data',
-        'starts_at',
-        'duration',
+        'time_starts_at',
+        'time_duration',
         'client_id',
         'required_employees',
         'created_at',
@@ -108,9 +108,9 @@ export class VisitsService {
         record.periodicity_type,
         record.periodicity_data,
       ),
-      timeInterval: new TimeIntervalDto({
-        startsAt: record.starts_at,
-        duration: record.duration,
+      time: new TimeIntervalDto({
+        startsAt: record.time_starts_at,
+        duration: record.time_duration,
       }),
       clientId: record.client_id,
       requiredEmployees: record.required_employees,

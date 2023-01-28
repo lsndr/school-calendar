@@ -63,7 +63,7 @@ describe('Attendance', () => {
     const weekDays: WeekDay[] = [1, 0];
 
     const periodicity = WeeklyPeriodicity.create(weekDays);
-    const timeInterval = TimeInterval.create({
+    const time = TimeInterval.create({
       startsAt: 0,
       duration: 120,
     });
@@ -75,7 +75,7 @@ describe('Attendance', () => {
       office,
       periodicity,
       name: 'Test Visit',
-      timeInterval,
+      time,
       requiredEmployees,
       now: DateTime.fromISO('2023-01-20T00:00:00.000Z'),
     });
@@ -86,7 +86,7 @@ describe('Attendance', () => {
       office: office2,
       periodicity,
       name: 'Test Visit',
-      timeInterval,
+      time,
       requiredEmployees,
       now: DateTime.fromISO('2023-01-20T00:00:00.000Z'),
     });
@@ -134,13 +134,13 @@ describe('Attendance', () => {
       year: 2023,
     });
     const id = AttendanceId.create(visit.id, date);
-    const timeInterval = TimeInterval.create({
+    const time = TimeInterval.create({
       startsAt: 0,
       duration: 60,
     });
     const attendance = Attendance.create({
       id,
-      timeInterval,
+      time,
       office,
       now,
     });
@@ -160,13 +160,13 @@ describe('Attendance', () => {
       year: 2023,
     });
     const id = AttendanceId.create(visit.id, date);
-    const timeInterval = TimeInterval.create({
+    const time = TimeInterval.create({
       startsAt: 0,
       duration: 60,
     });
     const attendance = Attendance.create({
       id,
-      timeInterval,
+      time,
       office,
       now,
     });
@@ -184,13 +184,13 @@ describe('Attendance', () => {
       year: 2023,
     });
     const id = AttendanceId.create(visit.id, date);
-    const timeInterval = TimeInterval.create({
+    const time = TimeInterval.create({
       startsAt: 0,
       duration: 60,
     });
     const attendance = Attendance.create({
       id,
-      timeInterval,
+      time,
       office,
       now,
     });
@@ -208,13 +208,13 @@ describe('Attendance', () => {
       year: 2023,
     });
     const id = AttendanceId.create(visit.id, date);
-    const timeInterval = TimeInterval.create({
+    const time = TimeInterval.create({
       startsAt: 0,
       duration: 60,
     });
     const attendance = Attendance.create({
       id,
-      timeInterval,
+      time,
       office,
       now,
     });
@@ -232,7 +232,7 @@ describe('Attendance', () => {
       year: 2023,
     });
     const id = AttendanceId.create(visit.id, date);
-    const timeInterval = TimeInterval.create({
+    const time = TimeInterval.create({
       startsAt: 0,
       duration: 60,
     });
@@ -241,7 +241,7 @@ describe('Attendance', () => {
       Attendance.create({
         id,
         office,
-        timeInterval,
+        time,
         now,
       });
 
@@ -257,14 +257,14 @@ describe('Attendance', () => {
       year: 2023,
     });
     const id = AttendanceId.create(visit.id, date);
-    const timeInterval = TimeInterval.create({
+    const time = TimeInterval.create({
       startsAt: 0,
       duration: 60,
     });
     const attendance = Attendance.create({
       id,
       office,
-      timeInterval,
+      time,
       now: nowInPast,
     });
 
@@ -282,14 +282,14 @@ describe('Attendance', () => {
       year: 2023,
     });
     const id = AttendanceId.create(visit.id, date);
-    const timeInterval = TimeInterval.create({
+    const time = TimeInterval.create({
       startsAt: 0,
       duration: 60,
     });
     const attendance = Attendance.create({
       id,
       office,
-      timeInterval,
+      time,
       now,
     });
 

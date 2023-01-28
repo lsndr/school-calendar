@@ -22,8 +22,8 @@ export class AttendanceDataMapper extends DataMapper<Attendance> {
         'visit_id',
         'date',
         'office_id',
-        'starts_at',
-        'duration',
+        'time_starts_at',
+        'time_duration',
         'version',
         'created_at',
         'updated_at',
@@ -74,8 +74,8 @@ export class AttendanceDataMapper extends DataMapper<Attendance> {
         visit_id: attendance.id.visitId.value,
         office_id: attendance.officeId.value,
         date: attendance.id.date.toDateTime().toSQL(),
-        starts_at: attendance.timeInterval.startsAt,
-        duration: attendance.timeInterval.duration,
+        time_starts_at: attendance.time.startsAt,
+        time_duration: attendance.time.duration,
         updated_at: attendance.updatedAt.toUTC().toSQL(),
         created_at: attendance.createdAt.toUTC().toSQL(),
         version,
@@ -132,9 +132,9 @@ export class AttendanceDataMapper extends DataMapper<Attendance> {
     });
     const id = new AttendanceIdHydrator(attendanceRecord.visit_id, date);
     const officeId = new OfficeIdHydrator(attendanceRecord.office_id);
-    const timeInterval = new TimeIntervalHydartor({
-      startsAt: attendanceRecord.starts_at,
-      duration: attendanceRecord.duration,
+    const time = new TimeIntervalHydartor({
+      startsAt: attendanceRecord.time_starts_at,
+      duration: attendanceRecord.time_duration,
     });
     const createdAt = attendanceRecord.created_at;
     const updatedAt = attendanceRecord.updated_at;
@@ -151,7 +151,7 @@ export class AttendanceDataMapper extends DataMapper<Attendance> {
 
     return new AttendanceHydrator({
       id,
-      timeInterval,
+      time,
       officeId,
       employeeIds,
       createdAt,

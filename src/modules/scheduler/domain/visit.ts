@@ -26,7 +26,7 @@ export interface VisitState extends AggregateState<VisitId> {
   officeId: OfficeId;
   name: string;
   periodicity: VisitPeriodicity;
-  timeInterval: TimeInterval;
+  time: TimeInterval;
   clientId: ClientId;
   requiredEmployees: RequiredEmployees;
   createdAt: DateTime;
@@ -38,7 +38,7 @@ type CreateVisit = {
   name: string;
   office: Office;
   periodicity: VisitPeriodicity;
-  timeInterval: TimeInterval;
+  time: TimeInterval;
   client: Client;
   requiredEmployees: RequiredEmployees;
   now: DateTime;
@@ -65,8 +65,8 @@ export class Visit extends Aggregate<VisitId, VisitState> {
     return this.state.requiredEmployees;
   }
 
-  get timeInterval() {
-    return this.state.timeInterval;
+  get time() {
+    return this.state.time;
   }
 
   get createdAt() {
@@ -90,7 +90,7 @@ export class Visit extends Aggregate<VisitId, VisitState> {
       name: data.name,
       requiredEmployees: data.requiredEmployees,
       periodicity: data.periodicity,
-      timeInterval: data.timeInterval,
+      time: data.time,
       createdAt: data.now,
       updatedAt: data.now,
     });
@@ -106,8 +106,8 @@ export class Visit extends Aggregate<VisitId, VisitState> {
     this.state.updatedAt = updatedAt;
   }
 
-  setTimeInterval(timeInterval: TimeInterval, updatedAt: DateTime) {
-    this.state.timeInterval = timeInterval;
+  setTime(time: TimeInterval, updatedAt: DateTime) {
+    this.state.time = time;
     this.state.updatedAt = updatedAt;
   }
 }

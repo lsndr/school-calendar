@@ -61,13 +61,13 @@ export class AttendancesService {
 
       const date = ExactDate.createFromISO(dto.date);
       const id = AttendanceId.create(visit.id, date);
-      const timeInterval = TimeInterval.create(dto.timeInterval);
+      const time = TimeInterval.create(dto.time);
       const now = DateTime.now();
 
       const attendance = Attendance.create({
         id,
         office,
-        timeInterval,
+        time,
         now,
       });
 
@@ -85,7 +85,7 @@ export class AttendancesService {
         visitId: attendance.id.visitId.value,
         date: attendance.id.date.toDateTime().toISODate(),
         employeeIds,
-        timeInterval: new TimeIntervalDto(attendance.timeInterval),
+        time: new TimeIntervalDto(attendance.time),
         updatedAt: attendance.updatedAt.toISO(),
         createdAt: attendance.createdAt.toISO(),
       });
@@ -138,9 +138,9 @@ export class AttendancesService {
 
       const now = DateTime.now();
 
-      if (dto.timeInterval !== undefined) {
-        const timeInterval = TimeInterval.create(dto.timeInterval);
-        attendance.setTimeInterval(timeInterval, now);
+      if (dto.time !== undefined) {
+        const time = TimeInterval.create(dto.time);
+        attendance.setTime(time, now);
       }
 
       if (dto.employeeIds !== undefined) {
@@ -168,7 +168,7 @@ export class AttendancesService {
         visitId: attendance.id.visitId.value,
         date: attendance.id.date.toDateTime().toISODate(),
         employeeIds,
-        timeInterval: new TimeIntervalDto(attendance.timeInterval),
+        time: new TimeIntervalDto(attendance.time),
         updatedAt: attendance.updatedAt.toISO(),
         createdAt: attendance.createdAt.toISO(),
       });
@@ -231,7 +231,7 @@ export class AttendancesService {
         visitId: attendance.id.visitId.value,
         date: attendance.id.date.toDateTime().toISODate(),
         employeeIds,
-        timeInterval: new TimeIntervalDto(attendance.timeInterval),
+        time: new TimeIntervalDto(attendance.time),
         updatedAt: attendance.updatedAt.toISO(),
         createdAt: attendance.createdAt.toISO(),
       });
@@ -281,7 +281,7 @@ export class AttendancesService {
         visitId: attendance.id.visitId.value,
         date: attendance.id.date.toDateTime().toISODate(),
         employeeIds,
-        timeInterval: new TimeIntervalDto(attendance.timeInterval),
+        time: new TimeIntervalDto(attendance.time),
         updatedAt: attendance.updatedAt.toISO(),
         createdAt: attendance.createdAt.toISO(),
       });
@@ -296,8 +296,8 @@ export class AttendancesService {
         .select([
           'attendances.date',
           'attendances.visit_id',
-          'attendances.starts_at',
-          'attendances.duration',
+          'attendances.time_starts_at',
+          'attendances.time_duration',
           'attendances.created_at',
           'attendances.updated_at',
         ])
@@ -325,9 +325,9 @@ export class AttendancesService {
       employeeIds,
       visitId: attendanceRecord.visit_id,
       date: attendanceRecord.date.toISODate(),
-      timeInterval: new TimeIntervalDto({
-        startsAt: attendanceRecord.starts_at,
-        duration: attendanceRecord.duration,
+      time: new TimeIntervalDto({
+        startsAt: attendanceRecord.time_starts_at,
+        duration: attendanceRecord.time_duration,
       }),
       updatedAt: attendanceRecord.updated_at.toISO(),
       createdAt: attendanceRecord.created_at.toISO(),

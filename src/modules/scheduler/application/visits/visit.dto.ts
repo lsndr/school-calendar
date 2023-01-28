@@ -29,7 +29,7 @@ export class VisitDto {
   @ApiProperty({
     type: TimeIntervalDto,
   })
-  timeInterval: TimeIntervalDto;
+  time: TimeIntervalDto;
 
   @ApiProperty()
   clientId: string;
@@ -53,7 +53,7 @@ export class VisitDto {
     this.id = dto?.id;
     this.name = dto?.name;
     this.periodicity = dto?.periodicity;
-    this.timeInterval = dto?.timeInterval;
+    this.time = dto?.time;
     this.clientId = dto?.clientId;
     this.requiredEmployees = dto?.requiredEmployees;
     this.createdAt = dto?.createdAt;

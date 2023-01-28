@@ -22,8 +22,8 @@ export class VisitDataMapper extends DataMapper<Visit> {
         'office_id',
         'periodicity_type',
         'periodicity_data',
-        'starts_at',
-        'duration',
+        'time_starts_at',
+        'time_duration',
         'client_id',
         'required_employees',
         'version',
@@ -72,8 +72,8 @@ export class VisitDataMapper extends DataMapper<Visit> {
           office_id: visit.officeId.value,
           periodicity_type: visit.periodicity.type,
           periodicity_data: mapPeriodicityToRaw(visit.periodicity),
-          starts_at: visit.timeInterval.startsAt,
-          duration: visit.timeInterval.duration,
+          time_starts_at: visit.time.startsAt,
+          time_duration: visit.time.duration,
           client_id: visit.clientId.value,
           required_employees: visit.requiredEmployees.amount,
           created_at: visit.createdAt.toJSDate(),
@@ -91,8 +91,8 @@ export class VisitDataMapper extends DataMapper<Visit> {
           name: visit.name,
           periodicity_type: visit.periodicity.type,
           periodicity_data: visit.periodicity,
-          starts_at: visit.timeInterval.startsAt,
-          duration: visit.timeInterval.duration,
+          time_starts_at: visit.time.startsAt,
+          time_duration: visit.time.duration,
           required_employees: visit.requiredEmployees.amount,
           created_at: visit.updatedAt.toJSDate(),
         })
@@ -122,9 +122,9 @@ export class VisitDataMapper extends DataMapper<Visit> {
       record.periodicity_type,
       record.periodicity_data,
     );
-    const timeInterval = new TimeIntervalHydartor({
-      startsAt: record.starts_at,
-      duration: record.duration,
+    const time = new TimeIntervalHydartor({
+      startsAt: record.time_starts_at,
+      duration: record.time_duration,
     });
     const clientId = new ClientIdHydrator(record.client_id);
     const requiredEmployees = new RequiredEmployeesHydrator(
@@ -138,7 +138,7 @@ export class VisitDataMapper extends DataMapper<Visit> {
       officeId,
       name,
       periodicity,
-      timeInterval,
+      time,
       clientId,
       requiredEmployees,
       createdAt,

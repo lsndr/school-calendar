@@ -77,7 +77,7 @@ describe('Employees Service', () => {
       periodicity: new WeeklyPeriodicityDto({
         days: [0, 2, 3],
       }),
-      timeInterval: new TimeIntervalDto({ startsAt: 0, duration: 120 }),
+      time: new TimeIntervalDto({ startsAt: 0, duration: 120 }),
       clientId: client.id.value,
       requiredEmployees: 3,
     });
@@ -92,7 +92,7 @@ describe('Employees Service', () => {
         type: 'weekly',
         days: [0, 2, 3],
       }),
-      timeInterval: expect.objectContaining({
+      time: expect.objectContaining({
         startsAt: 0,
         duration: 120,
       }),
@@ -109,7 +109,7 @@ describe('Employees Service', () => {
         type: 'weekly',
         days: [0, 2, 3],
       }),
-      timeInterval: expect.objectContaining({
+      time: expect.objectContaining({
         startsAt: 0,
         duration: 120,
       }),
@@ -126,8 +126,8 @@ describe('Employees Service', () => {
           type: 'weekly',
           days: [0, 2, 3],
         },
-        starts_at: 0,
-        duration: 120,
+        time_starts_at: 0,
+        time_duration: 120,
         required_employees: 3,
         created_at: DateTime.fromISO('2023-01-22T12:48:38.529Z'),
       },
@@ -146,7 +146,7 @@ describe('Employees Service', () => {
         periodicity: new WeeklyPeriodicityDto({
           days: [0, 2, 3],
         }),
-        timeInterval: new TimeIntervalDto({ startsAt: 0, duration: 120 }),
+        time: new TimeIntervalDto({ startsAt: 0, duration: 120 }),
         clientId: client.id.value,
         requiredEmployees: 3,
       });

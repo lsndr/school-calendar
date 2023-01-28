@@ -23,10 +23,10 @@ export class UpdateAttendanceDto {
   })
   @ValidateNested()
   @Type(() => TimeIntervalDto)
-  timeInterval?: TimeIntervalDto;
+  time?: TimeIntervalDto;
 
   constructor(dto: UpdateAttendanceDto) {
     this.employeeIds = dto?.employeeIds;
-    this.timeInterval = dto?.timeInterval;
+    this.time = dto?.time;
   }
 }

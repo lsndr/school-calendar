@@ -68,7 +68,7 @@ export class CreateVisitDto {
     type: TimeIntervalDto,
   })
   @Type(() => TimeIntervalDto)
-  timeInterval: TimeIntervalDto;
+  time: TimeIntervalDto;
 
   @ApiProperty()
   @IsString()
@@ -83,7 +83,7 @@ export class CreateVisitDto {
   constructor(dto: CreateVisitDto) {
     this.name = dto?.name;
     this.periodicity = dto?.periodicity;
-    this.timeInterval = dto?.timeInterval;
+    this.time = dto?.time;
     this.clientId = dto?.clientId;
     this.requiredEmployees = dto?.requiredEmployees;
   }

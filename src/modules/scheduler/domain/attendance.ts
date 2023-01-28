@@ -18,13 +18,13 @@ import { Visit } from './visit';
 
 export type CreateAttendance = {
   id: AttendanceId;
-  timeInterval: TimeInterval;
+  time: TimeInterval;
   office: Office;
   now: DateTime;
 };
 
 export interface AttendanceState extends AggregateState<AttendanceId> {
-  timeInterval: TimeInterval;
+  time: TimeInterval;
   officeId: OfficeId;
   employeeIds: Map<string, EmployeeId>;
   createdAt: DateTime;
@@ -32,8 +32,8 @@ export interface AttendanceState extends AggregateState<AttendanceId> {
 }
 
 export class Attendance extends Aggregate<AttendanceId, AttendanceState> {
-  get timeInterval() {
-    return this.state.timeInterval;
+  get time() {
+    return this.state.time;
   }
 
   get employeeIds(): ReadonlyArray<EmployeeId> {
@@ -55,7 +55,7 @@ export class Attendance extends Aggregate<AttendanceId, AttendanceState> {
   static create(data: CreateAttendance) {
     this.assertNotInPast(
       data.id.date,
-      data.timeInterval,
+      data.time,
       data.office,
       data.now,
     );
@@ -64,7 +64,7 @@ export class Attendance extends Aggregate<AttendanceId, AttendanceState> {
     const attendance = new this(
       {
         id: data.id,
-        timeInterval: data.timeInterval,
+        time: data.time,
         officeId: data.office.id,
         employeeIds: new Map(),
         createdAt: data.now,
@@ -83,7 +83,7 @@ export class Attendance extends Aggregate<AttendanceId, AttendanceState> {
             year: attendance.id.date.year,
           },
         },
-        timeInterval: attendance.timeInterval,
+        time: attendance.time,
         employeeIds: Array.from(attendance.employeeIds).map((id) => id.value),
         createdAt: attendance.createdAt.toISO(),
         updatedAt: attendance.updatedAt.toISO(),
@@ -94,7 +94,7 @@ export class Attendance extends Aggregate<AttendanceId, AttendanceState> {
   }
 
   protected assertAttendanceNotInPast(office: Office, now: DateTime) {
-    Attendance.assertNotInPast(this.id.date, this.timeInterval, office, now);
+    Attendance.assertNotInPast(this.id.date, this.time, office, now);
   }
 
   assignEmployee(
@@ -140,8 +140,8 @@ export class Attendance extends Aggregate<AttendanceId, AttendanceState> {
     this.addOrReplaceUpdatedEvent();
   }
 
-  setTimeInterval(timeInterval: TimeInterval, now: DateTime) {
-    this.state.timeInterval = timeInterval;
+  setTime(time: TimeInterval, now: DateTime) {
+    this.state.time = time;
     this.state.updatedAt = now;
 
     this.addOrReplaceUpdatedEvent();
@@ -157,7 +157,7 @@ export class Attendance extends Aggregate<AttendanceId, AttendanceState> {
           year: this.id.date.year,
         },
       },
-      timeInterval: this.timeInterval,
+      time: this.time,
       employeeIds: Array.from(this.employeeIds).map((id) => id.value),
       createdAt: this.createdAt.toISO(),
       updatedAt: this.updatedAt.toISO(),
@@ -168,13 +168,13 @@ export class Attendance extends Aggregate<AttendanceId, AttendanceState> {
 
   protected static assertNotInPast(
     date: ExactDate,
-    timeInterval: TimeInterval,
+    time: TimeInterval,
     office: Office,
     now: DateTime,
   ) {
     const startsAt = date
       .toDateTime(office.timeZone)
-      .plus({ minutes: timeInterval.startsAt });
+      .plus({ minutes: time.startsAt });
 
     assert.ok(
       now.toMillis() < startsAt.toMillis(),

@@ -7,8 +7,8 @@ export async function up(knex: Knex): Promise<void> {
     table.text('office_id').notNullable().index();
     table.text('periodicity_type').notNullable();
     table.jsonb('periodicity_data').notNullable();
-    table.smallint('starts_at').notNullable();
-    table.smallint('duration').notNullable();
+    table.smallint('time_starts_at').notNullable();
+    table.smallint('time_duration').notNullable();
     table.text('client_id').notNullable();
     table.smallint('required_employees').notNullable();
     table.smallint('version').notNullable();
