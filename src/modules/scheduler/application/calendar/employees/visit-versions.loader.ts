@@ -58,13 +58,13 @@ export class VisitVersionsLoader {
         query1
           .where((query2) => {
             query2
-              .where('active_since', '>=', options.from.toSQL())
-              .andWhere('active_since', '<', options.to.toSQL());
+              .where('active_since', '>=', options.from.toUTC().toSQL())
+              .andWhere('active_since', '<', options.to.toUTC().toSQL());
           })
           .orWhere((query2) => {
             query2
-              .where('active_till', '>=', options.from.toSQL())
-              .andWhere('active_till', '<', options.to.toSQL());
+              .where('active_till', '>=', options.from.toUTC().toSQL())
+              .andWhere('active_till', '<', options.to.toUTC().toSQL());
           });
       })
       .orderBy('active_since', 'desc');

@@ -76,8 +76,8 @@ export class AttendanceDataMapper extends DataMapper<Attendance> {
         date: attendance.id.date.toDateTime().toSQL(),
         starts_at: attendance.timeInterval.startsAt,
         duration: attendance.timeInterval.duration,
-        updated_at: attendance.updatedAt.toSQL(),
-        created_at: attendance.createdAt.toSQL(),
+        updated_at: attendance.updatedAt.toUTC().toSQL(),
+        created_at: attendance.createdAt.toUTC().toSQL(),
         version,
       })
       .into('attendances')

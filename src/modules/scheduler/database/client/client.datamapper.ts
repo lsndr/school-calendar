@@ -60,8 +60,8 @@ export class ClientDataMapper extends DataMapper<Client> {
         name: client.name,
         office_id: client.officeId.value,
         version,
-        created_at: client.createdAt.toSQL(),
-        updated_at: client.updatedAt.toSQL(),
+        created_at: client.createdAt.toUTC().toSQL(),
+        updated_at: client.updatedAt.toUTC().toSQL(),
       })
       .into('clients')
       .onConflict('id')
