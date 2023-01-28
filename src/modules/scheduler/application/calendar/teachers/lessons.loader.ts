@@ -3,6 +3,13 @@ import { Knex } from 'knex';
 import { DateTime } from 'luxon';
 import { KNEX_PROVIDER } from '../../../../shared/database';
 
+export type LessonsLoaderOptions = {
+  schoolId: string;
+  timeZone: string;
+  from: DateTime;
+  to: DateTime;
+};
+
 export type LessonDates = {
   subjectId: string;
   dates: DateTime[];
@@ -20,11 +27,8 @@ export type Assignment = {
 export class LessonsLoader {
   constructor(@Inject(KNEX_PROVIDER) private readonly knex: Knex) {}
 
-  async load(
-    timeZone: string,
-    subjectDates: Iterable<LessonDates>,
-  ): Promise<Generator<Assignment>> {
-    const assignmentsQuery = this.knex
+  async load(options: LessonsLoaderOptions): Promise<Generator<Assignment>> {
+    const lessons = await this.knex
       .select([
         'lessons.subject_id',
         'lessons.starts_at',
@@ -38,29 +42,29 @@ export class LessonsLoader {
           .groupBy('lessons_teachers.subject_id', 'lessons_teachers.date')
           .as('teacher_ids'),
       ])
-      .from('lessons');
-
-    assignmentsQuery.where((query1) => {
-      for (const subjectDate of subjectDates) {
-        query1.orWhere((query2) => {
-          query2.where('lessons.subject_id', subjectDate.subjectId).whereIn(
-            'lessons.date',
-            subjectDate.dates.map((date) => date.setZone(timeZone).toSQLDate()),
-          );
-        });
-      }
-    });
-
-    const assignments = await assignmentsQuery;
+      .from('lessons')
+      .where(
+        'lessons.date',
+        '>=',
+        options.from.setZone(options.timeZone).toSQLDate(),
+      )
+      .andWhere(
+        'lessons.date',
+        '<',
+        options.to.setZone(options.timeZone).toSQLDate(),
+      )
+      .andWhere('lessons.school_id', options.schoolId);
 
     return (function* () {
-      for (const assignment of assignments) {
+      for (const lesson of lessons) {
         yield {
-          subjectId: assignment.subject_id,
-          startsAt: assignment.starts_at,
-          duration: assignment.duration,
-          date: assignment.date.setZone(timeZone, { keepLocalTime: true }),
-          teacherIds: assignment.teacher_ids,
+          subjectId: lesson.subject_id,
+          startsAt: lesson.starts_at,
+          duration: lesson.duration,
+          date: lesson.date.setZone(options.timeZone, {
+            keepLocalTime: true,
+          }),
+          teacherIds: lesson.teacher_ids,
         };
       }
     })();

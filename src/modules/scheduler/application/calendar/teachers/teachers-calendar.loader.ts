@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { Knex } from 'knex';
 import { DateTime } from 'luxon';
 import { KNEX_PROVIDER } from '../../../../shared/database';
-import { LessonsLoader, LessonDates, Assignment } from './lessons.loader';
+import { LessonsLoader, Assignment } from './lessons.loader';
 import { CalendarTeacherEventDto } from './calendar-teacher-event.dto';
 import { CalendarTeacherDto } from './calendar-teacher.dto';
 import { TeachersCalendarDto } from './teachers-calendar.dto';
@@ -11,7 +11,7 @@ import {
   SubjectVersionsLoader,
 } from './subject-versions.loader';
 
-export type TeachersCalendarPeriod = {
+export type TeachersCalendarPeriodOptions = {
   schoolId: string;
   timeZone: string;
   from: DateTime;
@@ -27,40 +27,24 @@ export class TeachersCalendarLoader {
   ) {}
 
   async forPeriod(
-    period: TeachersCalendarPeriod,
+    options: TeachersCalendarPeriodOptions,
   ): Promise<TeachersCalendarDto> {
-    const [versionsIterator, teachers] = await Promise.all([
-      this.subjectVersionsLoader.load(period),
-      this.getTeachers(period.schoolId),
+    const [versionsIterator, teachers, lessonsIterator] = await Promise.all([
+      this.subjectVersionsLoader.load(options),
+      this.getTeachers(options.schoolId),
+      this.lessonsLoader.load(options),
     ]);
 
     const versions: SubjectVersion[] = [];
-    const lessonsDates = new Map<string, LessonDates>();
 
     for await (const version of versionsIterator) {
-      const lessonDates = lessonsDates.get(version.id) || {
-        subjectId: version.id,
-        dates: [],
-      };
-
-      lessonDates.dates.push(version.date);
-      lessonsDates.set(version.id, lessonDates);
-
       versions.push(version);
     }
 
-    const assignmentsIterator = await this.lessonsLoader.load(
-      period.timeZone,
-      lessonsDates.values(),
-    );
-
     const lessonsMap = new Map<string, Assignment>();
 
-    for await (const assignment of assignmentsIterator) {
-      lessonsMap.set(
-        `${assignment.subjectId}-${assignment.date.toSQLDate()}`,
-        assignment,
-      );
+    for await (const lesson of lessonsIterator) {
+      lessonsMap.set(`${lesson.subjectId}-${lesson.date.toSQLDate()}`, lesson);
     }
 
     const events: CalendarTeacherEventDto[] = [];
@@ -73,8 +57,6 @@ export class TeachersCalendarLoader {
       const numberOfAssignedTeachers = lesson?.teacherIds.length || 0;
       const numberOfUnassignedTeachers =
         version.requiredTeachers - numberOfAssignedTeachers;
-
-      // если существует атенданс, то берем его время
 
       const startsAt = version.date
         .startOf('day')

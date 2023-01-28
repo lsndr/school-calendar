@@ -176,27 +176,16 @@ describe('LessonsLoader', () => {
   });
 
   it('should load subject 1 since subject 1 version 2 starts later', async () => {
-    const lessons = await loader.load('Europe/Moscow', [
-      {
-        subjectId: subject1.id.value,
-        dates: [
-          DateTime.fromISO('2023-01-26T00:00:00', {
-            zone: 'Europe/Moscow',
-          }),
-          DateTime.fromISO('2023-01-28T00:00:00', {
-            zone: 'Europe/Moscow',
-          }),
-        ],
-      },
-      {
-        subjectId: subject2.id.value,
-        dates: [
-          DateTime.fromISO('2023-01-28T00:00:00', {
-            zone: 'Europe/Moscow',
-          }),
-        ],
-      },
-    ]);
+    const lessons = await loader.load({
+      timeZone: 'Europe/Moscow',
+      schoolId: subject1.schoolId.value,
+      from: DateTime.fromISO('2023-01-26T00:00:00', {
+        zone: 'Europe/Moscow',
+      }),
+      to: DateTime.fromISO('2023-01-29T00:00:00', {
+        zone: 'Europe/Moscow',
+      }),
+    });
 
     expect(Array.from(lessons)).toEqual([
       {
