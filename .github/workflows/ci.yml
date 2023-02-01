@@ -34,3 +34,32 @@ jobs:
           cache: 'npm'
       - run: npm ci
       - run: npm test
+  integration:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18.x]
+    services:
+      postgres:
+        image: postgres:15.1
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+        env:
+          DB_URL: postgres://dev:dev@postgres/test
+      - run: npm ci
+      - run: npm run test:integration
