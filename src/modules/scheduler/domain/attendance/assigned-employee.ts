@@ -2,6 +2,7 @@ import { Entity, ManyToOne, PrimaryKey, Property, Rel } from '@mikro-orm/core';
 import { DateTime } from 'luxon';
 import { EmployeeIdType } from '../../database';
 import { AssignedEmployeeId } from './assigned-employee-id';
+// eslint-disable-next-line import/no-cycle -- Required by MikroORM
 import { Attendance } from './attendance';
 import { EmployeeId } from '../employee';
 

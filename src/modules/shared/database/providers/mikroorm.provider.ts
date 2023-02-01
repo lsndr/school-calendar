@@ -11,6 +11,8 @@ import {
   Office,
   Visit,
 } from '../../../scheduler/domain';
+import '../../../scheduler/database/subscribers';
+
 export const ENTITIES = [
   Office,
   Employee,

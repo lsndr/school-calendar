@@ -1,5 +1,5 @@
 import { Type, ValidationError } from '@mikro-orm/core';
-import { TimeZone } from '../domain';
+import { TimeZone } from '../domain/shared';
 
 export class TimeZoneType extends Type<TimeZone, string> {
   override convertToDatabaseValue(value: unknown) {

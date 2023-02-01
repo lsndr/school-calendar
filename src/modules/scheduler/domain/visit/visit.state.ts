@@ -1,8 +1,12 @@
 import { Embedded, PrimaryKey, Property } from '@mikro-orm/core';
 import { DateTime } from 'luxon';
 import { AggregateState } from '../../../shared/domain';
-import { ClientIdType, OfficeIdType } from '../../database';
-import { VisitIdType, RequiredEmployeesType } from '../../database';
+import {
+  ClientIdType,
+  OfficeIdType,
+  VisitIdType,
+  RequiredEmployeesType,
+} from '../../database';
 import {
   BiWeeklyRecurrence,
   DailyRecurrence,

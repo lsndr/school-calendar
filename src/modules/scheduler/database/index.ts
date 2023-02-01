@@ -4,8 +4,6 @@ export * from './client-id.type';
 export * from './employee-id.type';
 export * from './exact-date.type';
 export * from './office-id.type';
-export * from './outbox.subscriber';
 export * from './required-employees.type';
 export * from './time-zone.type';
 export * from './visit-id.type';
-export * from './visit.subscriber';

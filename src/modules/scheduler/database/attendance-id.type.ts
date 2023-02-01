@@ -1,5 +1,5 @@
 import { Type } from '@mikro-orm/core';
-import { AttendanceId } from '../domain';
+import { AttendanceId } from '../domain/attendance/attendance-id';
 
 export class AttendanceIdType extends Type<AttendanceId, string> {
   override convertToDatabaseValue(value: any) {

@@ -1,5 +1,5 @@
 import { Type } from '@mikro-orm/core';
-import { OfficeId } from '../domain';
+import { OfficeId } from '../domain/office/office-id';
 
 export class OfficeIdType extends Type<OfficeId, string> {
   override convertToDatabaseValue(value: any) {

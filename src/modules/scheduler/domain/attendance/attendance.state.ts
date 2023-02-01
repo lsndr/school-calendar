@@ -16,6 +16,8 @@ import {
 import { OfficeId } from '../office';
 import { ExactDate, TimeInterval } from '../shared';
 import { VisitId } from '../visit';
+
+// eslint-disable-next-line import/no-cycle -- Required by MikroORM
 import { AssignedEmployee } from './assigned-employee';
 import { AttendanceId } from './attendance-id';
 

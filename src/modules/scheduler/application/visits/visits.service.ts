@@ -35,14 +35,12 @@ export class VisitsService {
           id: officeId,
         })
         .getSingleResult(),
-
       clientRepository
         .createQueryBuilder()
         .where({
           id: dto.clientId,
         })
         .getSingleResult(),
-      ,
     ]);
 
     if (!office) {

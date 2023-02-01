@@ -1,5 +1,5 @@
 import { Type } from '@mikro-orm/core';
-import { VisitId } from '../domain';
+import { VisitId } from '../domain/visit/visit-id';
 
 export class VisitIdType extends Type<VisitId, string> {
   override convertToDatabaseValue(value: any) {
