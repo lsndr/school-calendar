@@ -4,7 +4,7 @@ export class Migration20230129140036 extends Migration {
   async up(): Promise<void> {
     const knex = this.getKnex();
 
-    return knex.schema.createTable('teachers', (table) => {
+    return knex.schema.createTable('teacher', (table) => {
       table.text('id').primary();
       table.text('name').notNullable();
       table.text('school_id').notNullable().index();
@@ -17,6 +17,6 @@ export class Migration20230129140036 extends Migration {
   override async down(): Promise<void> {
     const knex = this.getKnex();
 
-    return knex.schema.dropTable('teachers');
+    return knex.schema.dropTable('teacher');
   }
 }
