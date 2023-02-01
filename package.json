@@ -80,5 +80,5 @@
   ],
   "lint-staged": {
     "**/*.{js,ts,tsx,json}": "eslint --fix --max-warnings=0"
-  },
+  }
 }
