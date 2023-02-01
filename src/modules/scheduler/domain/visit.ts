@@ -1,80 +1,117 @@
+import { Embedded, Entity, PrimaryKey, Property } from '@mikro-orm/core';
 import * as assert from 'assert';
 import { DateTime } from 'luxon';
-import { Aggregate, AggregateState } from '../../shared/domain';
+import { AggregateState } from '../../shared/domain';
+import { ClientIdType, OfficeIdType } from '../database';
+import { VisitIdType, RequiredEmployeesType } from '../database/visit';
 import { Client } from './client';
 import { ClientId } from './client-id';
 import { Office } from './office';
 import { OfficeId } from './office-id';
 import {
-  BiWeeklyPeriodicity,
-  DailyPeriodicity,
-  MonthlyPeriodicity,
-  WeeklyPeriodicity,
-} from './periodicity';
+  BiWeeklyRecurrence,
+  DailyRecurrence,
+  MonthlyRecurrence,
+  WeeklyRecurrence,
+} from './recurrence';
+
 import { RequiredEmployees } from './required-employees';
 import { TimeInterval } from './time-interval';
 import { VisitId } from './visit-id';
 
-export type VisitPeriodicity =
-  | DailyPeriodicity
-  | WeeklyPeriodicity
-  | BiWeeklyPeriodicity
-  | MonthlyPeriodicity;
+type Recurrence =
+  | DailyRecurrence
+  | WeeklyRecurrence
+  | BiWeeklyRecurrence
+  | MonthlyRecurrence;
 
-export interface VisitState extends AggregateState<VisitId> {
-  id: VisitId;
-  officeId: OfficeId;
-  name: string;
-  periodicity: VisitPeriodicity;
-  time: TimeInterval;
-  clientId: ClientId;
-  requiredEmployees: RequiredEmployees;
-  createdAt: DateTime;
-  updatedAt: DateTime;
+abstract class VisitState extends AggregateState {
+  @PrimaryKey({ name: 'id', type: VisitIdType })
+  protected _id!: VisitId;
+
+  @Property({ name: 'name' })
+  protected _name!: string;
+
+  @Property({ name: 'office_id', type: OfficeIdType })
+  protected _officeId!: OfficeId;
+
+  @Embedded(
+    () => [
+      DailyRecurrence,
+      WeeklyRecurrence,
+      BiWeeklyRecurrence,
+      MonthlyRecurrence,
+    ],
+    { prefix: 'recurrence_' },
+  )
+  protected _recurrence!: Recurrence;
+
+  @Embedded(() => TimeInterval, { prefix: 'time_' })
+  protected _time!: TimeInterval;
+
+  @Property({ name: 'client_id', type: ClientIdType })
+  protected _clientId!: ClientId;
+
+  @Property({ name: 'required_employees', type: RequiredEmployeesType })
+  protected _requiredEmployees!: RequiredEmployees;
+
+  @Property({ name: 'created_at' })
+  protected _createdAt!: DateTime;
+
+  @Property({ name: 'updated_at' })
+  protected _updatedAt!: DateTime;
+
+  @Property({ name: 'version', version: true })
+  protected _version!: number;
 }
 
 type CreateVisit = {
   id: VisitId;
   name: string;
   office: Office;
-  periodicity: VisitPeriodicity;
+  recurrence: Recurrence;
   time: TimeInterval;
   client: Client;
   requiredEmployees: RequiredEmployees;
   now: DateTime;
 };
 
-export class Visit extends Aggregate<VisitId, VisitState> {
+@Entity()
+export class Visit extends VisitState {
+  get id() {
+    return this._id;
+  }
+
   get officeId() {
-    return this.state.officeId;
+    return this._officeId;
   }
 
   get name() {
-    return this.state.name;
+    return this._name;
   }
 
-  get periodicity() {
-    return this.state.periodicity;
+  get recurrence() {
+    return this._recurrence;
   }
 
   get clientId() {
-    return this.state.clientId;
+    return this._clientId;
   }
 
   get requiredEmployees() {
-    return this.state.requiredEmployees;
+    return this._requiredEmployees;
   }
 
   get time() {
-    return this.state.time;
+    return this._time;
   }
 
   get createdAt() {
-    return this.state.createdAt;
+    return this._createdAt;
   }
 
   get updatedAt() {
-    return this.state.updatedAt;
+    return this._updatedAt;
   }
 
   static create(data: CreateVisit) {
@@ -83,31 +120,33 @@ export class Visit extends Aggregate<VisitId, VisitState> {
       'Office id and client office id must match',
     );
 
-    return new this({
-      id: data.id,
-      clientId: data.client.id,
-      officeId: data.office.id,
-      name: data.name,
-      requiredEmployees: data.requiredEmployees,
-      periodicity: data.periodicity,
-      time: data.time,
-      createdAt: data.now,
-      updatedAt: data.now,
-    });
+    const visit = new this();
+
+    visit._id = data.id;
+    visit._clientId = data.client.id;
+    visit._officeId = data.office.id;
+    visit._name = data.name;
+    visit._requiredEmployees = data.requiredEmployees;
+    visit._recurrence = data.recurrence;
+    visit._time = data.time;
+    visit._createdAt = data.now;
+    visit._updatedAt = data.now;
+
+    return visit;
   }
 
-  setName(name: string, updatedAt: DateTime) {
-    this.state.name = name;
-    this.state.updatedAt = updatedAt;
+  setName(name: string, now: DateTime) {
+    this._name = name;
+    this._updatedAt = now;
   }
 
-  setPeriodicity(periodicity: VisitPeriodicity, updatedAt: DateTime) {
-    this.state.periodicity = periodicity;
-    this.state.updatedAt = updatedAt;
+  setRecurrence(recurrence: Recurrence, now: DateTime) {
+    this._recurrence = recurrence;
+    this._updatedAt = now;
   }
 
-  setTime(time: TimeInterval, updatedAt: DateTime) {
-    this.state.time = time;
-    this.state.updatedAt = updatedAt;
+  setTime(time: TimeInterval, now: DateTime) {
+    this._time = time;
+    this._updatedAt = now;
   }
 }

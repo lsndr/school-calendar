@@ -1,55 +1,55 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { KNEX_PROVIDER, UOW_PROVIDER } from '../../../shared/database';
-import { Uow } from 'yuow';
-import { EmployeeRepository, OfficeRepository } from '../../database';
-import { Employee, EmployeeId } from '../../domain';
-import { Knex } from 'knex';
+import { MIKROORM_PROVIDER } from '../../../shared/database';
+import { Employee, EmployeeId, Office } from '../../domain';
 import { CreateEmployeeDto } from './create-employee.dto';
 import { EmployeeDto } from './employee.dto';
 import { DateTime } from 'luxon';
+import { MikroORM } from '@mikro-orm/postgresql';
 
 @Injectable()
 export class EmployeesService {
-  constructor(
-    @Inject(UOW_PROVIDER) private readonly uow: Uow,
-    @Inject(KNEX_PROVIDER) private readonly knex: Knex,
-  ) {}
+  constructor(@Inject(MIKROORM_PROVIDER) private readonly orm: MikroORM) {}
 
-  create(dto: CreateEmployeeDto) {
-    return this.uow(async (ctx) => {
-      const officeRepository = ctx.getRepository(OfficeRepository);
-      const office = await officeRepository.findOne({
+  async create(dto: CreateEmployeeDto) {
+    const em = this.orm.em.fork();
+    const officeRepository = em.getRepository(Office);
+    const employeeRepository = em.getRepository(Employee);
+
+    const office = await officeRepository
+      .createQueryBuilder()
+      .where({
         id: dto.officeId,
-      });
+      })
+      .getSingleResult();
 
-      if (!office) {
-        throw new Error('Office not found');
-      }
+    if (!office) {
+      throw new Error('Office not found');
+    }
 
-      const id = EmployeeId.create();
-      const name = dto.name;
+    const id = EmployeeId.create();
+    const name = dto.name;
 
-      const employee = Employee.create({
-        id,
-        name,
-        office: office,
-        now: DateTime.now(),
-      });
+    const employee = Employee.create({
+      id,
+      name,
+      office: office,
+      now: DateTime.now(),
+    });
 
-      const employeeRepository = ctx.getRepository(EmployeeRepository);
-      employeeRepository.add(employee);
+    await employeeRepository.persistAndFlush(employee);
 
-      return new EmployeeDto({
-        id: employee.id.value,
-        name: employee.name,
-      });
+    return new EmployeeDto({
+      id: employee.id.value,
+      name: employee.name,
     });
   }
 
   async findOne(id: string) {
-    const record = await this.knex
+    const knex = this.orm.em.getConnection().getKnex();
+
+    const record = await knex
       .select(['id', 'name'])
-      .from('employees')
+      .from('employee')
       .where('id', id)
       .first();
 

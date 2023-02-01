@@ -1,19 +1,16 @@
+import { randomUUID } from 'crypto';
 import { ValueObject } from '../../shared/domain';
-import { ExactDate } from './exact-date';
-import { VisitId } from './visit-id';
 
 export class AttendanceId extends ValueObject<'AttendanceId'> {
-  public readonly visitId: VisitId;
-  public readonly date: ExactDate;
+  public readonly value: string;
 
-  protected constructor(visitId: VisitId, date: ExactDate) {
+  protected constructor(value: string) {
     super();
 
-    this.visitId = visitId;
-    this.date = date;
+    this.value = value;
   }
 
-  static create(visitId: VisitId, date: ExactDate) {
-    return new this(visitId, date);
+  static create() {
+    return new this(randomUUID());
   }
 }

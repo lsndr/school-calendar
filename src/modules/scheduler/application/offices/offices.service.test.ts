@@ -1,29 +1,21 @@
 import { OfficesService } from './offices.service';
 import { Test } from '@nestjs/testing';
-import {
-  knexProvider,
-  uowProvider,
-  KNEX_PROVIDER,
-} from '../../../shared/database';
-import { Knex } from 'knex';
-import { recreateDb } from '../../../../../test-utils';
+import { MIKROORM_PROVIDER } from '../../../shared/database';
+import { testMikroormProvider } from '../../../../../test-utils';
+import { MikroORM } from '@mikro-orm/postgresql';
 
 describe('Offices Service', () => {
   let officesService: OfficesService;
-  let knex: Knex;
+  let orm: MikroORM;
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
       controllers: [],
-      providers: [OfficesService, knexProvider, uowProvider],
+      providers: [OfficesService, testMikroormProvider],
     }).compile();
 
     officesService = moduleRef.get(OfficesService);
-    knex = moduleRef.get(KNEX_PROVIDER);
-  });
-
-  beforeEach(async () => {
-    await recreateDb(knex);
+    orm = moduleRef.get(MIKROORM_PROVIDER);
   });
 
   it('should create an office', async () => {
@@ -43,6 +35,6 @@ describe('Offices Service', () => {
   });
 
   afterAll(async () => {
-    await knex.destroy();
+    await orm.close();
   });
 });

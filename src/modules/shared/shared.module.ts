@@ -1,16 +1,17 @@
 import { Module, Inject } from '@nestjs/common';
-import { knexProvider, KNEX_PROVIDER, uowProvider } from './database';
+import { mikroormProvider, MIKROORM_PROVIDER } from './database';
 import { Knex } from 'knex';
+import { MikroORM } from '@mikro-orm/postgresql';
 
 @Module({
   imports: [],
-  providers: [knexProvider, uowProvider],
-  exports: [knexProvider, uowProvider],
+  providers: [],
+  exports: [mikroormProvider],
 })
 export class SharedModule {
-  constructor(@Inject(KNEX_PROVIDER) private readonly knex: Knex) {}
+  constructor(@Inject(MIKROORM_PROVIDER) private readonly orm: MikroORM) {}
 
   async beforeApplicationShutdown() {
-    await this.knex.destroy();
+    await this.orm.close();
   }
 }

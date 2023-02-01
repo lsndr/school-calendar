@@ -1,13 +1,6 @@
 import { AttendancesService } from './attendances.service';
 import { Test } from '@nestjs/testing';
-import {
-  knexProvider,
-  uowProvider,
-  KNEX_PROVIDER,
-  UOW_PROVIDER,
-} from '../../../shared/database';
-import { Knex } from 'knex';
-import { recreateDb } from '../../../../../test-utils';
+import { MIKROORM_PROVIDER } from '../../../shared/database';
 import {
   Client,
   ClientId,
@@ -20,39 +13,29 @@ import {
   TimeZone,
   Visit,
   VisitId,
-  WeeklyPeriodicity,
+  WeeklyRecurrence,
 } from '../../domain';
 import { DateTime } from 'luxon';
-import { Uow } from 'yuow';
-import {
-  ClientRepository,
-  EmployeeRepository,
-  OfficeRepository,
-  VisitRepository,
-} from '../../database';
+import { MikroORM } from '@mikro-orm/postgresql';
+import { testMikroormProvider } from '../../../../../test-utils';
 
 describe('Attendances Service', () => {
   let attendancesService: AttendancesService;
   let office: Office;
   let visit: Visit;
   let client: Client;
-  let knex: Knex;
-  let uow: Uow;
   let employee: Employee;
+  let orm: MikroORM;
 
   beforeAll(async () => {
+    jest.setTimeout(999999999999);
     const moduleRef = await Test.createTestingModule({
       controllers: [],
-      providers: [AttendancesService, knexProvider, uowProvider],
+      providers: [AttendancesService, testMikroormProvider],
     }).compile();
 
     attendancesService = moduleRef.get(AttendancesService);
-    knex = moduleRef.get(KNEX_PROVIDER);
-    uow = moduleRef.get(UOW_PROVIDER);
-  });
-
-  beforeEach(async () => {
-    await recreateDb(knex);
+    orm = moduleRef.get(MIKROORM_PROVIDER);
   });
 
   beforeEach(async () => {
@@ -63,10 +46,8 @@ describe('Attendances Service', () => {
       now: DateTime.now(),
     });
 
-    await uow(async (ctx) => {
-      const officeRepository = ctx.getRepository(OfficeRepository);
-      officeRepository.add(office);
-    });
+    const officeRepository = orm.em.fork().getRepository(Office);
+    await officeRepository.persistAndFlush(office);
   });
 
   beforeEach(async () => {
@@ -78,10 +59,8 @@ describe('Attendances Service', () => {
       now: DateTime.now(),
     });
 
-    await uow((ctx) => {
-      const clientRepository = ctx.getRepository(ClientRepository);
-      clientRepository.add(client);
-    });
+    const clientRepository = orm.em.fork().getRepository(Client);
+    await clientRepository.persistAndFlush(client);
   });
 
   beforeEach(async () => {
@@ -90,7 +69,7 @@ describe('Attendances Service', () => {
       name: 'Test Office',
       office,
       client,
-      periodicity: WeeklyPeriodicity.create([1, 2, 4]),
+      recurrence: WeeklyRecurrence.create([1, 2, 4]),
       time: TimeInterval.create({
         startsAt: 120,
         duration: 60,
@@ -99,10 +78,8 @@ describe('Attendances Service', () => {
       now: DateTime.now(),
     });
 
-    await uow(async (ctx) => {
-      const visitRepository = ctx.getRepository(VisitRepository);
-      visitRepository.add(visit);
-    });
+    const visitRepository = orm.em.fork().getRepository(Visit);
+    await visitRepository.persistAndFlush(visit);
   });
 
   beforeEach(async () => {
@@ -113,10 +90,8 @@ describe('Attendances Service', () => {
       now: DateTime.now(),
     });
 
-    await uow(async (ctx) => {
-      const employeeRepository = ctx.getRepository(EmployeeRepository);
-      employeeRepository.add(employee);
-    });
+    const employeeRepository = orm.em.fork().getRepository(Employee);
+    await employeeRepository.persistAndFlush(employee);
   });
 
   it('should create an attendance', async () => {
@@ -147,7 +122,12 @@ describe('Attendances Service', () => {
       visitId: visit.id.value,
       createdAt: '2023-01-23T14:00:28.460+00:00',
       updatedAt: '2023-01-23T14:00:28.460+00:00',
-      employeeIds: [employee.id.value],
+      assignedEmployees: [
+        {
+          assignedAt: '2023-01-23T14:00:28.460+00:00',
+          employeeId: employee.id.value,
+        },
+      ],
       time: expect.objectContaining({
         duration: 123,
         startsAt: 45,
@@ -158,7 +138,12 @@ describe('Attendances Service', () => {
       visitId: visit.id.value,
       createdAt: '2023-01-23T14:00:28.460+00:00',
       updatedAt: '2023-01-23T14:00:28.460+00:00',
-      employeeIds: [employee.id.value],
+      assignedEmployees: [
+        {
+          assignedAt: '2023-01-23T14:00:28.460+00:00',
+          employeeId: employee.id.value,
+        },
+      ],
       time: expect.objectContaining({
         duration: 123,
         startsAt: 45,
@@ -169,6 +154,6 @@ describe('Attendances Service', () => {
   });
 
   afterAll(async () => {
-    await knex.destroy();
+    await orm.close();
   });
 });

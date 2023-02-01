@@ -1,3 +1,4 @@
+import { Embeddable, Property } from '@mikro-orm/core';
 import * as assert from 'assert';
 import { ValueObject } from '../../shared/domain';
 
@@ -6,8 +7,12 @@ export type TimeIntervalState = {
   duration: number;
 };
 
+@Embeddable()
 export class TimeInterval extends ValueObject<'TimeInterval'> {
+  @Property()
   public readonly startsAt: number;
+
+  @Property()
   public readonly duration: number;
 
   protected constructor(state: TimeIntervalState) {

@@ -1,14 +1,29 @@
+import { Entity, PrimaryKey, Property } from '@mikro-orm/core';
 import { DateTime } from 'luxon';
-import { Aggregate, AggregateState } from '../../shared/domain';
+import { AggregateState } from '../../shared/domain';
+import { OfficeIdType, ClientIdType } from '../database';
 import { ClientId } from './client-id';
 import { Office } from './office';
 import { OfficeId } from './office-id';
 
-export interface ClientState extends AggregateState<ClientId> {
-  name: string;
-  officeId: OfficeId;
-  createdAt: DateTime;
-  updatedAt: DateTime;
+abstract class ClientState extends AggregateState {
+  @PrimaryKey({ name: 'id', type: ClientIdType })
+  protected _id!: ClientId;
+
+  @Property({ name: 'name' })
+  protected _name!: string;
+
+  @Property({ name: 'office_id', type: OfficeIdType })
+  protected _officeId!: OfficeId;
+
+  @Property({ name: 'created_at' })
+  protected _createdAt!: DateTime;
+
+  @Property({ name: 'updated_at' })
+  protected _updatedAt!: DateTime;
+
+  @Property({ name: 'version', version: true })
+  protected _version!: number;
 }
 
 export type CreateClient = {
@@ -18,30 +33,37 @@ export type CreateClient = {
   now: DateTime;
 };
 
-export class Client extends Aggregate<ClientId, ClientState> {
+@Entity()
+export class Client extends ClientState {
+  get id() {
+    return this._id;
+  }
+
   get name() {
-    return this.state.name;
+    return this._name;
   }
 
   get officeId() {
-    return this.state.officeId;
+    return this._officeId;
   }
 
   get createdAt() {
-    return this.state.createdAt;
+    return this._createdAt;
   }
 
   get updatedAt() {
-    return this.state.updatedAt;
+    return this._updatedAt;
   }
 
   static create(data: CreateClient) {
-    return new this({
-      id: data.id,
-      name: data.name,
-      officeId: data.office.id,
-      createdAt: data.now,
-      updatedAt: data.now,
-    });
+    const client = new this();
+
+    client._id = data.id;
+    client._name = data.name;
+    client._officeId = data.office.id;
+    client._createdAt = data.now;
+    client._updatedAt = data.now;
+
+    return client;
   }
 }

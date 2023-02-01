@@ -1,2 +1,2 @@
-export * from './office.repository';
-export * from './office-id.hydrator';
+export * from './time-zone.type';
+export * from './office-id.type';

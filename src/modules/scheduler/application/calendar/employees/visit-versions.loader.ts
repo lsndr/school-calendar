@@ -1,7 +1,8 @@
+import { MikroORM } from '@mikro-orm/postgresql';
 import { Inject, Injectable } from '@nestjs/common';
 import { Knex } from 'knex';
 import { DateTime } from 'luxon';
-import { KNEX_PROVIDER } from '../../../../shared/database';
+import { MIKROORM_PROVIDER } from '../../../../shared/database';
 import { extractDatesFromPeriodicity } from './helpers';
 
 export type VisitVersionsLoaderOptions = {
@@ -23,36 +24,39 @@ export type VisitVersion = {
 
 @Injectable()
 export class VisitVersionsLoader {
-  constructor(@Inject(KNEX_PROVIDER) private readonly knex: Knex) {}
+  constructor(@Inject(MIKROORM_PROVIDER) private readonly orm: MikroORM) {}
 
   async load(
     options: VisitVersionsLoaderOptions,
   ): Promise<Generator<VisitVersion>> {
+    const knex = this.orm.em.getConnection().getKnex();
     const handledVersions = new Set<string>();
 
-    const visits = await this.knex
+    const visits = await knex
       .select('*')
       .from(
-        this.knex
+        knex
           .select([
-            'visits.id',
-            'visits.client_id',
-            'visits_log.name',
-            'visits_log.time_starts_at',
-            'visits_log.periodicity_type',
-            'visits_log.periodicity_data',
-            'visits_log.time_duration',
-            'visits_log.required_employees',
-            'visits_log.created_at as active_since',
-            this.knex.raw(
-              'LEAD(visits_log.created_at) OVER (PARTITION BY visits_log.visit_id ORDER BY visits_log.created_at ASC) as active_till',
+            'visit.id',
+            'visit.client_id',
+            'visit_log.name',
+            'visit_log.time_starts_at',
+            'visit_log.recurrence_type',
+            'visit_log.recurrence_week1',
+            'visit_log.recurrence_week2',
+            'visit_log.recurrence_days',
+            'visit_log.time_duration',
+            'visit_log.required_employees',
+            'visit_log.created_at as active_since',
+            knex.raw(
+              'LEAD(visit_log.created_at) OVER (PARTITION BY visit_log.visit_id ORDER BY visit_log.created_at ASC) as active_till',
             ),
-            'visits.created_at',
+            'visit.created_at',
           ])
-          .innerJoin('visits_log', 'visits_log.visit_id', 'visits.id')
-          .from('visits')
-          .where('visits.office_id', options.officeId)
-          .as('versions'),
+          .innerJoin('visit_log', 'visit_log.visit_id', 'visit.id')
+          .from('visit')
+          .where('visit.office_id', options.officeId)
+          .as('version'),
       )
       .where((query1) => {
         query1
@@ -71,9 +75,11 @@ export class VisitVersionsLoader {
 
     return (function* () {
       for (const visit of visits) {
-        const periodicity = {
-          type: visit.periodicity_type,
-          ...visit.periodicity_data,
+        const recurence = {
+          type: visit.recurrence_type,
+          days: visit.recurrence_days,
+          week1: visit.recurrence_week1,
+          week2: visit.recurrence_week2,
         };
 
         const calculateSince = visit.created_at
@@ -101,7 +107,7 @@ export class VisitVersionsLoader {
           timeZone: options.timeZone,
           calculateSince,
           calculateTill,
-          periodicity,
+          recurence,
         });
 
         for (const date of dates) {

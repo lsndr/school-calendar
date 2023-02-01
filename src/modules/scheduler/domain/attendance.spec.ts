@@ -1,4 +1,6 @@
+import { MikroORM } from '@mikro-orm/postgresql';
 import { DateTime } from 'luxon';
+import { AssignedEmployee } from './assigned-employee';
 import { Attendance } from './attendance';
 import { AttendanceId } from './attendance-id';
 import { Client } from './client';
@@ -8,7 +10,7 @@ import { EmployeeId } from './employee-id';
 import { ExactDate } from './exact-date';
 import { Office } from './office';
 import { OfficeId } from './office-id';
-import { WeekDay, WeeklyPeriodicity } from './periodicity';
+import { WeekDays, WeeklyRecurrence } from './recurrence';
 import { RequiredEmployees } from './required-employees';
 import { TimeInterval } from './time-interval';
 import { TimeZone } from './time-zone';
@@ -26,6 +28,16 @@ describe('Attendance', () => {
   let employee2: Employee;
   let employee3: Employee;
   let employee4: Employee;
+
+  beforeAll(async () => {
+    await MikroORM.init(
+      {
+        dbName: ':memory:',
+        entities: [Attendance, AssignedEmployee],
+      },
+      false,
+    );
+  });
 
   beforeEach(() => {
     office = Office.create({
@@ -60,9 +72,9 @@ describe('Attendance', () => {
   });
 
   beforeEach(() => {
-    const weekDays: WeekDay[] = [1, 0];
+    const weekDays: (typeof WeekDays)[number][] = [1, 0];
 
-    const periodicity = WeeklyPeriodicity.create(weekDays);
+    const recurrence = WeeklyRecurrence.create(weekDays);
     const time = TimeInterval.create({
       startsAt: 0,
       duration: 120,
@@ -73,7 +85,7 @@ describe('Attendance', () => {
       id: VisitId.create(),
       client,
       office,
-      periodicity,
+      recurrence,
       name: 'Test Visit',
       time,
       requiredEmployees,
@@ -84,7 +96,7 @@ describe('Attendance', () => {
       id: VisitId.create(),
       client: client2,
       office: office2,
-      periodicity,
+      recurrence,
       name: 'Test Visit',
       time,
       requiredEmployees,
@@ -127,23 +139,26 @@ describe('Attendance', () => {
   });
 
   it("should fail to add an employee if number of employees exceeds number of visit's required employees", () => {
+    const id = AttendanceId.create();
     const now = DateTime.fromISO('2023-01-20T12:00:00.000Z');
     const date = ExactDate.create({
       day: 21,
       month: 1,
       year: 2023,
     });
-    const id = AttendanceId.create(visit.id, date);
     const time = TimeInterval.create({
       startsAt: 0,
       duration: 60,
     });
     const attendance = Attendance.create({
       id,
+      visit,
+      date,
       time,
       office,
       now,
     });
+
     attendance.assignEmployee(employee1, visit, office, now);
     attendance.assignEmployee(employee2, visit, office, now);
 
@@ -159,13 +174,15 @@ describe('Attendance', () => {
       month: 1,
       year: 2023,
     });
-    const id = AttendanceId.create(visit.id, date);
+    const id = AttendanceId.create();
     const time = TimeInterval.create({
       startsAt: 0,
       duration: 60,
     });
     const attendance = Attendance.create({
       id,
+      visit,
+      date,
       time,
       office,
       now,
@@ -183,13 +200,15 @@ describe('Attendance', () => {
       month: 1,
       year: 2023,
     });
-    const id = AttendanceId.create(visit.id, date);
+    const id = AttendanceId.create();
     const time = TimeInterval.create({
       startsAt: 0,
       duration: 60,
     });
     const attendance = Attendance.create({
       id,
+      visit,
+      date,
       time,
       office,
       now,
@@ -207,13 +226,15 @@ describe('Attendance', () => {
       month: 1,
       year: 2023,
     });
-    const id = AttendanceId.create(visit.id, date);
+    const id = AttendanceId.create();
     const time = TimeInterval.create({
       startsAt: 0,
       duration: 60,
     });
     const attendance = Attendance.create({
       id,
+      visit,
+      date,
       time,
       office,
       now,
@@ -231,15 +252,17 @@ describe('Attendance', () => {
       month: 1,
       year: 2023,
     });
-    const id = AttendanceId.create(visit.id, date);
     const time = TimeInterval.create({
       startsAt: 0,
       duration: 60,
     });
+    const id = AttendanceId.create();
 
     const act = () =>
       Attendance.create({
         id,
+        visit,
+        date,
         office,
         time,
         now,
@@ -256,13 +279,15 @@ describe('Attendance', () => {
       month: 1,
       year: 2023,
     });
-    const id = AttendanceId.create(visit.id, date);
     const time = TimeInterval.create({
       startsAt: 0,
       duration: 60,
     });
+    const id = AttendanceId.create();
     const attendance = Attendance.create({
       id,
+      visit,
+      date,
       office,
       time,
       now: nowInPast,
@@ -276,18 +301,20 @@ describe('Attendance', () => {
 
   it('should add an employee', () => {
     const now = DateTime.fromISO('2023-01-20T12:00:00.000Z');
+    const id = AttendanceId.create();
     const date = ExactDate.create({
       day: 21,
       month: 1,
       year: 2023,
     });
-    const id = AttendanceId.create(visit.id, date);
     const time = TimeInterval.create({
       startsAt: 0,
       duration: 60,
     });
     const attendance = Attendance.create({
       id,
+      visit,
+      date,
       office,
       time,
       now,
@@ -295,9 +322,8 @@ describe('Attendance', () => {
 
     attendance.assignEmployee(employee1, visit, office, now);
 
-    expect(attendance.employeeIds.length).toBe(1);
-    expect(
-      attendance.employeeIds.find((id) => id.value === employee1.id.value),
-    ).not.toBeUndefined();
+    expect(attendance.assignedEmployees.length).toBe(1);
+    expect(attendance.assignedEmployees[0]?.assignedAt).toBe(now);
+    expect(attendance.assignedEmployees[0]?.employeeId).toBe(employee1.id);
   });
 });

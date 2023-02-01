@@ -1,90 +1,133 @@
+import {
+  Collection,
+  Embedded,
+  Entity,
+  OneToMany,
+  PrimaryKey,
+  Property,
+} from '@mikro-orm/core';
 import * as assert from 'assert';
 import { DateTime } from 'luxon';
-import {
-  Aggregate,
-  AggregateState,
-  AggregateEvents,
-} from '../../shared/domain';
+import { AggregateState, AggregateEvents } from '../../shared/domain';
+import { OfficeIdType, VisitIdType } from '../database';
+import { AttendanceIdType } from '../database/attendance';
+import { ExactDateType } from '../database/attendance/exact-date.type';
+import { AssignedEmployee } from './assigned-employee';
+import { AssignedEmployeeId } from './assigned-employee-id';
 import { AttendanceCreatedEvent } from './attendance-created.event';
 import { AttendanceId } from './attendance-id';
 import { AttendanceUpdatedEvent } from './attendance-updated.event';
 import { Employee } from './employee';
-import { EmployeeId } from './employee-id';
 import { ExactDate } from './exact-date';
 import { Office } from './office';
 import { OfficeId } from './office-id';
 import { TimeInterval } from './time-interval';
 import { Visit } from './visit';
+import { VisitId } from './visit-id';
+
+abstract class AttendanceState extends AggregateState {
+  @PrimaryKey({ name: 'id', type: AttendanceIdType })
+  protected _id!: AttendanceId;
+
+  @Property({ name: 'visit_id', type: VisitIdType })
+  protected _visitId!: VisitId;
+
+  @Property({ name: 'date', type: ExactDateType })
+  protected _date!: ExactDate;
+
+  @Property({ name: 'office_id', type: OfficeIdType })
+  protected _officeId!: OfficeId;
+
+  @OneToMany({
+    entity: () => AssignedEmployee,
+    mappedBy: 'attendance',
+    orphanRemoval: true,
+  })
+  protected _assignedEmployees!: Collection<AssignedEmployee>;
+
+  @Embedded(() => TimeInterval, { prefix: 'time_' })
+  protected _time!: TimeInterval;
+
+  @Property({ name: 'created_at' })
+  protected _createdAt!: DateTime;
+
+  @Property({ name: 'updated_at' })
+  protected _updatedAt!: DateTime;
+
+  @Property({ name: 'version', version: true })
+  protected _version!: number;
+}
 
 export type CreateAttendance = {
   id: AttendanceId;
+  visit: Visit;
+  date: ExactDate;
   time: TimeInterval;
   office: Office;
   now: DateTime;
 };
 
-export interface AttendanceState extends AggregateState<AttendanceId> {
-  time: TimeInterval;
-  officeId: OfficeId;
-  employeeIds: Map<string, EmployeeId>;
-  createdAt: DateTime;
-  updatedAt: DateTime;
-}
-
-export class Attendance extends Aggregate<AttendanceId, AttendanceState> {
-  get time() {
-    return this.state.time;
+@Entity({ tableName: 'attendance' })
+export class Attendance extends AttendanceState {
+  get visitId() {
+    return this._visitId;
   }
 
-  get employeeIds(): ReadonlyArray<EmployeeId> {
-    return Array.from(this.state.employeeIds.values());
+  get date() {
+    return this._date;
+  }
+
+  get time() {
+    return this._time;
+  }
+
+  get assignedEmployees(): ReadonlyArray<
+    Readonly<Omit<AssignedEmployee, 'attendance'>>
+  > {
+    return this._assignedEmployees.getItems();
   }
 
   get officeId() {
-    return this.state.officeId;
+    return this._officeId;
   }
 
   get updatedAt() {
-    return this.state.updatedAt;
+    return this._updatedAt;
   }
 
   get createdAt() {
-    return this.state.createdAt;
+    return this._createdAt;
   }
 
   static create(data: CreateAttendance) {
-    this.assertNotInPast(
-      data.id.date,
-      data.time,
-      data.office,
-      data.now,
-    );
+    this.assertNotInPast(data.date, data.time, data.office, data.now);
 
     const eventsManager = new AggregateEvents();
-    const attendance = new this(
-      {
-        id: data.id,
-        time: data.time,
-        officeId: data.office.id,
-        employeeIds: new Map(),
-        createdAt: data.now,
-        updatedAt: data.now,
-      },
-      eventsManager,
+    const attendance = new this();
+
+    attendance._id = data.id;
+    attendance._visitId = data.visit.id;
+    attendance._time = data.time;
+    attendance._date = data.date;
+    attendance._officeId = data.office.id;
+    attendance._createdAt = data.now;
+    attendance._updatedAt = data.now;
+    attendance._assignedEmployees = new Collection<AssignedEmployee>(
+      attendance,
     );
 
     eventsManager.add(
       new AttendanceCreatedEvent({
         id: {
-          visitId: attendance.id.visitId.value,
+          visitId: attendance.visitId.value,
           date: {
-            day: attendance.id.date.day,
-            month: attendance.id.date.month,
-            year: attendance.id.date.year,
+            day: attendance.date.day,
+            month: attendance.date.month,
+            year: attendance.date.year,
           },
         },
         time: attendance.time,
-        employeeIds: Array.from(attendance.employeeIds).map((id) => id.value),
+        employeeIds: [],
         createdAt: attendance.createdAt.toISO(),
         updatedAt: attendance.updatedAt.toISO(),
       }),
@@ -94,7 +137,7 @@ export class Attendance extends Aggregate<AttendanceId, AttendanceState> {
   }
 
   protected assertAttendanceNotInPast(office: Office, now: DateTime) {
-    Attendance.assertNotInPast(this.id.date, this.time, office, now);
+    Attendance.assertNotInPast(this.date, this.time, office, now);
   }
 
   assignEmployee(
@@ -103,12 +146,16 @@ export class Attendance extends Aggregate<AttendanceId, AttendanceState> {
     office: Office,
     now: DateTime,
   ) {
+    if (this.isEmployeeAssigned(employee.id.value)) {
+      return;
+    }
+
     assert.ok(
       visit.officeId.value === this.officeId.value,
       "Visit must belong to the attendance's office",
     );
     assert.ok(
-      this.state.employeeIds.size + 1 <= visit.requiredEmployees.amount,
+      this._assignedEmployees.length + 1 <= visit.requiredEmployees.value,
       'Too many employees assigned',
     );
     this.assertAttendanceNotInPast(office, now);
@@ -121,9 +168,14 @@ export class Attendance extends Aggregate<AttendanceId, AttendanceState> {
       "Office must the same as the attendance's office",
     );
 
-    this.state.employeeIds.set(employee.id.value, employee.id);
-    this.state.updatedAt = now;
+    const assignedEmployee = new AssignedEmployee({
+      id: AssignedEmployeeId.create(),
+      assignedAt: now,
+      employeeId: employee.id,
+    });
 
+    this._assignedEmployees.add(assignedEmployee);
+    this._updatedAt = now;
     this.addOrReplaceUpdatedEvent();
   }
 
@@ -134,15 +186,30 @@ export class Attendance extends Aggregate<AttendanceId, AttendanceState> {
       "Office must the same as the attendance's office",
     );
 
-    this.state.employeeIds.delete(employeeId);
-    this.state.updatedAt = now;
+    for (const employee of this._assignedEmployees) {
+      if (employee.employeeId.value === employeeId) {
+        this._assignedEmployees.remove(employee);
+      }
+    }
+
+    this._updatedAt = now;
 
     this.addOrReplaceUpdatedEvent();
   }
 
+  isEmployeeAssigned(employeeId: string) {
+    for (const employee of this._assignedEmployees) {
+      if (employee.employeeId.value === employeeId) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   setTime(time: TimeInterval, now: DateTime) {
-    this.state.time = time;
-    this.state.updatedAt = now;
+    this._time = time;
+    this._updatedAt = now;
 
     this.addOrReplaceUpdatedEvent();
   }
@@ -150,20 +217,22 @@ export class Attendance extends Aggregate<AttendanceId, AttendanceState> {
   protected addOrReplaceUpdatedEvent() {
     const event = new AttendanceUpdatedEvent({
       id: {
-        visitId: this.id.visitId.value,
+        visitId: this._visitId.value,
         date: {
-          day: this.id.date.day,
-          month: this.id.date.month,
-          year: this.id.date.year,
+          day: this._date.day,
+          month: this._date.month,
+          year: this._date.year,
         },
       },
       time: this.time,
-      employeeIds: Array.from(this.employeeIds).map((id) => id.value),
+      employeeIds: this._assignedEmployees
+        .getItems()
+        .map((employee) => employee.employeeId.value),
       createdAt: this.createdAt.toISO(),
       updatedAt: this.updatedAt.toISO(),
     });
 
-    this.eventsManager.replaceInstanceOrAdd(AttendanceUpdatedEvent, event);
+    this._eventsManager.replaceInstanceOrAdd(AttendanceUpdatedEvent, event);
   }
 
   protected static assertNotInPast(

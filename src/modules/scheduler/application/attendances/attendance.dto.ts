@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { TimeIntervalDto } from '../visits/time-interval.dto';
+import { AssignedEmployeeDto } from './assigned-employee.dto';
 
 export class AttendanceDto {
   @ApiProperty()
@@ -11,9 +12,9 @@ export class AttendanceDto {
   date: string;
 
   @ApiProperty({
-    type: [String],
+    type: [AssignedEmployeeDto],
   })
-  employeeIds: string[];
+  assignedEmployees: AssignedEmployeeDto[];
 
   @ApiProperty({
     type: TimeIntervalDto,
@@ -34,7 +35,7 @@ export class AttendanceDto {
     this.time = dto.time;
     this.visitId = dto.visitId;
     this.date = dto.date;
-    this.employeeIds = dto.employeeIds;
+    this.assignedEmployees = dto.assignedEmployees;
     this.updatedAt = dto.updatedAt;
     this.createdAt = dto.createdAt;
   }

@@ -1,17 +1,8 @@
 import { Test } from '@nestjs/testing';
 import {
-  knexProvider,
-  KNEX_PROVIDER,
-  uowProvider,
-  UOW_PROVIDER,
-} from '../../../../shared/database';
-import { Knex } from 'knex';
-import { recreateDb } from '../../../../../../test-utils';
-import { Uow } from 'yuow';
-import {
   Client,
   ClientId,
-  DailyPeriodicity,
+  DailyRecurrence,
   Office,
   OfficeId,
   RequiredEmployees,
@@ -19,21 +10,18 @@ import {
   TimeZone,
   Visit,
   VisitId,
-  WeeklyPeriodicity,
+  WeeklyRecurrence,
 } from '../../../domain';
 import { DateTime } from 'luxon';
-import {
-  ClientRepository,
-  OfficeRepository,
-  VisitRepository,
-} from '../../../database';
 import { VisitVersionsLoader } from './visit-versions.loader';
+import { MikroORM } from '@mikro-orm/postgresql';
+import { testMikroormProvider } from '../../../../../../test-utils';
+import { MIKROORM_PROVIDER } from '../../../../shared/database';
 
-describe('VisitVersionLoader', () => {
+describe('VisitVersionsLoader', () => {
   let loader: VisitVersionsLoader;
   let office: Office;
-  let knex: Knex;
-  let uow: Uow;
+  let orm: MikroORM;
 
   let visit1: Visit;
   let client: Client;
@@ -41,96 +29,93 @@ describe('VisitVersionLoader', () => {
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
       controllers: [],
-      providers: [VisitVersionsLoader, knexProvider, uowProvider],
+      providers: [VisitVersionsLoader, testMikroormProvider],
     }).compile();
 
     loader = moduleRef.get(VisitVersionsLoader);
-    knex = moduleRef.get(KNEX_PROVIDER);
-    uow = moduleRef.get(UOW_PROVIDER);
+    orm = moduleRef.get(MIKROORM_PROVIDER);
   });
 
   beforeAll(async () => {
-    await recreateDb(knex);
-  });
-
-  beforeAll(async () => {
+    const em = orm.em.fork();
     const now = DateTime.fromISO('2023-01-25T11:48:38', {
       zone: 'Europe/Moscow',
     });
 
-    await uow((ctx) => {
-      const officeRepository = ctx.getRepository(OfficeRepository);
-      const clientRepository = ctx.getRepository(ClientRepository);
-      const visitRepository = ctx.getRepository(VisitRepository);
+    const officeRepository = em.getRepository(Office);
+    const clientRepository = em.getRepository(Client);
+    const visitRepository = em.getRepository(Visit);
 
-      office = Office.create({
-        id: OfficeId.create(),
-        name: 'Test Office',
-        timeZone: TimeZone.create('Europe/Moscow'),
-        now,
-      });
-
-      client = Client.create({
-        id: ClientId.create(),
-        office,
-        name: 'Test Client',
-        now,
-      });
-
-      visit1 = Visit.create({
-        id: VisitId.create(),
-        office,
-        name: 'Visit 1',
-        periodicity: DailyPeriodicity.create(),
-        time: TimeInterval.create({
-          startsAt: 720,
-          duration: 60,
-        }),
-        client,
-        requiredEmployees: RequiredEmployees.create(2),
-        now: now.minus({ days: 2 }),
-      });
-
-      const visit2 = Visit.create({
-        id: VisitId.create(),
-        office,
-        name: 'Visit 2',
-        periodicity: WeeklyPeriodicity.create([0, 4]),
-        time: TimeInterval.create({
-          startsAt: 960,
-          duration: 120,
-        }),
-        client,
-        requiredEmployees: RequiredEmployees.create(1),
-        now: now.minus({ weeks: 4 }),
-      });
-
-      officeRepository.add(office);
-      clientRepository.add(client);
-      visitRepository.add(visit1);
-      visitRepository.add(visit2);
+    office = Office.create({
+      id: OfficeId.create(),
+      name: 'Test Office',
+      timeZone: TimeZone.create('Europe/Moscow'),
+      now,
     });
 
-    await uow(async (ctx) => {
-      const visitRepository = ctx.getRepository(VisitRepository);
+    client = Client.create({
+      id: ClientId.create(),
+      office,
+      name: 'Test Client',
+      now,
+    });
 
-      const visit = await visitRepository.findOne({
+    visit1 = Visit.create({
+      id: VisitId.create(),
+      office,
+      name: 'Visit 1',
+      recurrence: DailyRecurrence.create(),
+      time: TimeInterval.create({
+        startsAt: 720,
+        duration: 60,
+      }),
+      client,
+      requiredEmployees: RequiredEmployees.create(2),
+      now: now.minus({ days: 2 }),
+    });
+
+    const visit2 = Visit.create({
+      id: VisitId.create(),
+      office,
+      name: 'Visit 2',
+      recurrence: WeeklyRecurrence.create([0, 4]),
+      time: TimeInterval.create({
+        startsAt: 960,
+        duration: 120,
+      }),
+      client,
+      requiredEmployees: RequiredEmployees.create(1),
+      now: now.minus({ weeks: 4 }),
+    });
+
+    officeRepository.persist(office);
+    clientRepository.persist(client);
+    visitRepository.persist(visit1);
+    visitRepository.persist(visit2);
+
+    await em.flush();
+
+    const visit = await visitRepository
+      .createQueryBuilder()
+      .where({
         id: visit1.id.value,
-      });
+      })
+      .getSingleResult();
 
-      if (!visit) {
-        throw new Error('Visit Not found');
-      }
+    if (!visit) {
+      throw new Error('Visit Not found');
+    }
 
-      visit.setName('Visit 1 Version 2', now);
-      visit.setTime(
-        TimeInterval.create({
-          startsAt: 120,
-          duration: 600,
-        }),
-        now,
-      );
-    });
+    visit.setName('Visit 1 Version 2', now);
+    visit.setTime(
+      TimeInterval.create({
+        startsAt: 120,
+        duration: 600,
+      }),
+      now,
+    );
+
+    await em.flush();
   });
 
   it('should load visit 1 since visit 1 version 2 starts later', async () => {
@@ -176,6 +161,6 @@ describe('VisitVersionLoader', () => {
   });
 
   afterAll(async () => {
-    await knex.destroy();
+    await orm.close();
   });
 });

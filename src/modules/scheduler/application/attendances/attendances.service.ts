@@ -1,20 +1,14 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { KNEX_PROVIDER, UOW_PROVIDER } from '../../../shared/database';
-import { Uow } from 'yuow';
-import {
-  AttendanceRepository,
-  EmployeeRepository,
-  OfficeRepository,
-  VisitRepository,
-} from '../../database';
+import { MIKROORM_PROVIDER } from '../../../shared/database';
 import {
   Attendance,
   AttendanceId,
   Employee,
   ExactDate,
+  Office,
   TimeInterval,
+  Visit,
 } from '../../domain';
-import { Knex } from 'knex';
 import { DateTime } from 'luxon';
 import { CreateAttendanceDto } from './create-attendance.dto';
 import { AttendanceDto } from './attendance.dto';
@@ -22,309 +16,333 @@ import { TimeIntervalDto } from '../visits/time-interval.dto';
 import { UpdateAttendanceDto } from './update-attendance.dto';
 import { AssignEmployeesDto } from './assign-employees.dto';
 import { UnassignEmployeesDto } from './unassign-employees.dto';
+import { MikroORM } from '@mikro-orm/postgresql';
 
 @Injectable()
 export class AttendancesService {
-  constructor(
-    @Inject(UOW_PROVIDER) private readonly uow: Uow,
-    @Inject(KNEX_PROVIDER) private readonly knex: Knex,
-  ) {}
+  constructor(@Inject(MIKROORM_PROVIDER) private readonly orm: MikroORM) {}
 
-  create(officeId: string, visitId: string, dto: CreateAttendanceDto) {
-    return this.uow(async (ctx) => {
-      const officeRepository = ctx.getRepository(OfficeRepository);
-      const visitRepository = ctx.getRepository(VisitRepository);
-      const employeeRepository = ctx.getRepository(EmployeeRepository);
-      const attendanceRepository = ctx.getRepository(AttendanceRepository);
+  async create(officeId: string, visitId: string, dto: CreateAttendanceDto) {
+    const em = this.orm.em.fork();
 
-      const [office, visit, employees] = await Promise.all([
-        officeRepository.findOne({
-          id: officeId,
-        }),
-        visitRepository.findOne({
-          id: visitId,
-          officeId: officeId,
-        }),
-        employeeRepository.findMany({
-          ids: dto.employeeIds,
-          officeId: officeId,
-        }),
-      ]);
+    const officeRepository = em.getRepository(Office);
+    const visitRepository = em.getRepository(Visit);
+    const employeeRepository = em.getRepository(Employee);
+    const attendanceRepository = em.getRepository(Attendance);
 
-      if (!office) {
-        throw new Error('Office not found');
-      }
+    const [office, visit, employees] = await Promise.all([
+      officeRepository
+        .createQueryBuilder()
+        .where({ id: officeId })
+        .getSingleResult(),
+      visitRepository
+        .createQueryBuilder()
+        .where({ id: visitId, office_id: officeId })
+        .getSingleResult(),
+      employeeRepository
+        .createQueryBuilder()
+        .where({ id: { $in: dto.employeeIds }, office_id: officeId })
+        .getResult(),
+    ]);
 
-      if (!visit) {
-        throw new Error('Visit not found');
-      }
+    if (!office) {
+      throw new Error('Office not found');
+    }
 
-      const date = ExactDate.createFromISO(dto.date);
-      const id = AttendanceId.create(visit.id, date);
-      const time = TimeInterval.create(dto.time);
-      const now = DateTime.now();
+    if (!visit) {
+      throw new Error('Visit not found');
+    }
 
-      const attendance = Attendance.create({
-        id,
-        office,
-        time,
-        now,
-      });
+    const id = AttendanceId.create();
+    const date = ExactDate.createFromISO(dto.date);
+    const time = TimeInterval.create(dto.time);
+    const now = DateTime.now();
 
-      attendanceRepository.add(attendance);
+    const attendance = Attendance.create({
+      id,
+      date,
+      visit,
+      office,
+      time,
+      now,
+    });
 
-      for (const employee of employees) {
-        attendance.assignEmployee(employee, visit, office, now);
-      }
+    for (const employee of employees) {
+      attendance.assignEmployee(employee, visit, office, now);
+    }
 
-      const employeeIds = Array.from(attendance.employeeIds).map(
-        (id) => id.value,
-      );
+    await attendanceRepository.persistAndFlush(attendance);
 
-      return new AttendanceDto({
-        visitId: attendance.id.visitId.value,
-        date: attendance.id.date.toDateTime().toISODate(),
-        employeeIds,
-        time: new TimeIntervalDto(attendance.time),
-        updatedAt: attendance.updatedAt.toISO(),
-        createdAt: attendance.createdAt.toISO(),
-      });
+    const assignedEmployees = attendance.assignedEmployees.map((employee) => ({
+      employeeId: employee.employeeId.value,
+      assignedAt: employee.assignedAt.toISO(),
+    }));
+
+    return new AttendanceDto({
+      visitId: attendance.visitId.value,
+      date: attendance.date.toDateTime().toISODate(),
+      assignedEmployees,
+      time: new TimeIntervalDto(attendance.time),
+      updatedAt: attendance.updatedAt.toISO(),
+      createdAt: attendance.createdAt.toISO(),
     });
   }
 
-  update(
+  async update(
     officeId: string,
     visitId: string,
     date: string,
     dto: UpdateAttendanceDto,
   ) {
-    return this.uow(async (ctx) => {
-      const officeRepository = ctx.getRepository(OfficeRepository);
-      const visitRepository = ctx.getRepository(VisitRepository);
-      const employeeRepository = ctx.getRepository(EmployeeRepository);
-      const attendanceRepository = ctx.getRepository(AttendanceRepository);
+    const em = this.orm.em.fork();
 
-      const [attendance, office, visit, employees] = await Promise.all([
-        attendanceRepository.findOne({
-          id: {
-            visitId,
-            date,
-          },
-        }),
-        officeRepository.findOne({
-          id: officeId,
-        }),
-        visitRepository.findOne({
-          id: visitId,
-          officeId: officeId,
-        }),
-        employeeRepository.findMany({
-          ids: dto.employeeIds,
-          officeId: officeId,
-        }),
-      ]);
+    const officeRepository = em.getRepository(Office);
+    const visitRepository = em.getRepository(Visit);
+    const employeeRepository = em.getRepository(Employee);
+    const attendanceRepository = em.getRepository(Attendance);
 
-      if (!attendance) {
-        throw new Error('Attendance not found');
-      }
+    const [attendance, office, visit, employees] = await Promise.all([
+      attendanceRepository
+        .createQueryBuilder()
+        .where({
+          visitId,
+          date,
+          officeId,
+        })
+        .getSingleResult(),
+      officeRepository
+        .createQueryBuilder()
+        .where({ id: officeId })
+        .getSingleResult(),
+      visitRepository
+        .createQueryBuilder()
+        .where({ id: visitId, officeId: officeId })
+        .getSingleResult(),
+      employeeRepository
+        .createQueryBuilder()
+        .where({ id: { $in: dto.employeeIds }, officeId: officeId })
+        .getResult(),
+    ]);
 
-      if (!office) {
-        throw new Error('Office not found');
-      }
+    if (!attendance) {
+      throw new Error('Attendance not found');
+    }
 
-      if (!visit) {
-        throw new Error('Visit not found');
-      }
+    if (!office) {
+      throw new Error('Office not found');
+    }
 
-      const now = DateTime.now();
+    if (!visit) {
+      throw new Error('Visit not found');
+    }
 
-      if (dto.time !== undefined) {
-        const time = TimeInterval.create(dto.time);
-        attendance.setTime(time, now);
-      }
+    const now = DateTime.now();
 
-      if (dto.employeeIds !== undefined) {
-        const employeesMap = employees.reduce<Map<string, Employee>>(
-          (map, employee) => {
-            attendance.assignEmployee(employee, visit, office, now);
+    if (dto.time !== undefined) {
+      const time = TimeInterval.create(dto.time);
+      attendance.setTime(time, now);
+    }
 
-            return map.set(employee.id.value, employee);
-          },
-          new Map(),
-        );
+    if (dto.employeeIds !== undefined) {
+      const employeesMap = employees.reduce<Map<string, Employee>>(
+        (map, employee) => {
+          attendance.assignEmployee(employee, visit, office, now);
 
-        for (const id of attendance.employeeIds) {
-          if (employeesMap.has(id.value)) {
-            continue;
-          }
+          return map.set(employee.id.value, employee);
+        },
+        new Map(),
+      );
 
-          attendance.unassignEmployee(id.value, office, now);
+      for (const employee of attendance.assignedEmployees) {
+        if (employeesMap.has(employee.employeeId.value)) {
+          continue;
         }
+
+        attendance.unassignEmployee(employee.employeeId.value, office, now);
       }
+    }
 
-      const employeeIds = attendance.employeeIds.map((id) => id.value);
+    const assignedEmployees = attendance.assignedEmployees.map((employee) => ({
+      employeeId: employee.employeeId.value,
+      assignedAt: employee.assignedAt.toISO(),
+    }));
 
-      return new AttendanceDto({
-        visitId: attendance.id.visitId.value,
-        date: attendance.id.date.toDateTime().toISODate(),
-        employeeIds,
-        time: new TimeIntervalDto(attendance.time),
-        updatedAt: attendance.updatedAt.toISO(),
-        createdAt: attendance.createdAt.toISO(),
-      });
+    return new AttendanceDto({
+      visitId: attendance.visitId.value,
+      date: attendance.date.toDateTime().toISODate(),
+      assignedEmployees,
+      time: new TimeIntervalDto(attendance.time),
+      updatedAt: attendance.updatedAt.toISO(),
+      createdAt: attendance.createdAt.toISO(),
     });
   }
 
-  assignEmployee(
+  async assignEmployee(
     officeId: string,
     visitId: string,
     date: string,
     dto: AssignEmployeesDto,
   ) {
-    return this.uow(async (ctx) => {
-      const officeRepository = ctx.getRepository(OfficeRepository);
-      const visitRepository = ctx.getRepository(VisitRepository);
-      const employeeRepository = ctx.getRepository(EmployeeRepository);
-      const attendanceRepository = ctx.getRepository(AttendanceRepository);
+    const em = this.orm.em.fork();
 
-      const [attendance, office, visit, employees] = await Promise.all([
-        attendanceRepository.findOne({
-          id: {
-            visitId,
-            date,
-          },
-        }),
-        officeRepository.findOne({
-          id: officeId,
-        }),
-        visitRepository.findOne({
-          id: visitId,
-          officeId: officeId,
-        }),
-        employeeRepository.findMany({
-          ids: dto.employeeIds,
-          officeId: officeId,
-        }),
-      ]);
+    const officeRepository = em.getRepository(Office);
+    const visitRepository = em.getRepository(Visit);
+    const employeeRepository = em.getRepository(Employee);
+    const attendanceRepository = em.getRepository(Attendance);
 
-      if (!attendance) {
-        throw new Error('Attendance not found');
-      }
+    const [attendance, office, visit, employees] = await Promise.all([
+      attendanceRepository
+        .createQueryBuilder()
+        .where({
+          visitId,
+          date,
+          officeId,
+        })
+        .getSingleResult(),
+      officeRepository
+        .createQueryBuilder()
+        .where({ id: officeId })
+        .getSingleResult(),
+      visitRepository
+        .createQueryBuilder()
+        .where({ id: visitId, officeId: officeId })
+        .getSingleResult(),
+      employeeRepository
+        .createQueryBuilder()
+        .where({ id: { $in: dto.employeeIds }, officeId: officeId })
+        .getResult(),
+    ]);
 
-      if (!office) {
-        throw new Error('Office not found');
-      }
+    if (!attendance) {
+      throw new Error('Attendance not found');
+    }
 
-      if (!visit) {
-        throw new Error('Visit not found');
-      }
+    if (!office) {
+      throw new Error('Office not found');
+    }
 
-      const now = DateTime.now();
+    if (!visit) {
+      throw new Error('Visit not found');
+    }
 
-      for (const employee of employees) {
-        attendance.assignEmployee(employee, visit, office, now);
-      }
+    const now = DateTime.now();
 
-      const employeeIds = attendance.employeeIds.map((id) => id.value);
+    for (const employee of employees) {
+      attendance.assignEmployee(employee, visit, office, now);
+    }
 
-      return new AttendanceDto({
-        visitId: attendance.id.visitId.value,
-        date: attendance.id.date.toDateTime().toISODate(),
-        employeeIds,
-        time: new TimeIntervalDto(attendance.time),
-        updatedAt: attendance.updatedAt.toISO(),
-        createdAt: attendance.createdAt.toISO(),
-      });
+    const assignedEmployees = attendance.assignedEmployees.map((employee) => ({
+      employeeId: employee.employeeId.value,
+      assignedAt: employee.assignedAt.toISO(),
+    }));
+
+    return new AttendanceDto({
+      visitId: attendance.visitId.value,
+      date: attendance.date.toDateTime().toISODate(),
+      assignedEmployees,
+      time: new TimeIntervalDto(attendance.time),
+      updatedAt: attendance.updatedAt.toISO(),
+      createdAt: attendance.createdAt.toISO(),
     });
   }
 
-  unassignEmployee(
+  async unassignEmployee(
     officeId: string,
     visitId: string,
     date: string,
     dto: UnassignEmployeesDto,
   ) {
-    return this.uow(async (ctx) => {
-      const officeRepository = ctx.getRepository(OfficeRepository);
-      const attendanceRepository = ctx.getRepository(AttendanceRepository);
+    const em = this.orm.em.fork();
 
-      const [attendance, office] = await Promise.all([
-        attendanceRepository.findOne({
-          id: {
-            visitId,
-            date,
-          },
+    const officeRepository = em.getRepository(Office);
+    const attendanceRepository = em.getRepository(Attendance);
+
+    const [attendance, office] = await Promise.all([
+      attendanceRepository
+        .createQueryBuilder()
+        .where({
+          visitId,
+          date,
           officeId,
-        }),
-        officeRepository.findOne({
-          id: officeId,
-        }),
-      ]);
+        })
+        .getSingleResult(),
+      officeRepository
+        .createQueryBuilder()
+        .where({ id: officeId })
+        .getSingleResult(),
+    ]);
 
-      if (!attendance) {
-        throw new Error('Attendance not found');
-      }
+    if (!attendance) {
+      throw new Error('Attendance not found');
+    }
 
-      if (!office) {
-        throw new Error('Office not found');
-      }
+    if (!office) {
+      throw new Error('Office not found');
+    }
 
-      const now = DateTime.now();
+    const now = DateTime.now();
 
-      for (const id of dto.employeeIds) {
-        attendance.unassignEmployee(id, office, now);
-      }
+    for (const id of dto.employeeIds) {
+      attendance.unassignEmployee(id, office, now);
+    }
 
-      const employeeIds = attendance.employeeIds.map((id) => id.value);
+    const assignedEmployees = attendance.assignedEmployees.map((employee) => ({
+      employeeId: employee.employeeId.value,
+      assignedAt: employee.assignedAt.toISO(),
+    }));
 
-      return new AttendanceDto({
-        visitId: attendance.id.visitId.value,
-        date: attendance.id.date.toDateTime().toISODate(),
-        employeeIds,
-        time: new TimeIntervalDto(attendance.time),
-        updatedAt: attendance.updatedAt.toISO(),
-        createdAt: attendance.createdAt.toISO(),
-      });
+    return new AttendanceDto({
+      visitId: attendance.visitId.value,
+      date: attendance.date.toDateTime().toISODate(),
+      assignedEmployees,
+      time: new TimeIntervalDto(attendance.time),
+      updatedAt: attendance.updatedAt.toISO(),
+      createdAt: attendance.createdAt.toISO(),
     });
   }
 
   async findOne(officeId: string, visitId: string, date: string) {
-    const dateTime = DateTime.fromISO(date);
+    const knex = this.orm.em.getConnection().getKnex();
 
-    const [attendanceRecord, employeeRecords] = await Promise.all([
-      this.knex
-        .select([
-          'attendances.date',
-          'attendances.visit_id',
-          'attendances.time_starts_at',
-          'attendances.time_duration',
-          'attendances.created_at',
-          'attendances.updated_at',
-        ])
-        .from('attendances')
-        .innerJoin('visits', 'attendances.visit_id', 'visits.id')
-        .where('attendances.visit_id', visitId)
-        .where('visits.office_id', officeId)
-        .where('attendances.date', dateTime.toSQLDate())
-        .first(),
-      this.knex
-        .select('employee_id')
-        .from('attendances_employees')
-        .where('visit_id', visitId),
-    ]);
+    const attendanceRecord = await knex
+      .select([
+        'attendance.date',
+        'attendance.visit_id',
+        'attendance.time_starts_at',
+        'attendance.time_duration',
+        'attendance.created_at',
+        'attendance.updated_at',
+        knex
+          .select(
+            knex.raw(
+              `ARRAY_AGG(json_build_object('employee_id', attendance_employee.employee_id, 'assigned_at', attendance_employee.assigned_at))`,
+            ),
+          )
+          .from('attendance_employee')
+          .whereRaw('attendance_employee.attendance_id = attendance.id')
+          .as('assigned_employees'),
+      ])
+      .from('attendance')
+      .where('attendance.visit_id', visitId)
+      .where('attendance.office_id', officeId)
+      .where('attendance.date', date)
+      .first();
 
     if (!attendanceRecord) {
       return;
     }
 
-    const employeeIds = employeeRecords.map(
-      (record: any) => record.employee_id,
+    const assignedEmployees = attendanceRecord.assigned_employees.map(
+      (employee: any) => ({
+        employeeId: employee.employee_id,
+        assignedAt: DateTime.fromISO(employee.assigned_at).toISO(),
+      }),
     );
 
     return new AttendanceDto({
-      employeeIds,
+      assignedEmployees,
       visitId: attendanceRecord.visit_id,
-      date: attendanceRecord.date.toISODate(),
+      date: attendanceRecord.date,
       time: new TimeIntervalDto({
         startsAt: attendanceRecord.time_starts_at,
         duration: attendanceRecord.time_duration,

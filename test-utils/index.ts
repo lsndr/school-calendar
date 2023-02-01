@@ -1,1 +1,1 @@
-export * from './recreate-db';
+export * from './test-mikroorm.provider';

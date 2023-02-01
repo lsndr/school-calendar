@@ -1,1 +1,1 @@
-export * from './employee.repository';
+export * from './employee-id.type';

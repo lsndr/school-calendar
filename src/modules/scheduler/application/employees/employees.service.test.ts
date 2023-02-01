@@ -1,37 +1,24 @@
 import { EmployeesService } from './employees.service';
 import { Test } from '@nestjs/testing';
-import {
-  knexProvider,
-  uowProvider,
-  KNEX_PROVIDER,
-  UOW_PROVIDER,
-} from '../../../shared/database';
-import { Knex } from 'knex';
-import { recreateDb } from '../../../../../test-utils';
+import { MIKROORM_PROVIDER } from '../../../shared/database';
 import { Office, OfficeId, TimeZone } from '../../domain';
-import { Uow } from 'yuow';
 import { DateTime } from 'luxon';
-import { OfficeRepository } from '../../database';
+import { MikroORM } from '@mikro-orm/postgresql';
+import { testMikroormProvider } from '../../../../../test-utils';
 
 describe('Employees Service', () => {
   let employeesService: EmployeesService;
   let office: Office;
-  let knex: Knex;
-  let uow: Uow;
+  let orm: MikroORM;
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
       controllers: [],
-      providers: [EmployeesService, knexProvider, uowProvider],
+      providers: [EmployeesService, testMikroormProvider],
     }).compile();
 
     employeesService = moduleRef.get(EmployeesService);
-    knex = moduleRef.get(KNEX_PROVIDER);
-    uow = moduleRef.get(UOW_PROVIDER);
-  });
-
-  beforeEach(async () => {
-    await recreateDb(knex);
+    orm = moduleRef.get(MIKROORM_PROVIDER);
   });
 
   beforeEach(async () => {
@@ -42,10 +29,8 @@ describe('Employees Service', () => {
       now: DateTime.now(),
     });
 
-    await uow(async (ctx) => {
-      const officeRepository = ctx.getRepository(OfficeRepository);
-      officeRepository.add(office);
-    });
+    const officeRepository = orm.em.fork().getRepository(Office);
+    await officeRepository.persistAndFlush(office);
   });
 
   it('should create an employee', async () => {
@@ -74,6 +59,6 @@ describe('Employees Service', () => {
   });
 
   afterAll(async () => {
-    await knex.destroy();
+    await orm.close();
   });
 });

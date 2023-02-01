@@ -1,40 +1,26 @@
 import { VisitsService } from './visits.service';
 import { Test } from '@nestjs/testing';
-import {
-  knexProvider,
-  uowProvider,
-  KNEX_PROVIDER,
-  UOW_PROVIDER,
-} from '../../../shared/database';
-import { Knex } from 'knex';
-import { recreateDb } from '../../../../../test-utils';
+import { MIKROORM_PROVIDER } from '../../../shared/database';
 import { TimeIntervalDto } from './time-interval.dto';
 import { Client, ClientId, Office, OfficeId, TimeZone } from '../../domain';
-import { Uow } from 'yuow';
-import { ClientRepository, OfficeRepository } from '../../database';
-import { WeeklyPeriodicityDto } from './weekly-periodicity.dto';
 import { DateTime } from 'luxon';
+import { MikroORM } from '@mikro-orm/postgresql';
+import { WeeklyRecurrenceDto } from './weekly-recurrence.dto';
+import { testMikroormProvider } from '../../../../../test-utils';
 
-describe('Employees Service', () => {
+describe('Visits Service', () => {
   let visitsService: VisitsService;
   let office: Office;
   let client: Client;
-  let knex: Knex;
-  let uow: Uow;
+  let orm: MikroORM;
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
-      controllers: [],
-      providers: [VisitsService, knexProvider, uowProvider],
+      providers: [VisitsService, testMikroormProvider],
     }).compile();
 
     visitsService = moduleRef.get(VisitsService);
-    knex = moduleRef.get(KNEX_PROVIDER);
-    uow = moduleRef.get(UOW_PROVIDER);
-  });
-
-  beforeEach(async () => {
-    await recreateDb(knex);
+    orm = moduleRef.get(MIKROORM_PROVIDER);
   });
 
   beforeEach(async () => {
@@ -47,10 +33,8 @@ describe('Employees Service', () => {
       now: DateTime.now(),
     });
 
-    await uow((ctx) => {
-      const officeRepository = ctx.getRepository(OfficeRepository);
-      officeRepository.add(office);
-    });
+    const officeRepository = orm.em.fork().getRepository(Office);
+    await officeRepository.persistAndFlush(office);
   });
 
   beforeEach(async () => {
@@ -62,19 +46,19 @@ describe('Employees Service', () => {
       now: DateTime.now(),
     });
 
-    await uow((ctx) => {
-      const clientRepository = ctx.getRepository(ClientRepository);
-      clientRepository.add(client);
-    });
+    const clientRepository = orm.em.fork().getRepository(Client);
+    await clientRepository.persistAndFlush(client);
   });
 
   it('should create a visit with weekly periodicity', async () => {
     jest.useFakeTimers();
     jest.setSystemTime(new Date('2023-01-22T12:48:38.529Z'));
 
+    const knex = orm.em.getConnection().getKnex();
+
     const result = await visitsService.create(client.officeId.value, {
       name: 'Test Visit',
-      periodicity: new WeeklyPeriodicityDto({
+      recurrence: new WeeklyRecurrenceDto({
         days: [0, 2, 3],
       }),
       time: new TimeIntervalDto({ startsAt: 0, duration: 120 }),
@@ -83,12 +67,12 @@ describe('Employees Service', () => {
     });
 
     const result2 = await visitsService.findOne(result.id);
-    const logs = await knex.select('*').from('visits_log');
+    const logs = await knex.select('*').from('visit_log');
 
     expect(result).toEqual({
       id: expect.any(String),
       name: 'Test Visit',
-      periodicity: expect.objectContaining({
+      recurrence: expect.objectContaining({
         type: 'weekly',
         days: [0, 2, 3],
       }),
@@ -105,7 +89,7 @@ describe('Employees Service', () => {
       id: result.id,
       name: 'Test Visit',
       clientId: client.id.value,
-      periodicity: expect.objectContaining({
+      recurrence: expect.objectContaining({
         type: 'weekly',
         days: [0, 2, 3],
       }),
@@ -121,11 +105,10 @@ describe('Employees Service', () => {
       {
         visit_id: result.id,
         name: 'Test Visit',
-        periodicity_type: 'weekly',
-        periodicity_data: {
-          type: 'weekly',
-          days: [0, 2, 3],
-        },
+        recurrence_type: 'weekly',
+        recurrence_days: [0, 2, 3],
+        recurrence_week1: null,
+        recurrence_week2: null,
         time_starts_at: 0,
         time_duration: 120,
         required_employees: 3,
@@ -143,7 +126,7 @@ describe('Employees Service', () => {
     const act = () =>
       visitsService.create('wrong office id', {
         name: 'Test Visit',
-        periodicity: new WeeklyPeriodicityDto({
+        recurrence: new WeeklyRecurrenceDto({
           days: [0, 2, 3],
         }),
         time: new TimeIntervalDto({ startsAt: 0, duration: 120 }),
@@ -157,6 +140,6 @@ describe('Employees Service', () => {
   });
 
   afterAll(async () => {
-    await knex.destroy();
+    await orm.close();
   });
 });

@@ -46,18 +46,18 @@ describe('RequiredEmployees', () => {
   it('should succeed if amount is 1', () => {
     const requiredEmployees = RequiredEmployees.create(1);
 
-    expect(requiredEmployees.amount).toBe(1);
+    expect(requiredEmployees.value).toBe(1);
   });
 
   it('should succeed if amount is 2', () => {
     const requiredEmployees = RequiredEmployees.create(2);
 
-    expect(requiredEmployees.amount).toBe(2);
+    expect(requiredEmployees.value).toBe(2);
   });
 
   it('should succeed if amount is 3', () => {
     const requiredEmployees = RequiredEmployees.create(3);
 
-    expect(requiredEmployees.amount).toBe(3);
+    expect(requiredEmployees.value).toBe(3);
   });
 });

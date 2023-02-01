@@ -1,56 +1,56 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { KNEX_PROVIDER, UOW_PROVIDER } from '../../../shared/database';
-import { Uow } from 'yuow';
-import { ClientRepository, OfficeRepository } from '../../database';
-import { Client, ClientId } from '../../domain';
-import { Knex } from 'knex';
+import { MIKROORM_PROVIDER } from '../../../shared/database';
+import { Client, ClientId, Office } from '../../domain';
 import { CreateClientDto } from './create-client.dto';
 import { ClientDto } from './client.dto';
 import { DateTime } from 'luxon';
+import { MikroORM } from '@mikro-orm/postgresql';
 
 @Injectable()
 export class ClientsService {
-  constructor(
-    @Inject(UOW_PROVIDER) private readonly uow: Uow,
-    @Inject(KNEX_PROVIDER) private readonly knex: Knex,
-  ) {}
+  constructor(@Inject(MIKROORM_PROVIDER) private readonly orm: MikroORM) {}
 
-  create(dto: CreateClientDto) {
-    return this.uow(async (ctx) => {
-      const officeRepository = ctx.getRepository(OfficeRepository);
-      const office = await officeRepository.findOne({
+  async create(dto: CreateClientDto) {
+    const em = this.orm.em.fork();
+    const officeRepository = em.getRepository(Office);
+    const clientRepository = em.getRepository(Client);
+
+    const office = await officeRepository
+      .createQueryBuilder()
+      .where({
         id: dto.officeId,
-      });
+      })
+      .getSingleResult();
 
-      if (!office) {
-        throw new Error('Office not found');
-      }
+    if (!office) {
+      throw new Error('Office not found');
+    }
 
-      const id = ClientId.create();
-      const name = dto.name;
-      const now = DateTime.now();
+    const id = ClientId.create();
+    const name = dto.name;
+    const now = DateTime.now();
 
-      const client = Client.create({
-        id,
-        name,
-        office: office,
-        now,
-      });
+    const client = Client.create({
+      id,
+      name,
+      office: office,
+      now,
+    });
 
-      const clientRepository = ctx.getRepository(ClientRepository);
-      clientRepository.add(client);
+    await clientRepository.persistAndFlush(client);
 
-      return new ClientDto({
-        id: client.id.value,
-        name: client.name,
-      });
+    return new ClientDto({
+      id: client.id.value,
+      name: client.name,
     });
   }
 
   async findOne(id: string) {
-    const record = await this.knex
+    const knex = this.orm.em.getConnection().getKnex();
+
+    const record = await knex
       .select(['id', 'name'])
-      .from('clients')
+      .from('client')
       .where('id', id)
       .first();
 
