@@ -6,6 +6,7 @@ import { DateTime } from 'luxon';
 import { MikroORM } from '@mikro-orm/postgresql';
 import { WeeklyRecurrenceDto } from './weekly-recurrence.dto';
 import { testMikroormProvider } from '../../../../../test-utils';
+import { CreateSubjectDto } from './create-subject.dto';
 
 describe('Subjects Service', () => {
   let subjectsService: SubjectsService;
@@ -55,15 +56,18 @@ describe('Subjects Service', () => {
 
     const knex = orm.em.getConnection().getKnex();
 
-    const result = await subjectsService.create(group.schoolId.value, {
-      name: 'Test Subject',
-      recurrence: new WeeklyRecurrenceDto({
-        days: [0, 2, 3],
+    const result = await subjectsService.create(
+      group.schoolId.value,
+      new CreateSubjectDto({
+        name: 'Test Subject',
+        recurrence: new WeeklyRecurrenceDto({
+          days: [0, 2, 3],
+        }),
+        time: new TimeIntervalDto({ startsAt: 0, duration: 120 }),
+        groupId: group.id.value,
+        requiredTeachers: 3,
       }),
-      time: new TimeIntervalDto({ startsAt: 0, duration: 120 }),
-      groupId: group.id.value,
-      requiredTeachers: 3,
-    });
+    );
 
     const result2 = await subjectsService.findOne(result.id);
     const logs = await knex.select('*').from('subject_log');

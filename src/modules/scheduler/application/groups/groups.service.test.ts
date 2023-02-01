@@ -4,6 +4,7 @@ import { School, SchoolId, TimeZone } from '../../domain';
 import { DateTime } from 'luxon';
 import { MikroORM } from '@mikro-orm/postgresql';
 import { testMikroormProvider } from '../../../../../test-utils';
+import { CreateGroupDto } from './create-group.dto';
 
 describe('Groups Service', () => {
   let groupsService: GroupsService;
@@ -33,10 +34,12 @@ describe('Groups Service', () => {
   });
 
   it('should create a group', async () => {
-    const result = await groupsService.create({
-      name: 'Test Group',
-      schoolId: school.id.value,
-    });
+    const result = await groupsService.create(
+      new CreateGroupDto({
+        name: 'Test Group',
+        schoolId: school.id.value,
+      }),
+    );
 
     const result2 = await groupsService.findOne(result.id);
 
@@ -49,10 +52,12 @@ describe('Groups Service', () => {
 
   it('should fail to create a group if school not found', async () => {
     const result = () =>
-      groupsService.create({
-        name: 'Test Group',
-        schoolId: 'wrong-school-id',
-      });
+      groupsService.create(
+        new CreateGroupDto({
+          name: 'Test Group',
+          schoolId: 'wrong-school-id',
+        }),
+      );
 
     await expect(result).rejects.toThrowError('School not found');
   });

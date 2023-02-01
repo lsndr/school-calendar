@@ -17,6 +17,7 @@ import {
 import { DateTime } from 'luxon';
 import { MikroORM } from '@mikro-orm/postgresql';
 import { testMikroormProvider } from '../../../../../test-utils';
+import { CreateLessonDto } from './create-lesson.dto';
 
 describe('Lessons Service', () => {
   let lessonsService: LessonsService;
@@ -100,14 +101,14 @@ describe('Lessons Service', () => {
     const result = await lessonsService.create(
       school.id.value,
       subject.id.value,
-      {
+      new CreateLessonDto({
         date: '2023-01-24',
         teacherIds: [teacher.id.value],
         time: {
           startsAt: 45,
           duration: 123,
         },
-      },
+      }),
     );
 
     const result2 = await lessonsService.findOne(

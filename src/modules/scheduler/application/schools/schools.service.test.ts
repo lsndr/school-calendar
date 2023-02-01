@@ -2,6 +2,7 @@ import { SchoolsService } from './schools.service';
 import { Test } from '@nestjs/testing';
 import { testMikroormProvider } from '../../../../../test-utils';
 import { MikroORM } from '@mikro-orm/postgresql';
+import { CreateSchoolDto } from './create-school.dto';
 
 describe('Schools Service', () => {
   let schoolsService: SchoolsService;
@@ -17,11 +18,13 @@ describe('Schools Service', () => {
     orm = moduleRef.get(MikroORM);
   });
 
-  it('should create an school', async () => {
-    const result = await schoolsService.create({
-      name: 'Test School',
-      timeZone: 'Europe/Moscow',
-    });
+  it('should create a school', async () => {
+    const result = await schoolsService.create(
+      new CreateSchoolDto({
+        name: 'Test School',
+        timeZone: 'Europe/Moscow',
+      }),
+    );
 
     const result2 = await schoolsService.findOne(result.id);
 

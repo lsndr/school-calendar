@@ -4,6 +4,7 @@ import { School, SchoolId, TimeZone } from '../../domain';
 import { DateTime } from 'luxon';
 import { MikroORM } from '@mikro-orm/postgresql';
 import { testMikroormProvider } from '../../../../../test-utils';
+import { CreateTeacherDto } from './create-teacher.dto';
 
 describe('Teachers Service', () => {
   let teachersService: TeachersService;
@@ -33,10 +34,12 @@ describe('Teachers Service', () => {
   });
 
   it('should create an teacher', async () => {
-    const result = await teachersService.create({
-      name: 'Test Teacher',
-      schoolId: school.id.value,
-    });
+    const result = await teachersService.create(
+      new CreateTeacherDto({
+        name: 'Test Teacher',
+        schoolId: school.id.value,
+      }),
+    );
 
     const result2 = await teachersService.findOne(result.id);
 
@@ -49,10 +52,12 @@ describe('Teachers Service', () => {
 
   it('should fail to create an teacher if school not found', async () => {
     const result = () =>
-      teachersService.create({
-        name: 'Test Group',
-        schoolId: 'wrong-school-id',
-      });
+      teachersService.create(
+        new CreateTeacherDto({
+          name: 'Test Group',
+          schoolId: 'wrong-school-id',
+        }),
+      );
 
     await expect(result).rejects.toThrowError('School not found');
   });
