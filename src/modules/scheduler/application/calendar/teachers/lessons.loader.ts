@@ -1,5 +1,5 @@
 import { MikroORM } from '@mikro-orm/postgresql';
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { DateTime } from 'luxon';
 
 export type LessonsLoaderOptions = {
