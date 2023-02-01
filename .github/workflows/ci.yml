@@ -70,4 +70,4 @@ jobs:
       - name: Run integration tests
         run: npm run test:integration
         env:
-          DB_URL: postgres://dev:dev@localhost/test
+          DB_URL: postgres://test:test@localhost/test
