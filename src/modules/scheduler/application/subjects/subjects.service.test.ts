@@ -1,6 +1,5 @@
 import { SubjectsService } from './subjects.service';
 import { Test } from '@nestjs/testing';
-import { MIKROORM_PROVIDER } from '../../../shared/database';
 import { TimeIntervalDto } from './time-interval.dto';
 import { Group, GroupId, School, SchoolId, TimeZone } from '../../domain';
 import { DateTime } from 'luxon';
@@ -20,7 +19,7 @@ describe('Subjects Service', () => {
     }).compile();
 
     subjectsService = moduleRef.get(SubjectsService);
-    orm = moduleRef.get(MIKROORM_PROVIDER);
+    orm = moduleRef.get(MikroORM);
   });
 
   beforeEach(async () => {

@@ -1,5 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { MIKROORM_PROVIDER } from '../../../shared/database';
+import { Injectable } from '@nestjs/common';
 import { Group, GroupId, School } from '../../domain';
 import { CreateGroupDto } from './create-group.dto';
 import { GroupDto } from './group.dto';
@@ -8,7 +7,7 @@ import { MikroORM } from '@mikro-orm/postgresql';
 
 @Injectable()
 export class GroupsService {
-  constructor(@Inject(MIKROORM_PROVIDER) private readonly orm: MikroORM) {}
+  constructor(private readonly orm: MikroORM) {}
 
   async create(dto: CreateGroupDto) {
     const em = this.orm.em.fork();

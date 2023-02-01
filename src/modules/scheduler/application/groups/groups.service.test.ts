@@ -1,6 +1,5 @@
 import { GroupsService } from './groups.service';
 import { Test } from '@nestjs/testing';
-import { MIKROORM_PROVIDER } from '../../../shared/database';
 import { School, SchoolId, TimeZone } from '../../domain';
 import { DateTime } from 'luxon';
 import { MikroORM } from '@mikro-orm/postgresql';
@@ -18,7 +17,7 @@ describe('Groups Service', () => {
     }).compile();
 
     groupsService = moduleRef.get(GroupsService);
-    orm = moduleRef.get(MIKROORM_PROVIDER);
+    orm = moduleRef.get(MikroORM);
   });
 
   beforeEach(async () => {

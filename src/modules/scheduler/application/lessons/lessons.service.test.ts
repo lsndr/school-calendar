@@ -1,6 +1,5 @@
 import { LessonsService } from './lessons.service';
 import { Test } from '@nestjs/testing';
-import { MIKROORM_PROVIDER } from '../../../shared/database';
 import {
   Group,
   GroupId,
@@ -35,7 +34,7 @@ describe('Lessons Service', () => {
     }).compile();
 
     lessonsService = moduleRef.get(LessonsService);
-    orm = moduleRef.get(MIKROORM_PROVIDER);
+    orm = moduleRef.get(MikroORM);
   });
 
   beforeEach(async () => {

@@ -1,12 +1,14 @@
 import { MikroORM } from '@mikro-orm/postgresql';
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { DateTime } from 'luxon';
-import { MIKROORM_PROVIDER } from '../../../../shared/database';
 import { LessonsLoader, Assignment } from './lessons.loader';
 import { CalendarTeacherEventDto } from './calendar-teacher-event.dto';
 import { CalendarTeacherDto } from './calendar-teacher.dto';
 import { TeachersCalendarDto } from './teachers-calendar.dto';
-import { SubjectVersion, SubjectVersionsLoader } from './subject-versions.loader';
+import {
+  SubjectVersion,
+  SubjectVersionsLoader,
+} from './subject-versions.loader';
 
 export type TeachersCalendarPeriodOptions = {
   schoolId: string;
@@ -20,19 +22,17 @@ export class TeachersCalendarLoader {
   constructor(
     private readonly subjectVersionsLoader: SubjectVersionsLoader,
     private readonly lessonsLoader: LessonsLoader,
-    @Inject(MIKROORM_PROVIDER)
     private readonly orm: MikroORM,
   ) {}
 
   async forPeriod(
     options: TeachersCalendarPeriodOptions,
   ): Promise<TeachersCalendarDto> {
-    const [versionsIterator, teachers, lessonsIterator] =
-      await Promise.all([
-        this.subjectVersionsLoader.load(options),
-        this.getTeachers(options.schoolId),
-        this.lessonsLoader.load(options),
-      ]);
+    const [versionsIterator, teachers, lessonsIterator] = await Promise.all([
+      this.subjectVersionsLoader.load(options),
+      this.getTeachers(options.schoolId),
+      this.lessonsLoader.load(options),
+    ]);
 
     const versions: SubjectVersion[] = [];
 
@@ -43,10 +43,7 @@ export class TeachersCalendarLoader {
     const lessonsMap = new Map<string, Assignment>();
 
     for await (const lesson of lessonsIterator) {
-      lessonsMap.set(
-        `${lesson.subjectId}-${lesson.date.toSQLDate()}`,
-        lesson,
-      );
+      lessonsMap.set(`${lesson.subjectId}-${lesson.date.toSQLDate()}`, lesson);
     }
 
     const events: CalendarTeacherEventDto[] = [];

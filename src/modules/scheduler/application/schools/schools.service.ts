@@ -1,5 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { MIKROORM_PROVIDER } from '../../../shared/database';
+import { Injectable } from '@nestjs/common';
 import { School, SchoolId, TimeZone } from '../../domain';
 import { CreateSchoolDto } from './create-school.dto';
 import { SchoolDto } from './school.dto';
@@ -8,7 +7,7 @@ import { MikroORM } from '@mikro-orm/postgresql';
 
 @Injectable()
 export class SchoolsService {
-  constructor(@Inject(MIKROORM_PROVIDER) private readonly orm: MikroORM) {}
+  constructor(private readonly orm: MikroORM) {}
 
   async create(dto: CreateSchoolDto) {
     const em = this.orm.em.fork();
