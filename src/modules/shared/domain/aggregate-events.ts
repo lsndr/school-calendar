@@ -1,7 +1,7 @@
 export class AggregateEvents {
-  #events: unknown[];
+  #events: Record<any, any>[];
 
-  get events(): ReadonlyArray<unknown> {
+  get events(): ReadonlyArray<Readonly<Record<any, any>>> {
     return this.#events;
   }
 
@@ -24,7 +24,7 @@ export class AggregateEvents {
   replace(replacer: (event: unknown) => unknown) {
     let affected = 0;
 
-    this.#events = this.#events.reduce<unknown[]>((events, event) => {
+    this.#events = this.#events.reduce<Record<any, any>[]>((events, event) => {
       const reducedEvent = replacer(event);
 
       if (typeof reducedEvent === 'object' && reducedEvent !== null) {
