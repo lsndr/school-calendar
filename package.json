@@ -16,7 +16,9 @@
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest --testPathPattern=\\.spec\\.ts$",
     "test:integration": "jest --runInBand --testPathPattern=\\.test\\.ts$",
-    "mikroorm": "mikro-orm"
+    "migration:create": "mikro-orm migration:create --blank",
+    "migration:up": "mikro-orm migration:up",
+    "migration:down": "mikro-orm migration:down"
   },
   "dependencies": {
     "@mikro-orm/cli": "^5.6.8",
