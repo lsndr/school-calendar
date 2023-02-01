@@ -4,6 +4,7 @@ import { Office, OfficeId, TimeZone } from '../../domain';
 import { DateTime } from 'luxon';
 import { MikroORM } from '@mikro-orm/postgresql';
 import { testMikroormProvider } from '../../../../../test-utils';
+import { CreateClientDto } from './create-client.dto';
 
 describe('Clients Service', () => {
   let clientsService: ClientsService;
@@ -49,10 +50,12 @@ describe('Clients Service', () => {
 
   it('should fail to create a client if office not found', async () => {
     const result = () =>
-      clientsService.create({
-        name: 'Test Client',
-        officeId: 'wrong-office-id',
-      });
+      clientsService.create(
+        new CreateClientDto({
+          name: 'Test Client',
+          officeId: 'wrong-office-id',
+        }),
+      );
 
     await expect(result).rejects.toThrowError('Office not found');
   });

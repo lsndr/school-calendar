@@ -17,6 +17,7 @@ import {
 import { DateTime } from 'luxon';
 import { MikroORM } from '@mikro-orm/postgresql';
 import { testMikroormProvider } from '../../../../../test-utils';
+import { CreateAttendanceDto } from './create-attendance.dto';
 
 describe('Attendances Service', () => {
   let attendancesService: AttendancesService;
@@ -100,14 +101,14 @@ describe('Attendances Service', () => {
     const result = await attendancesService.create(
       office.id.value,
       visit.id.value,
-      {
+      new CreateAttendanceDto({
         date: '2023-01-24',
         employeeIds: [employee.id.value],
         time: {
           startsAt: 45,
           duration: 123,
         },
-      },
+      }),
     );
 
     const result2 = await attendancesService.findOne(

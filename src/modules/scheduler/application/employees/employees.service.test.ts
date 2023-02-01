@@ -4,6 +4,7 @@ import { Office, OfficeId, TimeZone } from '../../domain';
 import { DateTime } from 'luxon';
 import { MikroORM } from '@mikro-orm/postgresql';
 import { testMikroormProvider } from '../../../../../test-utils';
+import { CreateEmployeeDto } from './create-employee.dto';
 
 describe('Employees Service', () => {
   let employeesService: EmployeesService;
@@ -33,10 +34,12 @@ describe('Employees Service', () => {
   });
 
   it('should create an employee', async () => {
-    const result = await employeesService.create({
-      name: 'Test Employee',
-      officeId: office.id.value,
-    });
+    const result = await employeesService.create(
+      new CreateEmployeeDto({
+        name: 'Test Employee',
+        officeId: office.id.value,
+      }),
+    );
 
     const result2 = await employeesService.findOne(result.id);
 
