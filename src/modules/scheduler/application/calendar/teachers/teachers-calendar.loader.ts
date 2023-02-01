@@ -1,15 +1,12 @@
+import { MikroORM } from '@mikro-orm/postgresql';
 import { Inject, Injectable } from '@nestjs/common';
-import { Knex } from 'knex';
 import { DateTime } from 'luxon';
-import { KNEX_PROVIDER } from '../../../../shared/database';
+import { MIKROORM_PROVIDER } from '../../../../shared/database';
 import { LessonsLoader, Assignment } from './lessons.loader';
 import { CalendarTeacherEventDto } from './calendar-teacher-event.dto';
 import { CalendarTeacherDto } from './calendar-teacher.dto';
 import { TeachersCalendarDto } from './teachers-calendar.dto';
-import {
-  SubjectVersion,
-  SubjectVersionsLoader,
-} from './subject-versions.loader';
+import { SubjectVersion, SubjectVersionsLoader } from './subject-versions.loader';
 
 export type TeachersCalendarPeriodOptions = {
   schoolId: string;
@@ -21,19 +18,21 @@ export type TeachersCalendarPeriodOptions = {
 @Injectable()
 export class TeachersCalendarLoader {
   constructor(
-    @Inject(KNEX_PROVIDER) private readonly knex: Knex,
     private readonly subjectVersionsLoader: SubjectVersionsLoader,
     private readonly lessonsLoader: LessonsLoader,
+    @Inject(MIKROORM_PROVIDER)
+    private readonly orm: MikroORM,
   ) {}
 
   async forPeriod(
     options: TeachersCalendarPeriodOptions,
   ): Promise<TeachersCalendarDto> {
-    const [versionsIterator, teachers, lessonsIterator] = await Promise.all([
-      this.subjectVersionsLoader.load(options),
-      this.getTeachers(options.schoolId),
-      this.lessonsLoader.load(options),
-    ]);
+    const [versionsIterator, teachers, lessonsIterator] =
+      await Promise.all([
+        this.subjectVersionsLoader.load(options),
+        this.getTeachers(options.schoolId),
+        this.lessonsLoader.load(options),
+      ]);
 
     const versions: SubjectVersion[] = [];
 
@@ -44,7 +43,10 @@ export class TeachersCalendarLoader {
     const lessonsMap = new Map<string, Assignment>();
 
     for await (const lesson of lessonsIterator) {
-      lessonsMap.set(`${lesson.subjectId}-${lesson.date.toSQLDate()}`, lesson);
+      lessonsMap.set(
+        `${lesson.subjectId}-${lesson.date.toSQLDate()}`,
+        lesson,
+      );
     }
 
     const events: CalendarTeacherEventDto[] = [];
@@ -98,7 +100,9 @@ export class TeachersCalendarLoader {
   }
 
   private async getTeachers(schoolId: string): Promise<CalendarTeacherDto[]> {
-    return await this.knex
+    const knex = this.orm.em.getConnection().getKnex();
+
+    return await knex
       .select(['id', 'name'])
       .from('teachers')
       .where('school_id', schoolId);

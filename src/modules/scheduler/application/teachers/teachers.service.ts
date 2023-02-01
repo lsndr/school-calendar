@@ -49,7 +49,7 @@ export class TeachersService {
 
     const record = await knex
       .select(['id', 'name'])
-      .from('teacher')
+      .from('teachers')
       .where('id', id)
       .first();
 

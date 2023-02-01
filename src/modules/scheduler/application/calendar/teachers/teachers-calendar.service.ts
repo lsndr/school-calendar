@@ -1,7 +1,7 @@
+import { MikroORM } from '@mikro-orm/postgresql';
 import { Inject, Injectable } from '@nestjs/common';
-import { Knex } from 'knex';
 import { DateTime } from 'luxon';
-import { KNEX_PROVIDER } from '../../../../shared/database';
+import { MIKROORM_PROVIDER } from '../../../../shared/database';
 import { TeachersCalendarDto } from './teachers-calendar.dto';
 import { TeachersCalendarLoader } from './teachers-calendar.loader';
 import { TeachersCalendarQueryDto } from './teachers-calendar.query.dto';
@@ -9,16 +9,18 @@ import { TeachersCalendarQueryDto } from './teachers-calendar.query.dto';
 @Injectable()
 export class TeachersCalendarService {
   constructor(
-    @Inject(KNEX_PROVIDER)
-    private readonly knex: Knex,
     private readonly loader: TeachersCalendarLoader,
+    @Inject(MIKROORM_PROVIDER)
+    private readonly orm: MikroORM,
   ) {}
 
   async getForPeriod(
     schoolId: string,
     query: TeachersCalendarQueryDto,
   ): Promise<TeachersCalendarDto> {
-    const school = await this.knex
+    const knex = this.orm.em.getConnection().getKnex();
+
+    const school = await knex
       .select(['id', 'time_zone'])
       .from('schools')
       .where('id', schoolId)
