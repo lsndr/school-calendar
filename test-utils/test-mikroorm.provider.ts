@@ -1,10 +1,10 @@
 import { MikroORM } from '@mikro-orm/postgresql';
 import { Provider } from '@nestjs/common';
 import * as path from 'path';
-import { ENTITIES, MIKROORM_PROVIDER } from '../src/modules/shared/database';
+import { ENTITIES } from '../src/modules/shared/database';
 
 export const testMikroormProvider = {
-  provide: MIKROORM_PROVIDER,
+  provide: MikroORM,
   useFactory: () => {
     return initTestMikroORM();
   },

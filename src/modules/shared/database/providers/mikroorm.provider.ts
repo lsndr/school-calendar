@@ -28,14 +28,8 @@ types.setTypeParser(types.builtins.TIMESTAMPTZ, (val) =>
   DateTime.fromSQL(val, { setZone: true }),
 );
 
-types.setTypeParser(types.builtins.DATE, (val) =>
-  DateTime.fromSQL(val, { setZone: true }),
-);
-
-export const MIKROORM_PROVIDER = Symbol.for('MIKROORM_PROVIDER');
-
 export const mikroormProvider: Provider = {
-  provide: MIKROORM_PROVIDER,
+  provide: MikroORM,
   useFactory: () => {
     return MikroORM.init({
       entities: [...ENTITIES],

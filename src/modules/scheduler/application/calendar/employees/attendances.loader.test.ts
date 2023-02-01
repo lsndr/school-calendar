@@ -19,7 +19,6 @@ import { DateTime } from 'luxon';
 import { AttendancesLoader } from './attendances.loader';
 import { MikroORM } from '@mikro-orm/postgresql';
 import { testMikroormProvider } from '../../../../../../test-utils';
-import { MIKROORM_PROVIDER } from '../../../../shared/database';
 
 describe('AttendancesLoader', () => {
   let loader: AttendancesLoader;
@@ -39,7 +38,7 @@ describe('AttendancesLoader', () => {
     }).compile();
 
     loader = moduleRef.get(AttendancesLoader);
-    orm = moduleRef.get(MIKROORM_PROVIDER);
+    orm = moduleRef.get(MikroORM);
   });
 
   beforeAll(async () => {

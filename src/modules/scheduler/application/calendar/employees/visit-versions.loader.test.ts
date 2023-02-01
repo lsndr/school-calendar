@@ -16,7 +16,6 @@ import { DateTime } from 'luxon';
 import { VisitVersionsLoader } from './visit-versions.loader';
 import { MikroORM } from '@mikro-orm/postgresql';
 import { testMikroormProvider } from '../../../../../../test-utils';
-import { MIKROORM_PROVIDER } from '../../../../shared/database';
 
 describe('VisitVersionsLoader', () => {
   let loader: VisitVersionsLoader;
@@ -33,7 +32,7 @@ describe('VisitVersionsLoader', () => {
     }).compile();
 
     loader = moduleRef.get(VisitVersionsLoader);
-    orm = moduleRef.get(MIKROORM_PROVIDER);
+    orm = moduleRef.get(MikroORM);
   });
 
   beforeAll(async () => {

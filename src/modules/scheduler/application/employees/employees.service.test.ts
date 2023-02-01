@@ -1,6 +1,5 @@
 import { EmployeesService } from './employees.service';
 import { Test } from '@nestjs/testing';
-import { MIKROORM_PROVIDER } from '../../../shared/database';
 import { Office, OfficeId, TimeZone } from '../../domain';
 import { DateTime } from 'luxon';
 import { MikroORM } from '@mikro-orm/postgresql';
@@ -18,7 +17,7 @@ describe('Employees Service', () => {
     }).compile();
 
     employeesService = moduleRef.get(EmployeesService);
-    orm = moduleRef.get(MIKROORM_PROVIDER);
+    orm = moduleRef.get(MikroORM);
   });
 
   beforeEach(async () => {

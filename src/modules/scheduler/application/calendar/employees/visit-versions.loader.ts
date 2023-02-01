@@ -1,7 +1,6 @@
 import { MikroORM } from '@mikro-orm/postgresql';
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { DateTime } from 'luxon';
-import { MIKROORM_PROVIDER } from '../../../../shared/database';
 import { extractDatesFromPeriodicity } from './helpers';
 
 export type VisitVersionsLoaderOptions = {
@@ -23,7 +22,7 @@ export type VisitVersion = {
 
 @Injectable()
 export class VisitVersionsLoader {
-  constructor(@Inject(MIKROORM_PROVIDER) private readonly orm: MikroORM) {}
+  constructor(private readonly orm: MikroORM) {}
 
   async load(
     options: VisitVersionsLoaderOptions,

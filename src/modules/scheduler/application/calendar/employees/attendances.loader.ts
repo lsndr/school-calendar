@@ -1,7 +1,6 @@
 import { MikroORM } from '@mikro-orm/postgresql';
 import { Inject, Injectable } from '@nestjs/common';
 import { DateTime } from 'luxon';
-import { MIKROORM_PROVIDER } from '../../../../shared/database';
 
 export type AttendancesLoaderOptions = {
   officeId: string;
@@ -25,7 +24,7 @@ export type Assignment = {
 
 @Injectable()
 export class AttendancesLoader {
-  constructor(@Inject(MIKROORM_PROVIDER) private readonly orm: MikroORM) {}
+  constructor(private readonly orm: MikroORM) {}
 
   async load(
     options: AttendancesLoaderOptions,

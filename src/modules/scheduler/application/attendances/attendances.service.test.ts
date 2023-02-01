@@ -1,6 +1,5 @@
 import { AttendancesService } from './attendances.service';
 import { Test } from '@nestjs/testing';
-import { MIKROORM_PROVIDER } from '../../../shared/database';
 import {
   Client,
   ClientId,
@@ -35,7 +34,7 @@ describe('Attendances Service', () => {
     }).compile();
 
     attendancesService = moduleRef.get(AttendancesService);
-    orm = moduleRef.get(MIKROORM_PROVIDER);
+    orm = moduleRef.get(MikroORM);
   });
 
   beforeEach(async () => {

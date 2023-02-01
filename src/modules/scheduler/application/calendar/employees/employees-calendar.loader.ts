@@ -1,7 +1,6 @@
 import { MikroORM } from '@mikro-orm/postgresql';
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { DateTime } from 'luxon';
-import { MIKROORM_PROVIDER } from '../../../../shared/database';
 import { AttendancesLoader, Assignment } from './attendances.loader';
 import { CalendarEmployeeEventDto } from './calendar-employee-event.dto';
 import { CalendarEmployeeDto } from './calendar-employee.dto';
@@ -20,7 +19,6 @@ export class EmployeesCalendarLoader {
   constructor(
     private readonly visitVersionsLoader: VisitVersionsLoader,
     private readonly attendancesLoader: AttendancesLoader,
-    @Inject(MIKROORM_PROVIDER)
     private readonly orm: MikroORM,
   ) {}
 

@@ -1,6 +1,5 @@
 import { OfficesService } from './offices.service';
 import { Test } from '@nestjs/testing';
-import { MIKROORM_PROVIDER } from '../../../shared/database';
 import { testMikroormProvider } from '../../../../../test-utils';
 import { MikroORM } from '@mikro-orm/postgresql';
 
@@ -15,7 +14,7 @@ describe('Offices Service', () => {
     }).compile();
 
     officesService = moduleRef.get(OfficesService);
-    orm = moduleRef.get(MIKROORM_PROVIDER);
+    orm = moduleRef.get(MikroORM);
   });
 
   it('should create an office', async () => {

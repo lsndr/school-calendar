@@ -1,5 +1,5 @@
-import { Module, Inject } from '@nestjs/common';
-import { mikroormProvider, MIKROORM_PROVIDER } from './database';
+import { Module } from '@nestjs/common';
+import { mikroormProvider } from './database';
 import { MikroORM } from '@mikro-orm/postgresql';
 
 @Module({
@@ -8,7 +8,7 @@ import { MikroORM } from '@mikro-orm/postgresql';
   exports: [mikroormProvider],
 })
 export class SharedModule {
-  constructor(@Inject(MIKROORM_PROVIDER) private readonly orm: MikroORM) {}
+  constructor(private readonly orm: MikroORM) {}
 
   async beforeApplicationShutdown() {
     await this.orm.close();
