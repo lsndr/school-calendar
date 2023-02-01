@@ -13,6 +13,7 @@ const config: Options = {
     path: './migrations',
     transactional: true,
     allOrNothing: true,
+    snapshot: false,
   },
 };
 
