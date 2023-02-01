@@ -6,6 +6,7 @@ export class Migration20230129120844 extends Migration {
 
     return knex.schema.createTable('school', (table) => {
       table.text('id').primary();
+
       table.string('name').notNullable();
       table.string('time_zone').notNullable();
       table.smallint('version').defaultTo(1).notNullable();

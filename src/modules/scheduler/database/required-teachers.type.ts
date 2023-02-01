@@ -1,5 +1,5 @@
 import { Type } from '@mikro-orm/core';
-import { RequiredTeachers } from '../domain';
+import { RequiredTeachers } from '../domain/subject/required-teachers';
 
 export class RequiredTeachersType extends Type<RequiredTeachers, number> {
   override convertToDatabaseValue(value: any) {

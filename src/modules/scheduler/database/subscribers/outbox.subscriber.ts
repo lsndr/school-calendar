@@ -6,7 +6,7 @@ import {
 import { Knex } from '@mikro-orm/postgresql';
 import { randomUUID } from 'crypto';
 import { DateTime } from 'luxon';
-import { AggregateState } from '../../shared/domain';
+import { AggregateState } from '../../../shared/domain';
 
 @Subscriber()
 export class OutboxSubscriber implements EventSubscriber {

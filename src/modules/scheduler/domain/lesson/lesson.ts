@@ -6,6 +6,7 @@ import { Teacher } from '../teacher';
 import { School } from '../school';
 import { ExactDate, TimeInterval } from '../shared';
 import { Subject } from '../subject';
+// eslint-disable-next-line import/no-cycle -- Required by MikroORM
 import { AssignedTeacher } from './assigned-teacher';
 import { AssignedTeacherId } from './assigned-teacher-id';
 import { LessonCreatedEvent } from './lesson-created.event';

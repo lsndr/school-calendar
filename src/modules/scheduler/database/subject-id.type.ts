@@ -1,5 +1,5 @@
 import { Type } from '@mikro-orm/core';
-import { SubjectId } from '../domain';
+import { SubjectId } from '../domain/subject/subject-id';
 
 export class SubjectIdType extends Type<SubjectId, string> {
   override convertToDatabaseValue(value: any) {

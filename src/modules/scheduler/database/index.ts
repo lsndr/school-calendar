@@ -4,8 +4,6 @@ export * from './group-id.type';
 export * from './teacher-id.type';
 export * from './exact-date.type';
 export * from './school-id.type';
-export * from './outbox.subscriber';
 export * from './required-teachers.type';
 export * from './time-zone.type';
 export * from './subject-id.type';
-export * from './subject.subscriber';

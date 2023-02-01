@@ -1,6 +1,6 @@
 import { Type } from '@mikro-orm/core';
 import { DateTime } from 'luxon';
-import { ExactDate } from '../domain';
+import { ExactDate } from '../domain/shared';
 
 export class ExactDateType extends Type<ExactDate, 'string'> {
   override convertToDatabaseValue(value: any) {

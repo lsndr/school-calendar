@@ -11,6 +11,8 @@ import {
   School,
   Subject,
 } from '../../../scheduler/domain';
+import '../../../scheduler/database/subscribers';
+
 export const ENTITIES = [
   School,
   Teacher,

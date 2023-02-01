@@ -5,7 +5,8 @@ import {
   TransactionEventArgs,
 } from '@mikro-orm/core';
 import { Knex } from '@mikro-orm/postgresql';
-import { RecurrenceType, Subject } from '../domain';
+import { RecurrenceType } from '../../domain/subject/recurrence';
+import { Subject } from '../../domain/subject/subject';
 
 @Subscriber()
 export class SubjectSubscriber implements EventSubscriber {

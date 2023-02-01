@@ -1,5 +1,5 @@
 import { Type } from '@mikro-orm/core';
-import { GroupId } from '../domain';
+import { GroupId } from '../domain/group/group-id';
 
 export class GroupIdType extends Type<GroupId, string> {
   override convertToDatabaseValue(value: any) {

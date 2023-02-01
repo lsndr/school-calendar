@@ -42,7 +42,6 @@ export class SubjectsService {
           id: dto.groupId,
         })
         .getSingleResult(),
-      ,
     ]);
 
     if (!school) {
