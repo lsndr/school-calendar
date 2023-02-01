@@ -1,6 +1,6 @@
 module.exports = {
   testEnvironment: 'node',
-  collectCoverageFrom: ['**/*.(t|j)s'],
+  collectCoverageFrom: ['**/*.ts'],
   coverageDirectory: './coverage',
   globalSetup: './jest.setup.ts',
   transform: {
