@@ -1,46 +1,46 @@
 import {
-  BiWeeklyPeriodicity,
-  DailyPeriodicity,
-  MonthlyPeriodicity,
-  WeeklyPeriodicity,
+  DailyRecurrence,
+  WeeklyRecurrence,
+  BiWeeklyRecurrence,
+  MonthlyRecurrence,
 } from '../../domain';
-import { BiWeeklyPeriodicityDto } from './biweekly-periodicity.dto';
-import { DailyPeriodicityDto } from './daily-periodicity.dto';
-import { mapDtoToPeriodicity, mapPeriodicityToDto } from './mappers';
-import { MonthlyPeriodicityDto } from './monthly-periodicity.dto';
-import { WeeklyPeriodicityDto } from './weekly-periodicity.dto';
+import { DailyRecurrenceDto } from './daily-recurrence.dto';
+import { WeeklyRecurrenceDto } from './weekly-recurrence.dto';
+import { BiWeeklyRecurrenceDto } from './biweekly-recurrence.dto';
+import { MonthlyRecurrenceDto } from './monthly-recurrence.dto';
+import { mapRecurrenceToDto, mapDtoToRecurrence } from './mappers';
 
 describe('Mappers', () => {
-  describe('mapPeriodicityToDto', () => {
-    it('should map DailyPeriodicity to DailyPeriodicityDto', () => {
-      const peridoicity = DailyPeriodicity.create();
-      const dto = mapPeriodicityToDto(peridoicity);
+  describe('mapRecurrenceToDto', () => {
+    it('should map DailyRecurrence to DailyRecurrenceDto', () => {
+      const recurrence = DailyRecurrence.create();
+      const dto = mapRecurrenceToDto(recurrence);
 
-      expect(dto).toBeInstanceOf(DailyPeriodicityDto);
+      expect(dto).toBeInstanceOf(DailyRecurrenceDto);
       expect(dto).toEqual({
         type: 'daily',
       });
     });
 
-    it('should map WeeklyPeriodicity to WeeklyPeriodicityDto', () => {
-      const peridoicity = WeeklyPeriodicity.create([0, 4, 6]);
-      const dto = mapPeriodicityToDto(peridoicity);
+    it('should map WeeklyRecurrence to WeeklyRecurrenceDto', () => {
+      const peridoicity = WeeklyRecurrence.create([0, 4, 6]);
+      const dto = mapRecurrenceToDto(peridoicity);
 
-      expect(dto).toBeInstanceOf(WeeklyPeriodicityDto);
+      expect(dto).toBeInstanceOf(WeeklyRecurrenceDto);
       expect(dto).toEqual({
         type: 'weekly',
         days: [0, 4, 6],
       });
     });
 
-    it('should map BiWeeklyPeriodicity to BiWeeklyPeriodicityDto', () => {
-      const peridoicity = BiWeeklyPeriodicity.create({
+    it('should map BiWeeklyRecurrence to BiWeeklyRecurrenceDto', () => {
+      const peridoicity = BiWeeklyRecurrence.create({
         week1: [0, 4, 6],
         week2: [3, 2, 6],
       });
-      const dto = mapPeriodicityToDto(peridoicity);
+      const dto = mapRecurrenceToDto(peridoicity);
 
-      expect(dto).toBeInstanceOf(BiWeeklyPeriodicityDto);
+      expect(dto).toBeInstanceOf(BiWeeklyRecurrenceDto);
       expect(dto).toEqual({
         type: 'biweekly',
         week1: [0, 4, 6],
@@ -48,11 +48,11 @@ describe('Mappers', () => {
       });
     });
 
-    it('should map MonthlyPeriodicity to MonthlyPeriodicityDto', () => {
-      const peridoicity = MonthlyPeriodicity.create([0, 10, 30]);
-      const dto = mapPeriodicityToDto(peridoicity);
+    it('should map MonthlyRecurrence to MonthlyRecurrenceDto', () => {
+      const peridoicity = MonthlyRecurrence.create([0, 10, 30]);
+      const dto = mapRecurrenceToDto(peridoicity);
 
-      expect(dto).toBeInstanceOf(MonthlyPeriodicityDto);
+      expect(dto).toBeInstanceOf(MonthlyRecurrenceDto);
       expect(dto).toEqual({
         type: 'monthly',
         days: [0, 10, 30],
@@ -60,48 +60,48 @@ describe('Mappers', () => {
     });
   });
 
-  describe('mapDtoToPeriodicity', () => {
-    it('should map DailyPeriodicityDto to DailyPeriodicity', () => {
-      const dto = new DailyPeriodicityDto();
-      const periodicity = mapDtoToPeriodicity(dto);
+  describe('mapDtoToRecurrence', () => {
+    it('should map DailyRecurrenceDto to DailyRecurrence', () => {
+      const dto = new DailyRecurrenceDto();
+      const precurrence = mapDtoToRecurrence(dto);
 
-      expect(periodicity).toBeInstanceOf(DailyPeriodicity);
-      expect(periodicity.type).toBe('daily');
+      expect(precurrence).toBeInstanceOf(DailyRecurrence);
+      expect(precurrence.type).toBe('daily');
     });
 
-    it('should map WeeklyPeriodicityDto to WeeklyPeriodicity', () => {
-      const dto = new WeeklyPeriodicityDto({
+    it('should map WeeklyRecurrenceDto to WeeklyRecurrence', () => {
+      const dto = new WeeklyRecurrenceDto({
         days: [0, 1, 2],
       });
-      const periodicity = mapDtoToPeriodicity(dto);
+      const precurrence = mapDtoToRecurrence(dto);
 
-      expect(periodicity).toBeInstanceOf(WeeklyPeriodicity);
-      expect(periodicity.type).toBe('weekly');
-      expect(Array.from(periodicity.days)).toEqual([0, 1, 2]);
+      expect(precurrence).toBeInstanceOf(WeeklyRecurrence);
+      expect(precurrence.type).toBe('weekly');
+      expect(Array.from(precurrence.days)).toEqual([0, 1, 2]);
     });
 
-    it('should map WeeklyPeriodicityDto to WeeklyPeriodicity', () => {
-      const dto = new BiWeeklyPeriodicityDto({
+    it('should map WeeklyRecurrenceDto to WeeklyRecurrence', () => {
+      const dto = new BiWeeklyRecurrenceDto({
         week1: [0, 1, 2],
         week2: [3, 1, 6],
       });
-      const periodicity = mapDtoToPeriodicity(dto);
+      const precurrence = mapDtoToRecurrence(dto);
 
-      expect(periodicity).toBeInstanceOf(BiWeeklyPeriodicity);
-      expect(periodicity.type).toBe('biweekly');
-      expect(Array.from(periodicity.week1)).toEqual([0, 1, 2]);
-      expect(Array.from(periodicity.week2)).toEqual([3, 1, 6]);
+      expect(precurrence).toBeInstanceOf(BiWeeklyRecurrence);
+      expect(precurrence.type).toBe('biweekly');
+      expect(Array.from(precurrence.week1)).toEqual([0, 1, 2]);
+      expect(Array.from(precurrence.week2)).toEqual([3, 1, 6]);
     });
 
-    it('should map MonthlyPeriodicityDto to MonthlyPeriodicity', () => {
-      const dto = new MonthlyPeriodicityDto({
+    it('should map MonthlyRecurrenceDto to MonthlyRecurrence', () => {
+      const dto = new MonthlyRecurrenceDto({
         days: [0, 26, 30],
       });
-      const periodicity = mapDtoToPeriodicity(dto);
+      const precurrence = mapDtoToRecurrence(dto);
 
-      expect(periodicity).toBeInstanceOf(MonthlyPeriodicity);
-      expect(periodicity.type).toBe('monthly');
-      expect(Array.from(periodicity.days)).toEqual([0, 26, 30]);
+      expect(precurrence).toBeInstanceOf(MonthlyRecurrence);
+      expect(precurrence.type).toBe('monthly');
+      expect(Array.from(precurrence.days)).toEqual([0, 26, 30]);
     });
   });
 });

@@ -1,9 +1,9 @@
 import { ApiProperty, getSchemaPath } from '@nestjs/swagger';
-import { BiWeeklyPeriodicityDto } from './biweekly-periodicity.dto';
-import { DailyPeriodicityDto } from './daily-periodicity.dto';
-import { MonthlyPeriodicityDto } from './monthly-periodicity.dto';
+import { BiWeeklyRecurrenceDto } from './biweekly-recurrence.dto';
+import { DailyRecurrenceDto } from './daily-recurrence.dto';
+import { MonthlyRecurrenceDto } from './monthly-recurrence.dto';
 import { TimeIntervalDto } from './time-interval.dto';
-import { WeeklyPeriodicityDto } from './weekly-periodicity.dto';
+import { WeeklyRecurrenceDto } from './weekly-recurrence.dto';
 
 export class SubjectDto {
   @ApiProperty()
@@ -14,17 +14,17 @@ export class SubjectDto {
 
   @ApiProperty({
     oneOf: [
-      { $ref: getSchemaPath(DailyPeriodicityDto) },
-      { $ref: getSchemaPath(WeeklyPeriodicityDto) },
-      { $ref: getSchemaPath(BiWeeklyPeriodicityDto) },
-      { $ref: getSchemaPath(MonthlyPeriodicityDto) },
+      { $ref: getSchemaPath(DailyRecurrenceDto) },
+      { $ref: getSchemaPath(WeeklyRecurrenceDto) },
+      { $ref: getSchemaPath(BiWeeklyRecurrenceDto) },
+      { $ref: getSchemaPath(MonthlyRecurrenceDto) },
     ],
   })
-  periodicity:
-    | DailyPeriodicityDto
-    | WeeklyPeriodicityDto
-    | BiWeeklyPeriodicityDto
-    | MonthlyPeriodicityDto;
+  recurrence:
+    | DailyRecurrenceDto
+    | WeeklyRecurrenceDto
+    | BiWeeklyRecurrenceDto
+    | MonthlyRecurrenceDto;
 
   @ApiProperty({
     type: TimeIntervalDto,
@@ -52,7 +52,7 @@ export class SubjectDto {
   constructor(dto: SubjectDto) {
     this.id = dto?.id;
     this.name = dto?.name;
-    this.periodicity = dto?.periodicity;
+    this.recurrence = dto?.recurrence;
     this.time = dto?.time;
     this.groupId = dto?.groupId;
     this.requiredTeachers = dto?.requiredTeachers;

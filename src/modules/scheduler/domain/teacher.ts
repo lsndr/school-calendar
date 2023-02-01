@@ -1,14 +1,29 @@
+import { Entity, PrimaryKey, Property } from '@mikro-orm/core';
 import { DateTime } from 'luxon';
-import { Aggregate, AggregateState } from '../../shared/domain';
+import { AggregateState } from '../../shared/domain';
+import { TeacherIdType, SchoolIdType } from '../database';
 import { TeacherId } from './teacher-id';
 import { School } from './school';
 import { SchoolId } from './school-id';
 
-export interface TeacherState extends AggregateState<TeacherId> {
-  name: string;
-  createdAt: DateTime;
-  schoolId: SchoolId;
-  updatedAt: DateTime;
+abstract class TeacherState extends AggregateState {
+  @PrimaryKey({ name: 'id', type: TeacherIdType })
+  protected _id!: TeacherId;
+
+  @Property({ name: 'name' })
+  protected _name!: string;
+
+  @Property({ name: 'school_id', type: SchoolIdType })
+  protected _schoolId!: SchoolId;
+
+  @Property({ name: 'created_at' })
+  protected _createdAt!: DateTime;
+
+  @Property({ name: 'updated_at' })
+  protected _updatedAt!: DateTime;
+
+  @Property({ name: 'version', version: true })
+  protected _version!: number;
 }
 
 export type CreateTeacher = {
@@ -18,30 +33,37 @@ export type CreateTeacher = {
   now: DateTime;
 };
 
-export class Teacher extends Aggregate<TeacherId, TeacherState> {
+@Entity()
+export class Teacher extends TeacherState {
+  get id() {
+    return this._id;
+  }
+
   get name() {
-    return this.state.name;
+    return this._name;
   }
 
   get schoolId() {
-    return this.state.schoolId;
+    return this._schoolId;
   }
 
   get createdAt() {
-    return this.state.createdAt;
+    return this._createdAt;
   }
 
   get updatedAt() {
-    return this.state.updatedAt;
+    return this._updatedAt;
   }
 
   static create(data: CreateTeacher) {
-    return new this({
-      id: data.id,
-      name: data.name,
-      schoolId: data.school.id,
-      createdAt: data.now,
-      updatedAt: data.now,
-    });
+    const teacher = new this();
+
+    teacher._id = data.id;
+    teacher._name = data.name;
+    teacher._schoolId = data.school.id;
+    teacher._createdAt = data.now;
+    teacher._updatedAt = data.now;
+
+    return teacher;
   }
 }

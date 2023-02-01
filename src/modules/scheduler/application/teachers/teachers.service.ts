@@ -1,55 +1,55 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { KNEX_PROVIDER, UOW_PROVIDER } from '../../../shared/database';
-import { Uow } from 'yuow';
-import { TeacherRepository, SchoolRepository } from '../../database';
-import { Teacher, TeacherId } from '../../domain';
-import { Knex } from 'knex';
+import { MIKROORM_PROVIDER } from '../../../shared/database';
+import { Teacher, TeacherId, School } from '../../domain';
 import { CreateTeacherDto } from './create-teacher.dto';
 import { TeacherDto } from './teacher.dto';
 import { DateTime } from 'luxon';
+import { MikroORM } from '@mikro-orm/postgresql';
 
 @Injectable()
 export class TeachersService {
-  constructor(
-    @Inject(UOW_PROVIDER) private readonly uow: Uow,
-    @Inject(KNEX_PROVIDER) private readonly knex: Knex,
-  ) {}
+  constructor(@Inject(MIKROORM_PROVIDER) private readonly orm: MikroORM) {}
 
-  create(dto: CreateTeacherDto) {
-    return this.uow(async (ctx) => {
-      const schoolRepository = ctx.getRepository(SchoolRepository);
-      const school = await schoolRepository.findOne({
+  async create(dto: CreateTeacherDto) {
+    const em = this.orm.em.fork();
+    const schoolRepository = em.getRepository(School);
+    const teacherRepository = em.getRepository(Teacher);
+
+    const school = await schoolRepository
+      .createQueryBuilder()
+      .where({
         id: dto.schoolId,
-      });
+      })
+      .getSingleResult();
 
-      if (!school) {
-        throw new Error('School not found');
-      }
+    if (!school) {
+      throw new Error('School not found');
+    }
 
-      const id = TeacherId.create();
-      const name = dto.name;
+    const id = TeacherId.create();
+    const name = dto.name;
 
-      const teacher = Teacher.create({
-        id,
-        name,
-        school: school,
-        now: DateTime.now(),
-      });
+    const teacher = Teacher.create({
+      id,
+      name,
+      school: school,
+      now: DateTime.now(),
+    });
 
-      const teacherRepository = ctx.getRepository(TeacherRepository);
-      teacherRepository.add(teacher);
+    await teacherRepository.persistAndFlush(teacher);
 
-      return new TeacherDto({
-        id: teacher.id.value,
-        name: teacher.name,
-      });
+    return new TeacherDto({
+      id: teacher.id.value,
+      name: teacher.name,
     });
   }
 
   async findOne(id: string) {
-    const record = await this.knex
+    const knex = this.orm.em.getConnection().getKnex();
+
+    const record = await knex
       .select(['id', 'name'])
-      .from('teachers')
+      .from('teacher')
       .where('id', id)
       .first();
 

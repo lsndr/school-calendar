@@ -1,1 +1,1 @@
-export * from './teacher.repository';
+export * from './teacher-id.type';

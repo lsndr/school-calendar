@@ -1,7 +1,7 @@
+import { MikroORM } from '@mikro-orm/postgresql';
 import { Inject, Injectable } from '@nestjs/common';
-import { Knex } from 'knex';
 import { DateTime } from 'luxon';
-import { KNEX_PROVIDER } from '../../../../shared/database';
+import { MIKROORM_PROVIDER } from '../../../../shared/database';
 import { extractDatesFromPeriodicity } from './helpers';
 
 export type SubjectVersionsLoaderOptions = {
@@ -23,36 +23,39 @@ export type SubjectVersion = {
 
 @Injectable()
 export class SubjectVersionsLoader {
-  constructor(@Inject(KNEX_PROVIDER) private readonly knex: Knex) {}
+  constructor(@Inject(MIKROORM_PROVIDER) private readonly orm: MikroORM) {}
 
   async load(
     options: SubjectVersionsLoaderOptions,
   ): Promise<Generator<SubjectVersion>> {
+    const knex = this.orm.em.getConnection().getKnex();
     const handledVersions = new Set<string>();
 
-    const subjects = await this.knex
+    const subjects = await knex
       .select('*')
       .from(
-        this.knex
+        knex
           .select([
-            'subjects.id',
-            'subjects.group_id',
-            'subjects.name',
-            'subjects.time_starts_at',
-            'subjects.periodicity_type',
-            'subjects.periodicity_data',
-            'subjects.time_duration',
-            'subjects.required_teachers',
-            'subjects.created_at as active_since',
-            this.knex.raw(
-              'LEAD(subjects_log.created_at) OVER (PARTITION BY subjects_log.subject_id ORDER BY subjects_log.created_at ASC) as active_till',
+            'subject.id',
+            'subject.group_id',
+            'subject_log.name',
+            'subject_log.time_starts_at',
+            'subject_log.recurrence_type',
+            'subject_log.recurrence_week1',
+            'subject_log.recurrence_week2',
+            'subject_log.recurrence_days',
+            'subject_log.time_duration',
+            'subject_log.required_teachers',
+            'subject_log.created_at as active_since',
+            knex.raw(
+              'LEAD(subject_log.created_at) OVER (PARTITION BY subject_log.subject_id ORDER BY subject_log.created_at ASC) as active_till',
             ),
-            'subjects.created_at',
+            'subject.created_at',
           ])
-          .innerJoin('subjects_log', 'subjects_log.subject_id', 'subjects.id')
-          .from('subjects')
-          .where('subjects.school_id', options.schoolId)
-          .as('versions'),
+          .innerJoin('subject_log', 'subject_log.subject_id', 'subject.id')
+          .from('subject')
+          .where('subject.school_id', options.schoolId)
+          .as('version'),
       )
       .where((query1) => {
         query1
@@ -71,9 +74,11 @@ export class SubjectVersionsLoader {
 
     return (function* () {
       for (const subject of subjects) {
-        const periodicity = {
-          type: subject.periodicity_type,
-          ...subject.periodicity_data,
+        const recurence = {
+          type: subject.recurrence_type,
+          days: subject.recurrence_days,
+          week1: subject.recurrence_week1,
+          week2: subject.recurrence_week2,
         };
 
         const calculateSince = subject.created_at
@@ -101,7 +106,7 @@ export class SubjectVersionsLoader {
           timeZone: options.timeZone,
           calculateSince,
           calculateTill,
-          periodicity,
+          recurence,
         });
 
         for (const date of dates) {

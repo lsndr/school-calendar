@@ -1,56 +1,56 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { KNEX_PROVIDER, UOW_PROVIDER } from '../../../shared/database';
-import { Uow } from 'yuow';
-import { GroupRepository, SchoolRepository } from '../../database';
-import { Group, GroupId } from '../../domain';
-import { Knex } from 'knex';
+import { MIKROORM_PROVIDER } from '../../../shared/database';
+import { Group, GroupId, School } from '../../domain';
 import { CreateGroupDto } from './create-group.dto';
 import { GroupDto } from './group.dto';
 import { DateTime } from 'luxon';
+import { MikroORM } from '@mikro-orm/postgresql';
 
 @Injectable()
 export class GroupsService {
-  constructor(
-    @Inject(UOW_PROVIDER) private readonly uow: Uow,
-    @Inject(KNEX_PROVIDER) private readonly knex: Knex,
-  ) {}
+  constructor(@Inject(MIKROORM_PROVIDER) private readonly orm: MikroORM) {}
 
-  create(dto: CreateGroupDto) {
-    return this.uow(async (ctx) => {
-      const schoolRepository = ctx.getRepository(SchoolRepository);
-      const school = await schoolRepository.findOne({
+  async create(dto: CreateGroupDto) {
+    const em = this.orm.em.fork();
+    const schoolRepository = em.getRepository(School);
+    const groupRepository = em.getRepository(Group);
+
+    const school = await schoolRepository
+      .createQueryBuilder()
+      .where({
         id: dto.schoolId,
-      });
+      })
+      .getSingleResult();
 
-      if (!school) {
-        throw new Error('School not found');
-      }
+    if (!school) {
+      throw new Error('School not found');
+    }
 
-      const id = GroupId.create();
-      const name = dto.name;
-      const now = DateTime.now();
+    const id = GroupId.create();
+    const name = dto.name;
+    const now = DateTime.now();
 
-      const group = Group.create({
-        id,
-        name,
-        school: school,
-        now,
-      });
+    const group = Group.create({
+      id,
+      name,
+      school: school,
+      now,
+    });
 
-      const groupRepository = ctx.getRepository(GroupRepository);
-      groupRepository.add(group);
+    await groupRepository.persistAndFlush(group);
 
-      return new GroupDto({
-        id: group.id.value,
-        name: group.name,
-      });
+    return new GroupDto({
+      id: group.id.value,
+      name: group.name,
     });
   }
 
   async findOne(id: string) {
-    const record = await this.knex
+    const knex = this.orm.em.getConnection().getKnex();
+
+    const record = await knex
       .select(['id', 'name'])
-      .from('groups')
+      .from('group')
       .where('id', id)
       .first();
 

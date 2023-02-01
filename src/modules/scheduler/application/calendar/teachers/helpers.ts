@@ -1,7 +1,7 @@
 import { DateTime } from 'luxon';
 import { RRule, RRuleSet, Frequency } from 'rrule';
 
-type Periodicity =
+type Recurrence =
   | {
       type: 'daily';
     }
@@ -20,7 +20,7 @@ type Periodicity =
     };
 
 type PeriodicityToRruleSetOptions = {
-  periodicity: Periodicity;
+  recurence: Recurrence;
   timeZone: string;
   start: DateTime;
   until?: DateTime;
@@ -55,7 +55,7 @@ function periodicityToRruleSet(options: PeriodicityToRruleSetOptions) {
       ),
     );
 
-  if (options.periodicity.type === 'daily') {
+  if (options.recurence.type === 'daily') {
     rruleSet.rrule(
       new RRule({
         freq: Frequency.DAILY,
@@ -65,17 +65,17 @@ function periodicityToRruleSet(options: PeriodicityToRruleSetOptions) {
         count: 30,
       }),
     );
-  } else if (options.periodicity.type === 'weekly') {
+  } else if (options.recurence.type === 'weekly') {
     rruleSet.rrule(
       new RRule({
         freq: Frequency.WEEKLY,
         dtstart,
         until,
         tzid: options.timeZone,
-        byweekday: options.periodicity.days,
+        byweekday: options.recurence.days,
       }),
     );
-  } else if (options.periodicity.type === 'biweekly') {
+  } else if (options.recurence.type === 'biweekly') {
     rruleSet.rrule(
       new RRule({
         freq: Frequency.WEEKLY,
@@ -83,7 +83,7 @@ function periodicityToRruleSet(options: PeriodicityToRruleSetOptions) {
         dtstart,
         until,
         tzid: options.timeZone,
-        byweekday: options.periodicity.week1,
+        byweekday: options.recurence.week1,
       }),
     );
 
@@ -97,17 +97,17 @@ function periodicityToRruleSet(options: PeriodicityToRruleSetOptions) {
         dtstart: dtstart2,
         until,
         tzid: options.timeZone,
-        byweekday: options.periodicity.week1,
+        byweekday: options.recurence.week1,
       }),
     );
-  } else if (options.periodicity.type === 'monthly') {
+  } else if (options.recurence.type === 'monthly') {
     rruleSet.rrule(
       new RRule({
         freq: Frequency.MONTHLY,
         dtstart,
         until,
         tzid: options.timeZone,
-        bymonthday: options.periodicity.days,
+        bymonthday: options.recurence.days,
       }),
     );
   }
@@ -137,7 +137,7 @@ function* rruleBetween(rruleSet: RRuleSet, from: DateTime, to: DateTime) {
 }
 
 type ExtractDatesFromPeriodicityOptions = {
-  periodicity: Periodicity;
+  recurence: Recurrence;
   calculateSince: DateTime;
   calculateTill?: DateTime;
   timeZone: string;
@@ -152,7 +152,7 @@ export function extractDatesFromPeriodicity(
     timeZone: options.timeZone,
     start: options.calculateSince,
     until: options.calculateTill,
-    periodicity: options.periodicity,
+    recurence: options.recurence,
   });
 
   return rruleBetween(rruleSet, from, to);

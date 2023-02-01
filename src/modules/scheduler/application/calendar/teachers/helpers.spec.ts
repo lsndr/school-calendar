@@ -11,7 +11,7 @@ describe('extractDatesFromPeriodicity', () => {
         zone: 'Europe/Moscow',
       }),
       {
-        periodicity: {
+        recurence: {
           type: 'daily',
         },
         timeZone: 'Europe/Moscow',

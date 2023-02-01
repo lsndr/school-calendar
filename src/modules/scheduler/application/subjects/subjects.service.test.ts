@@ -1,40 +1,26 @@
 import { SubjectsService } from './subjects.service';
 import { Test } from '@nestjs/testing';
-import {
-  knexProvider,
-  uowProvider,
-  KNEX_PROVIDER,
-  UOW_PROVIDER,
-} from '../../../shared/database';
-import { Knex } from 'knex';
-import { recreateDb } from '../../../../../test-utils';
+import { MIKROORM_PROVIDER } from '../../../shared/database';
 import { TimeIntervalDto } from './time-interval.dto';
 import { Group, GroupId, School, SchoolId, TimeZone } from '../../domain';
-import { Uow } from 'yuow';
-import { GroupRepository, SchoolRepository } from '../../database';
-import { WeeklyPeriodicityDto } from './weekly-periodicity.dto';
 import { DateTime } from 'luxon';
+import { MikroORM } from '@mikro-orm/postgresql';
+import { WeeklyRecurrenceDto } from './weekly-recurrence.dto';
+import { testMikroormProvider } from '../../../../../test-utils';
 
-describe('Teachers Service', () => {
+describe('Subjects Service', () => {
   let subjectsService: SubjectsService;
   let school: School;
   let group: Group;
-  let knex: Knex;
-  let uow: Uow;
+  let orm: MikroORM;
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
-      controllers: [],
-      providers: [SubjectsService, knexProvider, uowProvider],
+      providers: [SubjectsService, testMikroormProvider],
     }).compile();
 
     subjectsService = moduleRef.get(SubjectsService);
-    knex = moduleRef.get(KNEX_PROVIDER);
-    uow = moduleRef.get(UOW_PROVIDER);
-  });
-
-  beforeEach(async () => {
-    await recreateDb(knex);
+    orm = moduleRef.get(MIKROORM_PROVIDER);
   });
 
   beforeEach(async () => {
@@ -47,10 +33,8 @@ describe('Teachers Service', () => {
       now: DateTime.now(),
     });
 
-    await uow((ctx) => {
-      const schoolRepository = ctx.getRepository(SchoolRepository);
-      schoolRepository.add(school);
-    });
+    const schoolRepository = orm.em.fork().getRepository(School);
+    await schoolRepository.persistAndFlush(school);
   });
 
   beforeEach(async () => {
@@ -62,19 +46,19 @@ describe('Teachers Service', () => {
       now: DateTime.now(),
     });
 
-    await uow((ctx) => {
-      const groupRepository = ctx.getRepository(GroupRepository);
-      groupRepository.add(group);
-    });
+    const groupRepository = orm.em.fork().getRepository(Group);
+    await groupRepository.persistAndFlush(group);
   });
 
   it('should create a subject with weekly periodicity', async () => {
     jest.useFakeTimers();
     jest.setSystemTime(new Date('2023-01-22T12:48:38.529Z'));
 
+    const knex = orm.em.getConnection().getKnex();
+
     const result = await subjectsService.create(group.schoolId.value, {
       name: 'Test Subject',
-      periodicity: new WeeklyPeriodicityDto({
+      recurrence: new WeeklyRecurrenceDto({
         days: [0, 2, 3],
       }),
       time: new TimeIntervalDto({ startsAt: 0, duration: 120 }),
@@ -83,12 +67,12 @@ describe('Teachers Service', () => {
     });
 
     const result2 = await subjectsService.findOne(result.id);
-    const logs = await knex.select('*').from('subjects_log');
+    const logs = await knex.select('*').from('subject_log');
 
     expect(result).toEqual({
       id: expect.any(String),
       name: 'Test Subject',
-      periodicity: expect.objectContaining({
+      recurrence: expect.objectContaining({
         type: 'weekly',
         days: [0, 2, 3],
       }),
@@ -105,7 +89,7 @@ describe('Teachers Service', () => {
       id: result.id,
       name: 'Test Subject',
       groupId: group.id.value,
-      periodicity: expect.objectContaining({
+      recurrence: expect.objectContaining({
         type: 'weekly',
         days: [0, 2, 3],
       }),
@@ -121,11 +105,10 @@ describe('Teachers Service', () => {
       {
         subject_id: result.id,
         name: 'Test Subject',
-        periodicity_type: 'weekly',
-        periodicity_data: {
-          type: 'weekly',
-          days: [0, 2, 3],
-        },
+        recurrence_type: 'weekly',
+        recurrence_days: [0, 2, 3],
+        recurrence_week1: null,
+        recurrence_week2: null,
         time_starts_at: 0,
         time_duration: 120,
         required_teachers: 3,
@@ -143,7 +126,7 @@ describe('Teachers Service', () => {
     const act = () =>
       subjectsService.create('wrong school id', {
         name: 'Test Subject',
-        periodicity: new WeeklyPeriodicityDto({
+        recurrence: new WeeklyRecurrenceDto({
           days: [0, 2, 3],
         }),
         time: new TimeIntervalDto({ startsAt: 0, duration: 120 }),
@@ -157,6 +140,6 @@ describe('Teachers Service', () => {
   });
 
   afterAll(async () => {
-    await knex.destroy();
+    await orm.close();
   });
 });

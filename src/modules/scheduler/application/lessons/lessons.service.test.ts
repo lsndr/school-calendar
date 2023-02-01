@@ -1,13 +1,6 @@
 import { LessonsService } from './lessons.service';
 import { Test } from '@nestjs/testing';
-import {
-  knexProvider,
-  uowProvider,
-  KNEX_PROVIDER,
-  UOW_PROVIDER,
-} from '../../../shared/database';
-import { Knex } from 'knex';
-import { recreateDb } from '../../../../../test-utils';
+import { MIKROORM_PROVIDER } from '../../../shared/database';
 import {
   Group,
   GroupId,
@@ -20,39 +13,29 @@ import {
   TimeZone,
   Subject,
   SubjectId,
-  WeeklyPeriodicity,
+  WeeklyRecurrence,
 } from '../../domain';
 import { DateTime } from 'luxon';
-import { Uow } from 'yuow';
-import {
-  GroupRepository,
-  TeacherRepository,
-  SchoolRepository,
-  SubjectRepository,
-} from '../../database';
+import { MikroORM } from '@mikro-orm/postgresql';
+import { testMikroormProvider } from '../../../../../test-utils';
 
 describe('Lessons Service', () => {
   let lessonsService: LessonsService;
   let school: School;
   let subject: Subject;
   let group: Group;
-  let knex: Knex;
-  let uow: Uow;
   let teacher: Teacher;
+  let orm: MikroORM;
 
   beforeAll(async () => {
+    jest.setTimeout(999999999999);
     const moduleRef = await Test.createTestingModule({
       controllers: [],
-      providers: [LessonsService, knexProvider, uowProvider],
+      providers: [LessonsService, testMikroormProvider],
     }).compile();
 
     lessonsService = moduleRef.get(LessonsService);
-    knex = moduleRef.get(KNEX_PROVIDER);
-    uow = moduleRef.get(UOW_PROVIDER);
-  });
-
-  beforeEach(async () => {
-    await recreateDb(knex);
+    orm = moduleRef.get(MIKROORM_PROVIDER);
   });
 
   beforeEach(async () => {
@@ -63,10 +46,8 @@ describe('Lessons Service', () => {
       now: DateTime.now(),
     });
 
-    await uow(async (ctx) => {
-      const schoolRepository = ctx.getRepository(SchoolRepository);
-      schoolRepository.add(school);
-    });
+    const schoolRepository = orm.em.fork().getRepository(School);
+    await schoolRepository.persistAndFlush(school);
   });
 
   beforeEach(async () => {
@@ -78,10 +59,8 @@ describe('Lessons Service', () => {
       now: DateTime.now(),
     });
 
-    await uow((ctx) => {
-      const groupRepository = ctx.getRepository(GroupRepository);
-      groupRepository.add(group);
-    });
+    const groupRepository = orm.em.fork().getRepository(Group);
+    await groupRepository.persistAndFlush(group);
   });
 
   beforeEach(async () => {
@@ -90,7 +69,7 @@ describe('Lessons Service', () => {
       name: 'Test School',
       school,
       group,
-      periodicity: WeeklyPeriodicity.create([1, 2, 4]),
+      recurrence: WeeklyRecurrence.create([1, 2, 4]),
       time: TimeInterval.create({
         startsAt: 120,
         duration: 60,
@@ -99,10 +78,8 @@ describe('Lessons Service', () => {
       now: DateTime.now(),
     });
 
-    await uow(async (ctx) => {
-      const subjectRepository = ctx.getRepository(SubjectRepository);
-      subjectRepository.add(subject);
-    });
+    const subjectRepository = orm.em.fork().getRepository(Subject);
+    await subjectRepository.persistAndFlush(subject);
   });
 
   beforeEach(async () => {
@@ -113,10 +90,8 @@ describe('Lessons Service', () => {
       now: DateTime.now(),
     });
 
-    await uow(async (ctx) => {
-      const teacherRepository = ctx.getRepository(TeacherRepository);
-      teacherRepository.add(teacher);
-    });
+    const teacherRepository = orm.em.fork().getRepository(Teacher);
+    await teacherRepository.persistAndFlush(teacher);
   });
 
   it('should create an lesson', async () => {
@@ -147,7 +122,12 @@ describe('Lessons Service', () => {
       subjectId: subject.id.value,
       createdAt: '2023-01-23T14:00:28.460+00:00',
       updatedAt: '2023-01-23T14:00:28.460+00:00',
-      teacherIds: [teacher.id.value],
+      assignedTeachers: [
+        {
+          assignedAt: '2023-01-23T14:00:28.460+00:00',
+          teacherId: teacher.id.value,
+        },
+      ],
       time: expect.objectContaining({
         duration: 123,
         startsAt: 45,
@@ -158,7 +138,12 @@ describe('Lessons Service', () => {
       subjectId: subject.id.value,
       createdAt: '2023-01-23T14:00:28.460+00:00',
       updatedAt: '2023-01-23T14:00:28.460+00:00',
-      teacherIds: [teacher.id.value],
+      assignedTeachers: [
+        {
+          assignedAt: '2023-01-23T14:00:28.460+00:00',
+          teacherId: teacher.id.value,
+        },
+      ],
       time: expect.objectContaining({
         duration: 123,
         startsAt: 45,
@@ -169,6 +154,6 @@ describe('Lessons Service', () => {
   });
 
   afterAll(async () => {
-    await knex.destroy();
+    await orm.close();
   });
 });

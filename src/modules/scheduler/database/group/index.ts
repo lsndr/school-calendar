@@ -1,2 +1,1 @@
-export * from './group.repository';
-export * from './group-id.hydrator';
+export * from './group-id.type';

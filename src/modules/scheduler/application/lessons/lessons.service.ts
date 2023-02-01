@@ -1,20 +1,14 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { KNEX_PROVIDER, UOW_PROVIDER } from '../../../shared/database';
-import { Uow } from 'yuow';
-import {
-  LessonRepository,
-  TeacherRepository,
-  SchoolRepository,
-  SubjectRepository,
-} from '../../database';
+import { MIKROORM_PROVIDER } from '../../../shared/database';
 import {
   Lesson,
   LessonId,
   Teacher,
   ExactDate,
+  School,
   TimeInterval,
+  Subject,
 } from '../../domain';
-import { Knex } from 'knex';
 import { DateTime } from 'luxon';
 import { CreateLessonDto } from './create-lesson.dto';
 import { LessonDto } from './lesson.dto';
@@ -22,305 +16,333 @@ import { TimeIntervalDto } from '../subjects/time-interval.dto';
 import { UpdateLessonDto } from './update-lesson.dto';
 import { AssignTeachersDto } from './assign-teachers.dto';
 import { UnassignTeachersDto } from './unassign-teachers.dto';
+import { MikroORM } from '@mikro-orm/postgresql';
 
 @Injectable()
 export class LessonsService {
-  constructor(
-    @Inject(UOW_PROVIDER) private readonly uow: Uow,
-    @Inject(KNEX_PROVIDER) private readonly knex: Knex,
-  ) {}
+  constructor(@Inject(MIKROORM_PROVIDER) private readonly orm: MikroORM) {}
 
-  create(schoolId: string, subjectId: string, dto: CreateLessonDto) {
-    return this.uow(async (ctx) => {
-      const schoolRepository = ctx.getRepository(SchoolRepository);
-      const subjectRepository = ctx.getRepository(SubjectRepository);
-      const teacherRepository = ctx.getRepository(TeacherRepository);
-      const lessonRepository = ctx.getRepository(LessonRepository);
+  async create(schoolId: string, subjectId: string, dto: CreateLessonDto) {
+    const em = this.orm.em.fork();
 
-      const [school, subject, teachers] = await Promise.all([
-        schoolRepository.findOne({
-          id: schoolId,
-        }),
-        subjectRepository.findOne({
-          id: subjectId,
-          schoolId: schoolId,
-        }),
-        teacherRepository.findMany({
-          ids: dto.teacherIds,
-          schoolId: schoolId,
-        }),
-      ]);
+    const schoolRepository = em.getRepository(School);
+    const subjectRepository = em.getRepository(Subject);
+    const teacherRepository = em.getRepository(Teacher);
+    const lessonRepository = em.getRepository(Lesson);
 
-      if (!school) {
-        throw new Error('School not found');
-      }
+    const [school, subject, teachers] = await Promise.all([
+      schoolRepository
+        .createQueryBuilder()
+        .where({ id: schoolId })
+        .getSingleResult(),
+      subjectRepository
+        .createQueryBuilder()
+        .where({ id: subjectId, school_id: schoolId })
+        .getSingleResult(),
+      teacherRepository
+        .createQueryBuilder()
+        .where({ id: { $in: dto.teacherIds }, school_id: schoolId })
+        .getResult(),
+    ]);
 
-      if (!subject) {
-        throw new Error('Subject not found');
-      }
+    if (!school) {
+      throw new Error('School not found');
+    }
 
-      const date = ExactDate.createFromISO(dto.date);
-      const id = LessonId.create(subject.id, date);
-      const time = TimeInterval.create(dto.time);
-      const now = DateTime.now();
+    if (!subject) {
+      throw new Error('Subject not found');
+    }
 
-      const lesson = Lesson.create({
-        id,
-        school,
-        time,
-        now,
-      });
+    const id = LessonId.create();
+    const date = ExactDate.createFromISO(dto.date);
+    const time = TimeInterval.create(dto.time);
+    const now = DateTime.now();
 
-      lessonRepository.add(lesson);
+    const lesson = Lesson.create({
+      id,
+      date,
+      subject,
+      school,
+      time,
+      now,
+    });
 
-      for (const teacher of teachers) {
-        lesson.assignTeacher(teacher, subject, school, now);
-      }
+    for (const teacher of teachers) {
+      lesson.assignTeacher(teacher, subject, school, now);
+    }
 
-      const teacherIds = Array.from(lesson.teacherIds).map((id) => id.value);
+    await lessonRepository.persistAndFlush(lesson);
 
-      return new LessonDto({
-        subjectId: lesson.id.subjectId.value,
-        date: lesson.id.date.toDateTime().toISODate(),
-        teacherIds,
-        time: new TimeIntervalDto(lesson.time),
-        updatedAt: lesson.updatedAt.toISO(),
-        createdAt: lesson.createdAt.toISO(),
-      });
+    const assignedTeachers = lesson.assignedTeachers.map((teacher) => ({
+      teacherId: teacher.teacherId.value,
+      assignedAt: teacher.assignedAt.toISO(),
+    }));
+
+    return new LessonDto({
+      subjectId: lesson.subjectId.value,
+      date: lesson.date.toDateTime().toISODate(),
+      assignedTeachers,
+      time: new TimeIntervalDto(lesson.time),
+      updatedAt: lesson.updatedAt.toISO(),
+      createdAt: lesson.createdAt.toISO(),
     });
   }
 
-  update(
+  async update(
     schoolId: string,
     subjectId: string,
     date: string,
     dto: UpdateLessonDto,
   ) {
-    return this.uow(async (ctx) => {
-      const schoolRepository = ctx.getRepository(SchoolRepository);
-      const subjectRepository = ctx.getRepository(SubjectRepository);
-      const teacherRepository = ctx.getRepository(TeacherRepository);
-      const lessonRepository = ctx.getRepository(LessonRepository);
+    const em = this.orm.em.fork();
 
-      const [lesson, school, subject, teachers] = await Promise.all([
-        lessonRepository.findOne({
-          id: {
-            subjectId,
-            date,
-          },
-        }),
-        schoolRepository.findOne({
-          id: schoolId,
-        }),
-        subjectRepository.findOne({
-          id: subjectId,
-          schoolId: schoolId,
-        }),
-        teacherRepository.findMany({
-          ids: dto.teacherIds,
-          schoolId: schoolId,
-        }),
-      ]);
+    const schoolRepository = em.getRepository(School);
+    const subjectRepository = em.getRepository(Subject);
+    const teacherRepository = em.getRepository(Teacher);
+    const lessonRepository = em.getRepository(Lesson);
 
-      if (!lesson) {
-        throw new Error('Lesson not found');
-      }
+    const [lesson, school, subject, teachers] = await Promise.all([
+      lessonRepository
+        .createQueryBuilder()
+        .where({
+          subjectId,
+          date,
+          schoolId,
+        })
+        .getSingleResult(),
+      schoolRepository
+        .createQueryBuilder()
+        .where({ id: schoolId })
+        .getSingleResult(),
+      subjectRepository
+        .createQueryBuilder()
+        .where({ id: subjectId, schoolId: schoolId })
+        .getSingleResult(),
+      teacherRepository
+        .createQueryBuilder()
+        .where({ id: { $in: dto.teacherIds }, schoolId: schoolId })
+        .getResult(),
+    ]);
 
-      if (!school) {
-        throw new Error('School not found');
-      }
+    if (!lesson) {
+      throw new Error('Lesson not found');
+    }
 
-      if (!subject) {
-        throw new Error('Subject not found');
-      }
+    if (!school) {
+      throw new Error('School not found');
+    }
 
-      const now = DateTime.now();
+    if (!subject) {
+      throw new Error('Subject not found');
+    }
 
-      if (dto.time !== undefined) {
-        const time = TimeInterval.create(dto.time);
-        lesson.setTime(time, now);
-      }
+    const now = DateTime.now();
 
-      if (dto.teacherIds !== undefined) {
-        const teachersMap = teachers.reduce<Map<string, Teacher>>(
-          (map, teacher) => {
-            lesson.assignTeacher(teacher, subject, school, now);
+    if (dto.time !== undefined) {
+      const time = TimeInterval.create(dto.time);
+      lesson.setTime(time, now);
+    }
 
-            return map.set(teacher.id.value, teacher);
-          },
-          new Map(),
-        );
+    if (dto.teacherIds !== undefined) {
+      const teachersMap = teachers.reduce<Map<string, Teacher>>(
+        (map, teacher) => {
+          lesson.assignTeacher(teacher, subject, school, now);
 
-        for (const id of lesson.teacherIds) {
-          if (teachersMap.has(id.value)) {
-            continue;
-          }
+          return map.set(teacher.id.value, teacher);
+        },
+        new Map(),
+      );
 
-          lesson.unassignTeacher(id.value, school, now);
+      for (const teacher of lesson.assignedTeachers) {
+        if (teachersMap.has(teacher.teacherId.value)) {
+          continue;
         }
+
+        lesson.unassignTeacher(teacher.teacherId.value, school, now);
       }
+    }
 
-      const teacherIds = lesson.teacherIds.map((id) => id.value);
+    const assignedTeachers = lesson.assignedTeachers.map((teacher) => ({
+      teacherId: teacher.teacherId.value,
+      assignedAt: teacher.assignedAt.toISO(),
+    }));
 
-      return new LessonDto({
-        subjectId: lesson.id.subjectId.value,
-        date: lesson.id.date.toDateTime().toISODate(),
-        teacherIds,
-        time: new TimeIntervalDto(lesson.time),
-        updatedAt: lesson.updatedAt.toISO(),
-        createdAt: lesson.createdAt.toISO(),
-      });
+    return new LessonDto({
+      subjectId: lesson.subjectId.value,
+      date: lesson.date.toDateTime().toISODate(),
+      assignedTeachers,
+      time: new TimeIntervalDto(lesson.time),
+      updatedAt: lesson.updatedAt.toISO(),
+      createdAt: lesson.createdAt.toISO(),
     });
   }
 
-  assignTeacher(
+  async assignTeacher(
     schoolId: string,
     subjectId: string,
     date: string,
     dto: AssignTeachersDto,
   ) {
-    return this.uow(async (ctx) => {
-      const schoolRepository = ctx.getRepository(SchoolRepository);
-      const subjectRepository = ctx.getRepository(SubjectRepository);
-      const teacherRepository = ctx.getRepository(TeacherRepository);
-      const lessonRepository = ctx.getRepository(LessonRepository);
+    const em = this.orm.em.fork();
 
-      const [lesson, school, subject, teachers] = await Promise.all([
-        lessonRepository.findOne({
-          id: {
-            subjectId,
-            date,
-          },
-        }),
-        schoolRepository.findOne({
-          id: schoolId,
-        }),
-        subjectRepository.findOne({
-          id: subjectId,
-          schoolId: schoolId,
-        }),
-        teacherRepository.findMany({
-          ids: dto.teacherIds,
-          schoolId: schoolId,
-        }),
-      ]);
+    const schoolRepository = em.getRepository(School);
+    const subjectRepository = em.getRepository(Subject);
+    const teacherRepository = em.getRepository(Teacher);
+    const lessonRepository = em.getRepository(Lesson);
 
-      if (!lesson) {
-        throw new Error('Lesson not found');
-      }
+    const [lesson, school, subject, teachers] = await Promise.all([
+      lessonRepository
+        .createQueryBuilder()
+        .where({
+          subjectId,
+          date,
+          schoolId,
+        })
+        .getSingleResult(),
+      schoolRepository
+        .createQueryBuilder()
+        .where({ id: schoolId })
+        .getSingleResult(),
+      subjectRepository
+        .createQueryBuilder()
+        .where({ id: subjectId, schoolId: schoolId })
+        .getSingleResult(),
+      teacherRepository
+        .createQueryBuilder()
+        .where({ id: { $in: dto.teacherIds }, schoolId: schoolId })
+        .getResult(),
+    ]);
 
-      if (!school) {
-        throw new Error('School not found');
-      }
+    if (!lesson) {
+      throw new Error('Lesson not found');
+    }
 
-      if (!subject) {
-        throw new Error('Subject not found');
-      }
+    if (!school) {
+      throw new Error('School not found');
+    }
 
-      const now = DateTime.now();
+    if (!subject) {
+      throw new Error('Subject not found');
+    }
 
-      for (const teacher of teachers) {
-        lesson.assignTeacher(teacher, subject, school, now);
-      }
+    const now = DateTime.now();
 
-      const teacherIds = lesson.teacherIds.map((id) => id.value);
+    for (const teacher of teachers) {
+      lesson.assignTeacher(teacher, subject, school, now);
+    }
 
-      return new LessonDto({
-        subjectId: lesson.id.subjectId.value,
-        date: lesson.id.date.toDateTime().toISODate(),
-        teacherIds,
-        time: new TimeIntervalDto(lesson.time),
-        updatedAt: lesson.updatedAt.toISO(),
-        createdAt: lesson.createdAt.toISO(),
-      });
+    const assignedTeachers = lesson.assignedTeachers.map((teacher) => ({
+      teacherId: teacher.teacherId.value,
+      assignedAt: teacher.assignedAt.toISO(),
+    }));
+
+    return new LessonDto({
+      subjectId: lesson.subjectId.value,
+      date: lesson.date.toDateTime().toISODate(),
+      assignedTeachers,
+      time: new TimeIntervalDto(lesson.time),
+      updatedAt: lesson.updatedAt.toISO(),
+      createdAt: lesson.createdAt.toISO(),
     });
   }
 
-  unassignTeacher(
+  async unassignTeacher(
     schoolId: string,
     subjectId: string,
     date: string,
     dto: UnassignTeachersDto,
   ) {
-    return this.uow(async (ctx) => {
-      const schoolRepository = ctx.getRepository(SchoolRepository);
-      const lessonRepository = ctx.getRepository(LessonRepository);
+    const em = this.orm.em.fork();
 
-      const [lesson, school] = await Promise.all([
-        lessonRepository.findOne({
-          id: {
-            subjectId,
-            date,
-          },
+    const schoolRepository = em.getRepository(School);
+    const lessonRepository = em.getRepository(Lesson);
+
+    const [lesson, school] = await Promise.all([
+      lessonRepository
+        .createQueryBuilder()
+        .where({
+          subjectId,
+          date,
           schoolId,
-        }),
-        schoolRepository.findOne({
-          id: schoolId,
-        }),
-      ]);
+        })
+        .getSingleResult(),
+      schoolRepository
+        .createQueryBuilder()
+        .where({ id: schoolId })
+        .getSingleResult(),
+    ]);
 
-      if (!lesson) {
-        throw new Error('Lesson not found');
-      }
+    if (!lesson) {
+      throw new Error('Lesson not found');
+    }
 
-      if (!school) {
-        throw new Error('School not found');
-      }
+    if (!school) {
+      throw new Error('School not found');
+    }
 
-      const now = DateTime.now();
+    const now = DateTime.now();
 
-      for (const id of dto.teacherIds) {
-        lesson.unassignTeacher(id, school, now);
-      }
+    for (const id of dto.teacherIds) {
+      lesson.unassignTeacher(id, school, now);
+    }
 
-      const teacherIds = lesson.teacherIds.map((id) => id.value);
+    const assignedTeachers = lesson.assignedTeachers.map((teacher) => ({
+      teacherId: teacher.teacherId.value,
+      assignedAt: teacher.assignedAt.toISO(),
+    }));
 
-      return new LessonDto({
-        subjectId: lesson.id.subjectId.value,
-        date: lesson.id.date.toDateTime().toISODate(),
-        teacherIds,
-        time: new TimeIntervalDto(lesson.time),
-        updatedAt: lesson.updatedAt.toISO(),
-        createdAt: lesson.createdAt.toISO(),
-      });
+    return new LessonDto({
+      subjectId: lesson.subjectId.value,
+      date: lesson.date.toDateTime().toISODate(),
+      assignedTeachers,
+      time: new TimeIntervalDto(lesson.time),
+      updatedAt: lesson.updatedAt.toISO(),
+      createdAt: lesson.createdAt.toISO(),
     });
   }
 
   async findOne(schoolId: string, subjectId: string, date: string) {
-    const dateTime = DateTime.fromISO(date);
+    const knex = this.orm.em.getConnection().getKnex();
 
-    const [lessonRecord, teacherRecords] = await Promise.all([
-      this.knex
-        .select([
-          'lessons.date',
-          'lessons.subject_id',
-          'lessons.time_starts_at',
-          'lessons.time_duration',
-          'lessons.created_at',
-          'lessons.updated_at',
-        ])
-        .from('lessons')
-        .innerJoin('subjects', 'lessons.subject_id', 'subjects.id')
-        .where('lessons.subject_id', subjectId)
-        .where('subjects.school_id', schoolId)
-        .where('lessons.date', dateTime.toSQLDate())
-        .first(),
-      this.knex
-        .select('teacher_id')
-        .from('lessons_teachers')
-        .where('subject_id', subjectId),
-    ]);
+    const lessonRecord = await knex
+      .select([
+        'lesson.date',
+        'lesson.subject_id',
+        'lesson.time_starts_at',
+        'lesson.time_duration',
+        'lesson.created_at',
+        'lesson.updated_at',
+        knex
+          .select(
+            knex.raw(
+              `ARRAY_AGG(json_build_object('teacher_id', lesson_teacher.teacher_id, 'assigned_at', lesson_teacher.assigned_at))`,
+            ),
+          )
+          .from('lesson_teacher')
+          .whereRaw('lesson_teacher.lesson_id = lesson.id')
+          .as('assigned_teachers'),
+      ])
+      .from('lesson')
+      .where('lesson.subject_id', subjectId)
+      .where('lesson.school_id', schoolId)
+      .where('lesson.date', date)
+      .first();
 
     if (!lessonRecord) {
       return;
     }
 
-    const teacherIds = teacherRecords.map((record: any) => record.teacher_id);
+    const assignedTeachers = lessonRecord.assigned_teachers.map(
+      (teacher: any) => ({
+        teacherId: teacher.teacher_id,
+        assignedAt: DateTime.fromISO(teacher.assigned_at).toISO(),
+      }),
+    );
 
     return new LessonDto({
-      teacherIds,
+      assignedTeachers,
       subjectId: lessonRecord.subject_id,
-      date: lessonRecord.date.toISODate(),
+      date: lessonRecord.date,
       time: new TimeIntervalDto({
         startsAt: lessonRecord.time_starts_at,
         duration: lessonRecord.time_duration,

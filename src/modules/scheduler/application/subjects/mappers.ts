@@ -1,115 +1,112 @@
 import {
-  BiWeeklyPeriodicity,
-  DailyPeriodicity,
-  MonthlyPeriodicity,
-  WeeklyPeriodicity,
+  BiWeeklyRecurrence,
+  DailyRecurrence,
+  MonthlyRecurrence,
+  RecurrenceType,
+  WeeklyRecurrence,
 } from '../../domain';
-import { BiWeeklyPeriodicityDto } from './biweekly-periodicity.dto';
-import { DailyPeriodicityDto } from './daily-periodicity.dto';
-import { MonthlyPeriodicityDto } from './monthly-periodicity.dto';
-import { WeeklyPeriodicityDto } from './weekly-periodicity.dto';
+import { BiWeeklyRecurrenceDto } from './biweekly-recurrence.dto';
+import { DailyRecurrenceDto } from './daily-recurrence.dto';
+import { MonthlyRecurrenceDto } from './monthly-recurrence.dto';
+import { WeeklyRecurrenceDto } from './weekly-recurrence.dto';
 
-export function mapPeriodicityToDto(dto: DailyPeriodicity): DailyPeriodicityDto;
-export function mapPeriodicityToDto(
-  peridoicity: WeeklyPeriodicity,
-): WeeklyPeriodicityDto;
-export function mapPeriodicityToDto(
-  peridoicity: BiWeeklyPeriodicity,
-): BiWeeklyPeriodicityDto;
-export function mapPeriodicityToDto(
-  peridoicity: MonthlyPeriodicity,
-): MonthlyPeriodicityDto;
-export function mapPeriodicityToDto(
-  peridoicity:
-    | DailyPeriodicity
-    | WeeklyPeriodicity
-    | BiWeeklyPeriodicity
-    | MonthlyPeriodicity,
+export function mapRecurrenceToDto(
+  recurrence: DailyRecurrence,
+): DailyRecurrenceDto;
+export function mapRecurrenceToDto(
+  recurrence: WeeklyRecurrence,
+): WeeklyRecurrenceDto;
+export function mapRecurrenceToDto(
+  recurrence: BiWeeklyRecurrence,
+): BiWeeklyRecurrenceDto;
+export function mapRecurrenceToDto(
+  recurrence: MonthlyRecurrence,
+): MonthlyRecurrenceDto;
+export function mapRecurrenceToDto(
+  recurrence:
+    | DailyRecurrence
+    | WeeklyRecurrence
+    | BiWeeklyRecurrence
+    | MonthlyRecurrence,
 ):
-  | DailyPeriodicityDto
-  | WeeklyPeriodicityDto
-  | BiWeeklyPeriodicityDto
-  | MonthlyPeriodicityDto;
-export function mapPeriodicityToDto(
-  peridoicity:
-    | DailyPeriodicity
-    | WeeklyPeriodicity
-    | BiWeeklyPeriodicity
-    | MonthlyPeriodicity,
+  | DailyRecurrenceDto
+  | WeeklyRecurrenceDto
+  | BiWeeklyRecurrenceDto
+  | MonthlyRecurrenceDto;
+export function mapRecurrenceToDto(
+  recurrence:
+    | DailyRecurrence
+    | WeeklyRecurrence
+    | BiWeeklyRecurrence
+    | MonthlyRecurrence,
 ) {
-  if (peridoicity.type === 'daily') {
-    return new DailyPeriodicityDto();
-  } else if (peridoicity.type === 'weekly') {
-    return new WeeklyPeriodicityDto({
-      days: Array.from(peridoicity.days),
+  if (recurrence.type === RecurrenceType.Daily) {
+    return new DailyRecurrenceDto();
+  } else if (recurrence.type === RecurrenceType.Weekly) {
+    return new WeeklyRecurrenceDto({
+      days: Array.from(recurrence.days),
     });
-  } else if (peridoicity.type === 'biweekly') {
-    return new BiWeeklyPeriodicityDto({
-      week1: Array.from(peridoicity.week1),
-      week2: Array.from(peridoicity.week2),
+  } else if (recurrence.type === 'biweekly') {
+    return new BiWeeklyRecurrenceDto({
+      week1: [...recurrence.week1],
+      week2: [...recurrence.week2],
     });
-  } else if (peridoicity.type === 'monthly') {
-    return new MonthlyPeriodicityDto({
-      days: Array.from(peridoicity.days),
+  } else if (recurrence.type === 'monthly') {
+    return new MonthlyRecurrenceDto({
+      days: Array.from(recurrence.days),
     });
   } else {
     throw new Error('Unknown periodicity type');
   }
 }
 
-export function mapDtoToPeriodicity(dto: DailyPeriodicityDto): DailyPeriodicity;
-export function mapDtoToPeriodicity(
-  dto: WeeklyPeriodicityDto,
-): WeeklyPeriodicity;
-export function mapDtoToPeriodicity(
-  dto: BiWeeklyPeriodicityDto,
-): BiWeeklyPeriodicity;
-export function mapDtoToPeriodicity(
-  dto: MonthlyPeriodicityDto,
-): MonthlyPeriodicity;
-export function mapDtoToPeriodicity(
+export function mapDtoToRecurrence(dto: DailyRecurrenceDto): DailyRecurrence;
+export function mapDtoToRecurrence(dto: WeeklyRecurrenceDto): WeeklyRecurrence;
+export function mapDtoToRecurrence(
+  dto: BiWeeklyRecurrenceDto,
+): BiWeeklyRecurrence;
+export function mapDtoToRecurrence(
+  dto: MonthlyRecurrenceDto,
+): MonthlyRecurrence;
+export function mapDtoToRecurrence(
   dto:
-    | DailyPeriodicityDto
-    | WeeklyPeriodicityDto
-    | BiWeeklyPeriodicityDto
-    | MonthlyPeriodicityDto,
-):
-  | DailyPeriodicity
-  | MonthlyPeriodicity
-  | WeeklyPeriodicity
-  | BiWeeklyPeriodicity;
-export function mapDtoToPeriodicity(
+    | DailyRecurrenceDto
+    | WeeklyRecurrenceDto
+    | BiWeeklyRecurrenceDto
+    | MonthlyRecurrenceDto,
+): DailyRecurrence | MonthlyRecurrence | WeeklyRecurrence | BiWeeklyRecurrence;
+export function mapDtoToRecurrence(
   dto:
-    | DailyPeriodicityDto
-    | WeeklyPeriodicityDto
-    | BiWeeklyPeriodicityDto
-    | MonthlyPeriodicityDto,
+    | DailyRecurrenceDto
+    | WeeklyRecurrenceDto
+    | BiWeeklyRecurrenceDto
+    | MonthlyRecurrenceDto,
 ) {
   if (dto.type === 'daily') {
-    return DailyPeriodicity.create();
+    return DailyRecurrence.create();
   } else if (dto.type === 'weekly') {
-    return WeeklyPeriodicity.create(dto.days);
+    return WeeklyRecurrence.create(dto.days);
   } else if (dto.type === 'biweekly') {
-    return BiWeeklyPeriodicity.create({
+    return BiWeeklyRecurrence.create({
       week1: dto.week1,
       week2: dto.week2,
     });
   } else if (dto.type === 'monthly') {
-    return MonthlyPeriodicity.create(dto.days);
+    return MonthlyRecurrence.create(dto.days);
   } else {
     throw new Error('Unknown periodicity type');
   }
 }
 
-export function mapRawPeriodicityToDto(type: any, data: any) {
+export function mapRawRecurrenceToDto(type: any, data: any) {
   if (type === 'daily') {
-    return new DailyPeriodicityDto();
+    return new DailyRecurrenceDto();
   } else if (type === 'weekly') {
-    return new WeeklyPeriodicityDto(data);
+    return new WeeklyRecurrenceDto(data);
   } else if (type === 'biweekly') {
-    return new BiWeeklyPeriodicityDto(data);
+    return new BiWeeklyRecurrenceDto(data);
   } else if (type === 'monthly') {
-    return new MonthlyPeriodicityDto(data);
+    return new MonthlyRecurrenceDto(data);
   } else {
     throw new Error('Unknown periodicity type');
   }

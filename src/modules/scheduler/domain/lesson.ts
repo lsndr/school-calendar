@@ -1,85 +1,133 @@
+import {
+  Collection,
+  Embedded,
+  Entity,
+  OneToMany,
+  PrimaryKey,
+  Property,
+} from '@mikro-orm/core';
 import * as assert from 'assert';
 import { DateTime } from 'luxon';
-import {
-  Aggregate,
-  AggregateState,
-  AggregateEvents,
-} from '../../shared/domain';
+import { AggregateState, AggregateEvents } from '../../shared/domain';
+import { SchoolIdType, SubjectIdType } from '../database';
+import { LessonIdType } from '../database/lesson';
+import { ExactDateType } from '../database/lesson/exact-date.type';
+import { AssignedTeacher } from './assigned-teacher';
+import { AssignedTeacherId } from './assigned-teacher-id';
 import { LessonCreatedEvent } from './lesson-created.event';
 import { LessonId } from './lesson-id';
 import { LessonUpdatedEvent } from './lesson-updated.event';
 import { Teacher } from './teacher';
-import { TeacherId } from './teacher-id';
 import { ExactDate } from './exact-date';
 import { School } from './school';
 import { SchoolId } from './school-id';
 import { TimeInterval } from './time-interval';
 import { Subject } from './subject';
+import { SubjectId } from './subject-id';
+
+abstract class LessonState extends AggregateState {
+  @PrimaryKey({ name: 'id', type: LessonIdType })
+  protected _id!: LessonId;
+
+  @Property({ name: 'subject_id', type: SubjectIdType })
+  protected _subjectId!: SubjectId;
+
+  @Property({ name: 'date', type: ExactDateType })
+  protected _date!: ExactDate;
+
+  @Property({ name: 'school_id', type: SchoolIdType })
+  protected _schoolId!: SchoolId;
+
+  @OneToMany({
+    entity: () => AssignedTeacher,
+    mappedBy: 'lesson',
+    orphanRemoval: true,
+  })
+  protected _assignedTeachers!: Collection<AssignedTeacher>;
+
+  @Embedded(() => TimeInterval, { prefix: 'time_' })
+  protected _time!: TimeInterval;
+
+  @Property({ name: 'created_at' })
+  protected _createdAt!: DateTime;
+
+  @Property({ name: 'updated_at' })
+  protected _updatedAt!: DateTime;
+
+  @Property({ name: 'version', version: true })
+  protected _version!: number;
+}
 
 export type CreateLesson = {
   id: LessonId;
+  subject: Subject;
+  date: ExactDate;
   time: TimeInterval;
   school: School;
   now: DateTime;
 };
 
-export interface LessonState extends AggregateState<LessonId> {
-  time: TimeInterval;
-  schoolId: SchoolId;
-  teacherIds: Map<string, TeacherId>;
-  createdAt: DateTime;
-  updatedAt: DateTime;
-}
-
-export class Lesson extends Aggregate<LessonId, LessonState> {
-  get time() {
-    return this.state.time;
+@Entity({ tableName: 'lesson' })
+export class Lesson extends LessonState {
+  get subjectId() {
+    return this._subjectId;
   }
 
-  get teacherIds(): ReadonlyArray<TeacherId> {
-    return Array.from(this.state.teacherIds.values());
+  get date() {
+    return this._date;
+  }
+
+  get time() {
+    return this._time;
+  }
+
+  get assignedTeachers(): ReadonlyArray<
+    Readonly<Omit<AssignedTeacher, 'lesson'>>
+  > {
+    return this._assignedTeachers.getItems();
   }
 
   get schoolId() {
-    return this.state.schoolId;
+    return this._schoolId;
   }
 
   get updatedAt() {
-    return this.state.updatedAt;
+    return this._updatedAt;
   }
 
   get createdAt() {
-    return this.state.createdAt;
+    return this._createdAt;
   }
 
   static create(data: CreateLesson) {
-    this.assertNotInPast(data.id.date, data.time, data.school, data.now);
+    this.assertNotInPast(data.date, data.time, data.school, data.now);
 
     const eventsManager = new AggregateEvents();
-    const lesson = new this(
-      {
-        id: data.id,
-        time: data.time,
-        schoolId: data.school.id,
-        teacherIds: new Map(),
-        createdAt: data.now,
-        updatedAt: data.now,
-      },
-      eventsManager,
+    const lesson = new this();
+
+    lesson._id = data.id;
+    lesson._subjectId = data.subject.id;
+    lesson._time = data.time;
+    lesson._date = data.date;
+    lesson._schoolId = data.school.id;
+    lesson._createdAt = data.now;
+    lesson._updatedAt = data.now;
+    lesson._assignedTeachers = new Collection<AssignedTeacher>(
+      lesson,
     );
 
     eventsManager.add(
       new LessonCreatedEvent({
         id: {
-          subjectId: lesson.id.subjectId.value,
+          subjectId: lesson.subjectId.value,
           date: {
-            day: lesson.id.date.day,
-            month: lesson.id.date.month,
-            year: lesson.id.date.year,
+            day: lesson.date.day,
+            month: lesson.date.month,
+            year: lesson.date.year,
           },
         },
         time: lesson.time,
-        teacherIds: Array.from(lesson.teacherIds).map((id) => id.value),
+        teacherIds: [],
         createdAt: lesson.createdAt.toISO(),
         updatedAt: lesson.updatedAt.toISO(),
       }),
@@ -89,7 +137,7 @@ export class Lesson extends Aggregate<LessonId, LessonState> {
   }
 
   protected assertLessonNotInPast(school: School, now: DateTime) {
-    Lesson.assertNotInPast(this.id.date, this.time, school, now);
+    Lesson.assertNotInPast(this.date, this.time, school, now);
   }
 
   assignTeacher(
@@ -98,12 +146,16 @@ export class Lesson extends Aggregate<LessonId, LessonState> {
     school: School,
     now: DateTime,
   ) {
+    if (this.isTeacherAssigned(teacher.id.value)) {
+      return;
+    }
+
     assert.ok(
       subject.schoolId.value === this.schoolId.value,
       "Subject must belong to the lesson's school",
     );
     assert.ok(
-      this.state.teacherIds.size + 1 <= subject.requiredTeachers.amount,
+      this._assignedTeachers.length + 1 <= subject.requiredTeachers.value,
       'Too many teachers assigned',
     );
     this.assertLessonNotInPast(school, now);
@@ -116,9 +168,14 @@ export class Lesson extends Aggregate<LessonId, LessonState> {
       "School must the same as the lesson's school",
     );
 
-    this.state.teacherIds.set(teacher.id.value, teacher.id);
-    this.state.updatedAt = now;
+    const assignedTeacher = new AssignedTeacher({
+      id: AssignedTeacherId.create(),
+      assignedAt: now,
+      teacherId: teacher.id,
+    });
 
+    this._assignedTeachers.add(assignedTeacher);
+    this._updatedAt = now;
     this.addOrReplaceUpdatedEvent();
   }
 
@@ -129,15 +186,30 @@ export class Lesson extends Aggregate<LessonId, LessonState> {
       "School must the same as the lesson's school",
     );
 
-    this.state.teacherIds.delete(teacherId);
-    this.state.updatedAt = now;
+    for (const teacher of this._assignedTeachers) {
+      if (teacher.teacherId.value === teacherId) {
+        this._assignedTeachers.remove(teacher);
+      }
+    }
+
+    this._updatedAt = now;
 
     this.addOrReplaceUpdatedEvent();
   }
 
+  isTeacherAssigned(teacherId: string) {
+    for (const teacher of this._assignedTeachers) {
+      if (teacher.teacherId.value === teacherId) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   setTime(time: TimeInterval, now: DateTime) {
-    this.state.time = time;
-    this.state.updatedAt = now;
+    this._time = time;
+    this._updatedAt = now;
 
     this.addOrReplaceUpdatedEvent();
   }
@@ -145,31 +217,33 @@ export class Lesson extends Aggregate<LessonId, LessonState> {
   protected addOrReplaceUpdatedEvent() {
     const event = new LessonUpdatedEvent({
       id: {
-        subjectId: this.id.subjectId.value,
+        subjectId: this._subjectId.value,
         date: {
-          day: this.id.date.day,
-          month: this.id.date.month,
-          year: this.id.date.year,
+          day: this._date.day,
+          month: this._date.month,
+          year: this._date.year,
         },
       },
       time: this.time,
-      teacherIds: Array.from(this.teacherIds).map((id) => id.value),
+      teacherIds: this._assignedTeachers
+        .getItems()
+        .map((teacher) => teacher.teacherId.value),
       createdAt: this.createdAt.toISO(),
       updatedAt: this.updatedAt.toISO(),
     });
 
-    this.eventsManager.replaceInstanceOrAdd(LessonUpdatedEvent, event);
+    this._eventsManager.replaceInstanceOrAdd(LessonUpdatedEvent, event);
   }
 
   protected static assertNotInPast(
     date: ExactDate,
-    timeInterval: TimeInterval,
+    time: TimeInterval,
     school: School,
     now: DateTime,
   ) {
     const startsAt = date
       .toDateTime(school.timeZone)
-      .plus({ minutes: timeInterval.startsAt });
+      .plus({ minutes: time.startsAt });
 
     assert.ok(
       now.toMillis() < startsAt.toMillis(),

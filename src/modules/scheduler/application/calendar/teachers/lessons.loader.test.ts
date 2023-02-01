@@ -1,19 +1,10 @@
 import { Test } from '@nestjs/testing';
 import {
-  knexProvider,
-  KNEX_PROVIDER,
-  uowProvider,
-  UOW_PROVIDER,
-} from '../../../../shared/database';
-import { Knex } from 'knex';
-import { recreateDb } from '../../../../../../test-utils';
-import { Uow } from 'yuow';
-import {
   Lesson,
   LessonId,
   Group,
   GroupId,
-  DailyPeriodicity,
+  DailyRecurrence,
   ExactDate,
   School,
   SchoolId,
@@ -22,22 +13,18 @@ import {
   TimeZone,
   Subject,
   SubjectId,
-  WeeklyPeriodicity,
+  WeeklyRecurrence,
 } from '../../../domain';
 import { DateTime } from 'luxon';
-import {
-  LessonRepository,
-  GroupRepository,
-  SchoolRepository,
-  SubjectRepository,
-} from '../../../database';
 import { LessonsLoader } from './lessons.loader';
+import { MikroORM } from '@mikro-orm/postgresql';
+import { testMikroormProvider } from '../../../../../../test-utils';
+import { MIKROORM_PROVIDER } from '../../../../shared/database';
 
 describe('LessonsLoader', () => {
   let loader: LessonsLoader;
   let school: School;
-  let knex: Knex;
-  let uow: Uow;
+  let orm: MikroORM;
 
   let subject1: Subject;
   let subject2: Subject;
@@ -48,131 +35,104 @@ describe('LessonsLoader', () => {
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
-      controllers: [],
-      providers: [LessonsLoader, knexProvider, uowProvider],
+      providers: [LessonsLoader, testMikroormProvider],
     }).compile();
 
     loader = moduleRef.get(LessonsLoader);
-    knex = moduleRef.get(KNEX_PROVIDER);
-    uow = moduleRef.get(UOW_PROVIDER);
+    orm = moduleRef.get(MIKROORM_PROVIDER);
   });
 
   beforeAll(async () => {
-    await recreateDb(knex);
-  });
+    const em = orm.em.fork();
 
-  beforeAll(async () => {
     const now = DateTime.fromISO('2023-01-25T11:48:38', {
       zone: 'Europe/Moscow',
     });
 
-    await uow((ctx) => {
-      const schoolRepository = ctx.getRepository(SchoolRepository);
-      const groupRepository = ctx.getRepository(GroupRepository);
-      const subjectRepository = ctx.getRepository(SubjectRepository);
-      const lessonRepository = ctx.getRepository(LessonRepository);
+    const schoolRepository = em.getRepository(School);
+    const groupRepository = em.getRepository(Group);
+    const subjectRepository = em.getRepository(Subject);
+    const lessonRepository = em.getRepository(Lesson);
 
-      school = School.create({
-        id: SchoolId.create(),
-        name: 'Test School',
-        timeZone: TimeZone.create('Europe/Moscow'),
-        now,
-      });
-
-      group = Group.create({
-        id: GroupId.create(),
-        school,
-        name: 'Test Group',
-        now,
-      });
-
-      subject1 = Subject.create({
-        id: SubjectId.create(),
-        school,
-        name: 'Subject 1',
-        periodicity: DailyPeriodicity.create(),
-        time: TimeInterval.create({
-          startsAt: 720,
-          duration: 60,
-        }),
-        group,
-        requiredTeachers: RequiredTeachers.create(2),
-        now: now.minus({ days: 2 }),
-      });
-
-      subject2 = Subject.create({
-        id: SubjectId.create(),
-        school,
-        name: 'Subject 2',
-        periodicity: WeeklyPeriodicity.create([0, 4]),
-        time: TimeInterval.create({
-          startsAt: 960,
-          duration: 120,
-        }),
-        group,
-        requiredTeachers: RequiredTeachers.create(1),
-        now: now.minus({ weeks: 4 }),
-      });
-
-      attendace1 = Lesson.create({
-        id: LessonId.create(
-          subject1.id,
-          ExactDate.create({
-            day: 26,
-            month: 1,
-            year: 2023,
-          }),
-        ),
-        time: subject1.time,
-        school,
-        now,
-      });
-
-      attendace2 = Lesson.create({
-        id: LessonId.create(
-          subject2.id,
-          ExactDate.create({
-            day: 28,
-            month: 1,
-            year: 2023,
-          }),
-        ),
-        time: TimeInterval.create({
-          startsAt: 0,
-          duration: 120,
-        }),
-        school,
-        now,
-      });
-
-      schoolRepository.add(school);
-      groupRepository.add(group);
-      subjectRepository.add(subject1);
-      subjectRepository.add(subject2);
-      lessonRepository.add(attendace1);
-      lessonRepository.add(attendace2);
+    school = School.create({
+      id: SchoolId.create(),
+      name: 'Test School',
+      timeZone: TimeZone.create('Europe/Moscow'),
+      now,
     });
 
-    await uow(async (ctx) => {
-      const subjectRepository = ctx.getRepository(SubjectRepository);
-
-      const subject = await subjectRepository.findOne({
-        id: subject1.id.value,
-      });
-
-      if (!subject) {
-        throw new Error('Subject Not found');
-      }
-
-      subject.setName('Subject 1 Version 2', now);
-      subject.setTime(
-        TimeInterval.create({
-          startsAt: 120,
-          duration: 600,
-        }),
-        now,
-      );
+    group = Group.create({
+      id: GroupId.create(),
+      school,
+      name: 'Test Group',
+      now,
     });
+
+    subject1 = Subject.create({
+      id: SubjectId.create(),
+      school,
+      name: 'Subject 1',
+      recurrence: DailyRecurrence.create(),
+      time: TimeInterval.create({
+        startsAt: 720,
+        duration: 60,
+      }),
+      group,
+      requiredTeachers: RequiredTeachers.create(2),
+      now: now.minus({ days: 2 }),
+    });
+
+    subject2 = Subject.create({
+      id: SubjectId.create(),
+      school,
+      name: 'Subject 2',
+      recurrence: WeeklyRecurrence.create([0, 4]),
+      time: TimeInterval.create({
+        startsAt: 960,
+        duration: 120,
+      }),
+      group,
+      requiredTeachers: RequiredTeachers.create(1),
+      now: now.minus({ weeks: 4 }),
+    });
+
+    attendace1 = Lesson.create({
+      id: LessonId.create(),
+      subject: subject1,
+      date: ExactDate.create({
+        day: 26,
+        month: 1,
+        year: 2023,
+      }),
+      time: subject1.time,
+      school,
+      now,
+    });
+
+    attendace2 = Lesson.create({
+      id: LessonId.create(),
+      subject: subject2,
+      date: ExactDate.create({
+        day: 28,
+        month: 1,
+        year: 2023,
+      }),
+      time: TimeInterval.create({
+        startsAt: 0,
+        duration: 120,
+      }),
+      school,
+      now,
+    });
+
+    schoolRepository.persist(school);
+    groupRepository.persist(group);
+    subjectRepository.persist(subject1);
+    subjectRepository.persist(subject2);
+    lessonRepository.persist(attendace1);
+    lessonRepository.persist(attendace2);
+
+    await em.flush();
   });
 
   it('should load subject 1 since subject 1 version 2 starts later', async () => {
@@ -210,6 +170,6 @@ describe('LessonsLoader', () => {
   });
 
   afterAll(async () => {
-    await knex.destroy();
+    await orm.close();
   });
 });

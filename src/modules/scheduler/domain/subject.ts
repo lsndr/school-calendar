@@ -1,80 +1,117 @@
+import { Embedded, Entity, PrimaryKey, Property } from '@mikro-orm/core';
 import * as assert from 'assert';
 import { DateTime } from 'luxon';
-import { Aggregate, AggregateState } from '../../shared/domain';
+import { AggregateState } from '../../shared/domain';
+import { GroupIdType, SchoolIdType } from '../database';
+import { SubjectIdType, RequiredTeachersType } from '../database/subject';
 import { Group } from './group';
 import { GroupId } from './group-id';
 import { School } from './school';
 import { SchoolId } from './school-id';
 import {
-  BiWeeklyPeriodicity,
-  DailyPeriodicity,
-  MonthlyPeriodicity,
-  WeeklyPeriodicity,
-} from './periodicity';
+  BiWeeklyRecurrence,
+  DailyRecurrence,
+  MonthlyRecurrence,
+  WeeklyRecurrence,
+} from './recurrence';
+
 import { RequiredTeachers } from './required-teachers';
 import { TimeInterval } from './time-interval';
 import { SubjectId } from './subject-id';
 
-export type SubjectPeriodicity =
-  | DailyPeriodicity
-  | WeeklyPeriodicity
-  | BiWeeklyPeriodicity
-  | MonthlyPeriodicity;
+type Recurrence =
+  | DailyRecurrence
+  | WeeklyRecurrence
+  | BiWeeklyRecurrence
+  | MonthlyRecurrence;
 
-export interface SubjectState extends AggregateState<SubjectId> {
-  id: SubjectId;
-  schoolId: SchoolId;
-  name: string;
-  periodicity: SubjectPeriodicity;
-  time: TimeInterval;
-  groupId: GroupId;
-  requiredTeachers: RequiredTeachers;
-  createdAt: DateTime;
-  updatedAt: DateTime;
+abstract class SubjectState extends AggregateState {
+  @PrimaryKey({ name: 'id', type: SubjectIdType })
+  protected _id!: SubjectId;
+
+  @Property({ name: 'name' })
+  protected _name!: string;
+
+  @Property({ name: 'school_id', type: SchoolIdType })
+  protected _schoolId!: SchoolId;
+
+  @Embedded(
+    () => [
+      DailyRecurrence,
+      WeeklyRecurrence,
+      BiWeeklyRecurrence,
+      MonthlyRecurrence,
+    ],
+    { prefix: 'recurrence_' },
+  )
+  protected _recurrence!: Recurrence;
+
+  @Embedded(() => TimeInterval, { prefix: 'time_' })
+  protected _time!: TimeInterval;
+
+  @Property({ name: 'group_id', type: GroupIdType })
+  protected _groupId!: GroupId;
+
+  @Property({ name: 'required_teachers', type: RequiredTeachersType })
+  protected _requiredTeachers!: RequiredTeachers;
+
+  @Property({ name: 'created_at' })
+  protected _createdAt!: DateTime;
+
+  @Property({ name: 'updated_at' })
+  protected _updatedAt!: DateTime;
+
+  @Property({ name: 'version', version: true })
+  protected _version!: number;
 }
 
 type CreateSubject = {
   id: SubjectId;
   name: string;
   school: School;
-  periodicity: SubjectPeriodicity;
+  recurrence: Recurrence;
   time: TimeInterval;
   group: Group;
   requiredTeachers: RequiredTeachers;
   now: DateTime;
 };
 
-export class Subject extends Aggregate<SubjectId, SubjectState> {
+@Entity()
+export class Subject extends SubjectState {
+  get id() {
+    return this._id;
+  }
+
   get schoolId() {
-    return this.state.schoolId;
+    return this._schoolId;
   }
 
   get name() {
-    return this.state.name;
+    return this._name;
   }
 
-  get periodicity() {
-    return this.state.periodicity;
+  get recurrence() {
+    return this._recurrence;
   }
 
   get groupId() {
-    return this.state.groupId;
+    return this._groupId;
   }
 
   get requiredTeachers() {
-    return this.state.requiredTeachers;
+    return this._requiredTeachers;
   }
 
   get time() {
-    return this.state.time;
+    return this._time;
   }
 
   get createdAt() {
-    return this.state.createdAt;
+    return this._createdAt;
   }
 
   get updatedAt() {
-    return this.state.updatedAt;
+    return this._updatedAt;
   }
 
   static create(data: CreateSubject) {
@@ -83,31 +120,33 @@ export class Subject extends Aggregate<SubjectId, SubjectState> {
       'School id and group school id must match',
     );
 
-    return new this({
-      id: data.id,
-      groupId: data.group.id,
-      schoolId: data.school.id,
-      name: data.name,
-      requiredTeachers: data.requiredTeachers,
-      periodicity: data.periodicity,
-      time: data.time,
-      createdAt: data.now,
-      updatedAt: data.now,
-    });
+    const subject = new this();
+
+    subject._id = data.id;
+    subject._groupId = data.group.id;
+    subject._schoolId = data.school.id;
+    subject._name = data.name;
+    subject._requiredTeachers = data.requiredTeachers;
+    subject._recurrence = data.recurrence;
+    subject._time = data.time;
+    subject._createdAt = data.now;
+    subject._updatedAt = data.now;
+
+    return subject;
   }
 
-  setName(name: string, updatedAt: DateTime) {
-    this.state.name = name;
-    this.state.updatedAt = updatedAt;
+  setName(name: string, now: DateTime) {
+    this._name = name;
+    this._updatedAt = now;
   }
 
-  setPeriodicity(periodicity: SubjectPeriodicity, updatedAt: DateTime) {
-    this.state.periodicity = periodicity;
-    this.state.updatedAt = updatedAt;
+  setRecurrence(recurrence: Recurrence, now: DateTime) {
+    this._recurrence = recurrence;
+    this._updatedAt = now;
   }
 
-  setTime(time: TimeInterval, updatedAt: DateTime) {
-    this.state.time = time;
-    this.state.updatedAt = updatedAt;
+  setTime(time: TimeInterval, now: DateTime) {
+    this._time = time;
+    this._updatedAt = now;
   }
 }

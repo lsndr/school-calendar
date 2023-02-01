@@ -1,2 +1,2 @@
-export * from './school.repository';
-export * from './school-id.hydrator';
+export * from './time-zone.type';
+export * from './school-id.type';

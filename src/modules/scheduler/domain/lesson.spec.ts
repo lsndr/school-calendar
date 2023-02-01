@@ -1,4 +1,6 @@
+import { MikroORM } from '@mikro-orm/postgresql';
 import { DateTime } from 'luxon';
+import { AssignedTeacher } from './assigned-teacher';
 import { Lesson } from './lesson';
 import { LessonId } from './lesson-id';
 import { Group } from './group';
@@ -8,7 +10,7 @@ import { TeacherId } from './teacher-id';
 import { ExactDate } from './exact-date';
 import { School } from './school';
 import { SchoolId } from './school-id';
-import { WeekDay, WeeklyPeriodicity } from './periodicity';
+import { WeekDays, WeeklyRecurrence } from './recurrence';
 import { RequiredTeachers } from './required-teachers';
 import { TimeInterval } from './time-interval';
 import { TimeZone } from './time-zone';
@@ -26,6 +28,16 @@ describe('Lesson', () => {
   let teacher2: Teacher;
   let teacher3: Teacher;
   let teacher4: Teacher;
+
+  beforeAll(async () => {
+    await MikroORM.init(
+      {
+        dbName: ':memory:',
+        entities: [Lesson, AssignedTeacher],
+      },
+      false,
+    );
+  });
 
   beforeEach(() => {
     school = School.create({
@@ -60,9 +72,9 @@ describe('Lesson', () => {
   });
 
   beforeEach(() => {
-    const weekDays: WeekDay[] = [1, 0];
+    const weekDays: (typeof WeekDays)[number][] = [1, 0];
 
-    const periodicity = WeeklyPeriodicity.create(weekDays);
+    const recurrence = WeeklyRecurrence.create(weekDays);
     const time = TimeInterval.create({
       startsAt: 0,
       duration: 120,
@@ -73,7 +85,7 @@ describe('Lesson', () => {
       id: SubjectId.create(),
       group,
       school,
-      periodicity,
+      recurrence,
       name: 'Test Subject',
       time,
       requiredTeachers,
@@ -84,7 +96,7 @@ describe('Lesson', () => {
       id: SubjectId.create(),
       group: group2,
       school: school2,
-      periodicity,
+      recurrence,
       name: 'Test Subject',
       time,
       requiredTeachers,
@@ -127,23 +139,26 @@ describe('Lesson', () => {
   });
 
   it("should fail to add an teacher if number of teachers exceeds number of subject's required teachers", () => {
+    const id = LessonId.create();
     const now = DateTime.fromISO('2023-01-20T12:00:00.000Z');
     const date = ExactDate.create({
       day: 21,
       month: 1,
       year: 2023,
     });
-    const id = LessonId.create(subject.id, date);
     const time = TimeInterval.create({
       startsAt: 0,
       duration: 60,
     });
     const lesson = Lesson.create({
       id,
+      subject,
+      date,
       time,
       school,
       now,
     });
+
     lesson.assignTeacher(teacher1, subject, school, now);
     lesson.assignTeacher(teacher2, subject, school, now);
 
@@ -159,13 +174,15 @@ describe('Lesson', () => {
       month: 1,
       year: 2023,
     });
-    const id = LessonId.create(subject.id, date);
+    const id = LessonId.create();
     const time = TimeInterval.create({
       startsAt: 0,
       duration: 60,
     });
     const lesson = Lesson.create({
       id,
+      subject,
+      date,
       time,
       school,
       now,
@@ -183,13 +200,15 @@ describe('Lesson', () => {
       month: 1,
       year: 2023,
     });
-    const id = LessonId.create(subject.id, date);
+    const id = LessonId.create();
     const time = TimeInterval.create({
       startsAt: 0,
       duration: 60,
     });
     const lesson = Lesson.create({
       id,
+      subject,
+      date,
       time,
       school,
       now,
@@ -207,13 +226,15 @@ describe('Lesson', () => {
       month: 1,
       year: 2023,
     });
-    const id = LessonId.create(subject.id, date);
+    const id = LessonId.create();
     const time = TimeInterval.create({
       startsAt: 0,
       duration: 60,
     });
     const lesson = Lesson.create({
       id,
+      subject,
+      date,
       time,
       school,
       now,
@@ -231,15 +252,17 @@ describe('Lesson', () => {
       month: 1,
       year: 2023,
     });
-    const id = LessonId.create(subject.id, date);
     const time = TimeInterval.create({
       startsAt: 0,
       duration: 60,
     });
+    const id = LessonId.create();
 
     const act = () =>
       Lesson.create({
         id,
+        subject,
+        date,
         school,
         time,
         now,
@@ -256,13 +279,15 @@ describe('Lesson', () => {
       month: 1,
       year: 2023,
     });
-    const id = LessonId.create(subject.id, date);
     const time = TimeInterval.create({
       startsAt: 0,
       duration: 60,
     });
+    const id = LessonId.create();
     const lesson = Lesson.create({
       id,
+      subject,
+      date,
       school,
       time,
       now: nowInPast,
@@ -276,18 +301,20 @@ describe('Lesson', () => {
 
   it('should add an teacher', () => {
     const now = DateTime.fromISO('2023-01-20T12:00:00.000Z');
+    const id = LessonId.create();
     const date = ExactDate.create({
       day: 21,
       month: 1,
       year: 2023,
     });
-    const id = LessonId.create(subject.id, date);
     const time = TimeInterval.create({
       startsAt: 0,
       duration: 60,
     });
     const lesson = Lesson.create({
       id,
+      subject,
+      date,
       school,
       time,
       now,
@@ -295,9 +322,8 @@ describe('Lesson', () => {
 
     lesson.assignTeacher(teacher1, subject, school, now);
 
-    expect(lesson.teacherIds.length).toBe(1);
-    expect(
-      lesson.teacherIds.find((id) => id.value === teacher1.id.value),
-    ).not.toBeUndefined();
+    expect(lesson.assignedTeachers.length).toBe(1);
+    expect(lesson.assignedTeachers[0]?.assignedAt).toBe(now);
+    expect(lesson.assignedTeachers[0]?.teacherId).toBe(teacher1.id);
   });
 });

@@ -1,7 +1,7 @@
+import { MikroORM } from '@mikro-orm/postgresql';
 import { Inject, Injectable } from '@nestjs/common';
-import { Knex } from 'knex';
 import { DateTime } from 'luxon';
-import { KNEX_PROVIDER } from '../../../../shared/database';
+import { MIKROORM_PROVIDER } from '../../../../shared/database';
 
 export type LessonsLoaderOptions = {
   schoolId: string;
@@ -25,35 +25,35 @@ export type Assignment = {
 
 @Injectable()
 export class LessonsLoader {
-  constructor(@Inject(KNEX_PROVIDER) private readonly knex: Knex) {}
+  constructor(@Inject(MIKROORM_PROVIDER) private readonly orm: MikroORM) {}
 
   async load(options: LessonsLoaderOptions): Promise<Generator<Assignment>> {
-    const lessons = await this.knex
+    const knex = this.orm.em.getConnection().getKnex();
+
+    const lessons = await knex
       .select([
-        'lessons.subject_id',
-        'lessons.time_starts_at',
-        'lessons.time_duration',
-        'lessons.date',
-        this.knex
-          .select(this.knex.raw('ARRAY_AGG(lessons_teachers.teacher_id)'))
-          .from('lessons_teachers')
-          .whereRaw('lessons_teachers.subject_id = lessons.subject_id')
-          .andWhereRaw('lessons_teachers.date = lessons.date')
-          .groupBy('lessons_teachers.subject_id', 'lessons_teachers.date')
+        'lesson.subject_id',
+        'lesson.time_starts_at',
+        'lesson.time_duration',
+        'lesson.date',
+        knex
+          .select(knex.raw('ARRAY_AGG(lesson_teacher.teacher_id)'))
+          .from('lesson_teacher')
+          .whereRaw('lesson_teacher.lesson_id = lesson.id')
           .as('teacher_ids'),
       ])
-      .from('lessons')
+      .from('lesson')
       .where(
-        'lessons.date',
+        'lesson.date',
         '>=',
         options.from.setZone(options.timeZone).toSQLDate(),
       )
       .andWhere(
-        'lessons.date',
+        'lesson.date',
         '<',
         options.to.setZone(options.timeZone).toSQLDate(),
       )
-      .andWhere('lessons.school_id', options.schoolId);
+      .andWhere('lesson.school_id', options.schoolId);
 
     return (function* () {
       for (const lesson of lessons) {
@@ -61,7 +61,7 @@ export class LessonsLoader {
           subjectId: lesson.subject_id,
           startsAt: lesson.time_starts_at,
           duration: lesson.time_duration,
-          date: lesson.date.setZone(options.timeZone, {
+          date: DateTime.fromSQL(lesson.date).setZone(options.timeZone, {
             keepLocalTime: true,
           }),
           teacherIds: lesson.teacher_ids,

@@ -2,12 +2,12 @@ import * as assert from 'assert';
 import { ValueObject } from '../../shared/domain';
 
 export class RequiredTeachers extends ValueObject<'RequiredTeachers'> {
-  readonly amount: number;
+  readonly value: number;
 
   protected constructor(amount: number) {
     super();
 
-    this.amount = amount;
+    this.value = amount;
   }
 
   static create(amount: number) {

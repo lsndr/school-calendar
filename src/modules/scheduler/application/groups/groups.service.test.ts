@@ -1,37 +1,24 @@
 import { GroupsService } from './groups.service';
 import { Test } from '@nestjs/testing';
-import {
-  knexProvider,
-  uowProvider,
-  KNEX_PROVIDER,
-  UOW_PROVIDER,
-} from '../../../shared/database';
-import { Knex } from 'knex';
-import { recreateDb } from '../../../../../test-utils';
+import { MIKROORM_PROVIDER } from '../../../shared/database';
 import { School, SchoolId, TimeZone } from '../../domain';
 import { DateTime } from 'luxon';
-import { Uow } from 'yuow';
-import { SchoolRepository } from '../../database';
+import { MikroORM } from '@mikro-orm/postgresql';
+import { testMikroormProvider } from '../../../../../test-utils';
 
 describe('Groups Service', () => {
   let groupsService: GroupsService;
   let school: School;
-  let knex: Knex;
-  let uow: Uow;
+  let orm: MikroORM;
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
       controllers: [],
-      providers: [GroupsService, knexProvider, uowProvider],
+      providers: [GroupsService, testMikroormProvider],
     }).compile();
 
     groupsService = moduleRef.get(GroupsService);
-    knex = moduleRef.get(KNEX_PROVIDER);
-    uow = moduleRef.get(UOW_PROVIDER);
-  });
-
-  beforeEach(async () => {
-    await recreateDb(knex);
+    orm = moduleRef.get(MIKROORM_PROVIDER);
   });
 
   beforeEach(async () => {
@@ -42,10 +29,8 @@ describe('Groups Service', () => {
       now: DateTime.now(),
     });
 
-    await uow(async (ctx) => {
-      const schoolRepository = ctx.getRepository(SchoolRepository);
-      schoolRepository.add(school);
-    });
+    const schoolRepository = orm.em.fork();
+    await schoolRepository.persistAndFlush(school);
   });
 
   it('should create a group', async () => {
@@ -74,6 +59,6 @@ describe('Groups Service', () => {
   });
 
   afterAll(async () => {
-    await knex.destroy();
+    await orm.close();
   });
 });
