@@ -2,18 +2,16 @@ name: CI
 
 on:
   push:
-    branches: [master]
+    branches: [it]
   pull_request:
-    branches: [master]
+    branches: [it]
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     strategy:
       matrix:
         node-version: [18.x]
-
     steps:
       - uses: actions/checkout@v2
       - name: Use Node.js ${{ matrix.node-version }}
@@ -23,5 +21,27 @@ jobs:
           cache: 'npm'
       - run: npm ci
       - run: npm run lint
-      - run: npm test
       - run: npm run build
+      - uses: actions/upload-artifact@v2
+        with:
+          name: build-artifact
+          path: ./
+  unit:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x]
+
+    steps:
+      - uses: actions/download-artifact@v2
+        with:
+          name: my-artifact
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
