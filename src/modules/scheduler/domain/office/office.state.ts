@@ -1,6 +1,6 @@
 import { PrimaryKey, Property } from '@mikro-orm/core';
 import { DateTime } from 'luxon';
-import { AggregateState } from '../../../shared/domain';
+import { AggregateRoot } from '../../../shared/domain';
 import { OfficeIdType, TimeZoneType } from '../../database';
 import { OfficeId } from './office-id';
 import { TimeZone } from './../shared';
@@ -13,7 +13,7 @@ type CreateOfficeState = {
   updatedAt: DateTime;
 };
 
-export abstract class OfficeState extends AggregateState {
+export abstract class OfficeState extends AggregateRoot {
   @PrimaryKey({ name: 'id', type: OfficeIdType })
   protected _id: OfficeId;
 

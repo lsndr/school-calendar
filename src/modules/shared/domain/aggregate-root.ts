@@ -1,6 +1,6 @@
 import { AggregateEvents } from './aggregate-events';
 
-export abstract class AggregateState {
+export abstract class AggregateRoot {
   protected _eventsManager = new AggregateEvents();
 
   get events() {

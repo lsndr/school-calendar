@@ -1,6 +1,6 @@
 import { Embedded, PrimaryKey, Property } from '@mikro-orm/core';
 import { DateTime } from 'luxon';
-import { AggregateState } from '../../../shared/domain';
+import { AggregateRoot } from '../../../shared/domain';
 import {
   ClientIdType,
   OfficeIdType,
@@ -33,7 +33,7 @@ type CreateVisitState = {
   updatedAt: DateTime;
 };
 
-export abstract class VisitState extends AggregateState {
+export abstract class VisitState extends AggregateRoot {
   @PrimaryKey({ name: 'id', type: VisitIdType })
   protected _id: VisitId;
 
