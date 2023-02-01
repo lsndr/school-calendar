@@ -1,6 +1,5 @@
 import { Module, Inject } from '@nestjs/common';
 import { mikroormProvider, MIKROORM_PROVIDER } from './database';
-import { Knex } from 'knex';
 import { MikroORM } from '@mikro-orm/postgresql';
 
 @Module({

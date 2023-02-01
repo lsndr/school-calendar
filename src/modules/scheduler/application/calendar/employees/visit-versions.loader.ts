@@ -1,6 +1,5 @@
 import { MikroORM } from '@mikro-orm/postgresql';
 import { Inject, Injectable } from '@nestjs/common';
-import { Knex } from 'knex';
 import { DateTime } from 'luxon';
 import { MIKROORM_PROVIDER } from '../../../../shared/database';
 import { extractDatesFromPeriodicity } from './helpers';

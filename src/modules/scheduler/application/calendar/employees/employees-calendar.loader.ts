@@ -1,12 +1,8 @@
+import { MikroORM } from '@mikro-orm/postgresql';
 import { Inject, Injectable } from '@nestjs/common';
-import { Knex } from 'knex';
 import { DateTime } from 'luxon';
-import { KNEX_PROVIDER } from '../../../../shared/database';
-import {
-  AttendancesLoader,
-  AttendanceDates,
-  Assignment,
-} from './attendances.loader';
+import { MIKROORM_PROVIDER } from '../../../../shared/database';
+import { AttendancesLoader, Assignment } from './attendances.loader';
 import { CalendarEmployeeEventDto } from './calendar-employee-event.dto';
 import { CalendarEmployeeDto } from './calendar-employee.dto';
 import { EmployeesCalendarDto } from './employees-calendar.dto';
@@ -22,9 +18,10 @@ export type EmployeesCalendarPeriodOptions = {
 @Injectable()
 export class EmployeesCalendarLoader {
   constructor(
-    @Inject(KNEX_PROVIDER) private readonly knex: Knex,
     private readonly visitVersionsLoader: VisitVersionsLoader,
     private readonly attendancesLoader: AttendancesLoader,
+    @Inject(MIKROORM_PROVIDER)
+    private readonly orm: MikroORM,
   ) {}
 
   async forPeriod(
@@ -103,9 +100,11 @@ export class EmployeesCalendarLoader {
   }
 
   private async getEmployees(officeId: string): Promise<CalendarEmployeeDto[]> {
-    return await this.knex
+    const knex = this.orm.em.getConnection().getKnex();
+
+    return await knex
       .select(['id', 'name'])
-      .from('employees')
+      .from('employee')
       .where('office_id', officeId);
   }
 }
