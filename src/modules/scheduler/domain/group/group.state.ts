@@ -1,6 +1,6 @@
 import { PrimaryKey, Property } from '@mikro-orm/core';
 import { DateTime } from 'luxon';
-import { AggregateState } from '../../../shared/domain';
+import { AggregateRoot } from '../../../shared/domain';
 import { SchoolIdType, GroupIdType } from '../../database';
 import { GroupId } from './group-id';
 import { SchoolId } from './../school';
@@ -13,7 +13,7 @@ type CreateGroupState = {
   updatedAt: DateTime;
 };
 
-export abstract class GroupState extends AggregateState {
+export abstract class GroupState extends AggregateRoot {
   @PrimaryKey({ name: 'id', type: GroupIdType })
   protected _id: GroupId;
 

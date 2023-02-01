@@ -1,6 +1,6 @@
 import { PrimaryKey, Property } from '@mikro-orm/core';
 import { DateTime } from 'luxon';
-import { AggregateState } from '../../../shared/domain';
+import { AggregateRoot } from '../../../shared/domain';
 import { TeacherIdType, SchoolIdType } from '../../database';
 import { TeacherId } from './teacher-id';
 import { SchoolId } from './../school';
@@ -13,7 +13,7 @@ type CreateTeacherState = {
   updatedAt: DateTime;
 };
 
-export abstract class TeacherState extends AggregateState {
+export abstract class TeacherState extends AggregateRoot {
   @PrimaryKey({ name: 'id', type: TeacherIdType })
   protected _id: TeacherId;
 

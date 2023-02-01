@@ -6,7 +6,7 @@ import {
 import { Knex } from '@mikro-orm/postgresql';
 import { randomUUID } from 'crypto';
 import { DateTime } from 'luxon';
-import { AggregateState } from '../../../shared/domain';
+import { AggregateRoot } from '../../../shared/domain';
 
 @Subscriber()
 export class OutboxSubscriber implements EventSubscriber {
@@ -23,7 +23,7 @@ export class OutboxSubscriber implements EventSubscriber {
     for (const changeSet of changeSets) {
       const entity = changeSet.entity;
 
-      if (!(entity instanceof AggregateState)) {
+      if (!(entity instanceof AggregateRoot)) {
         continue;
       }
 
