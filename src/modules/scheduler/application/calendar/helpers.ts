@@ -62,7 +62,6 @@ function periodicityToRruleSet(options: PeriodicityToRruleSetOptions) {
         dtstart,
         until,
         tzid: options.timeZone,
-        count: 30,
       }),
     );
   } else if (options.recurence.type === 'weekly') {
