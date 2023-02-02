@@ -1,0 +1,40 @@
+# https://github.com/microsoft/vscode-dev-containers/tree/main/containers/javascript-node-postgres
+version: '3'
+services:
+  app:
+    build: 
+      context: ./app
+      args:
+        VARIANT: 18-bullseye
+    volumes:
+      - ..:/workspace:cached
+    command: sleep infinity
+    network_mode: service:postgres
+  postgres:
+    build: ./postgres
+    restart: always
+    volumes:
+      - ./postgres/create-multiple-postgresql-databases.sh:/docker-entrypoint-initdb.d/create-multiple-postgresql-databases.sh
+      - postgres-data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_MULTIPLE_DATABASES=test,dev
+      - POSTGRES_USER=dev 
+      - POSTGRES_PASSWORD=dev
+  pgadmin4: 
+    build: ./pgadmin4
+    restart: always
+    ports:
+      - 8080:80
+    volumes:
+      - ./pgadmin4/servers.json:/pgadmin4/servers.json
+      - ./pgadmin4/pgpass:/pgpass
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=test@test.com
+      - PGADMIN_DEFAULT_PASSWORD=test
+      - PGADMIN_CONFIG_SERVER_MODE=False
+      - STRICT_TRANSPORT_SECURITY_ENABLED=False
+      - PGADMIN_CONFIG_PROXY_X_HOST_COUNT=1
+      - PGADMIN_CONFIG_PROXY_X_PREFIX_COUNT=1
+      - PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED=False
+volumes:
+  postgres-data:
