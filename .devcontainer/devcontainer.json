@@ -6,5 +6,5 @@
   "remoteUser": "node",
   "forwardPorts": [8080],
   "waitFor": "postCreateCommand",
-  "updateContentCommand": "npm install && cp .env.example .env && cp .env.test.example .env.test"
+  "postCreateCommand": "npm install && cp .env.example .env && cp .env.test.example .env.test"
 }
