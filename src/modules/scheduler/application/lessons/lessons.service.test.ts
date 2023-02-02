@@ -28,7 +28,6 @@ describe('Lessons Service', () => {
   let orm: MikroORM;
 
   beforeAll(async () => {
-    jest.setTimeout(999999999999);
     const moduleRef = await Test.createTestingModule({
       controllers: [],
       providers: [LessonsService, testMikroormProvider],
