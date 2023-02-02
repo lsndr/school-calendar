@@ -32,20 +32,7 @@ export class TeachersCalendarService {
       zone: school.time_zone,
     }).startOf('day');
 
-    const to = DateTime.fromISO(query.dateFrom, {
-      zone: school.time_zone,
-    })
-      .startOf('day')
-      .plus({ day: 1 });
-
-    const diff = from.diff(to, ['days']).days;
-
-    if (diff > 7 || diff <= 0) {
-      return {
-        teachers: [],
-        events: [],
-      };
-    }
+    const to = from.plus({ day: query.days });
 
     return this.loader.forPeriod({
       schoolId: school.id,
