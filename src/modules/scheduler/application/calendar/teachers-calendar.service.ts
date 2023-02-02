@@ -28,7 +28,7 @@ export class TeachersCalendarService {
       throw new Error('School not found');
     }
 
-    const from = DateTime.fromISO(query.dateFrom, {
+    const from = DateTime.fromISO(query.startDate, {
       zone: school.time_zone,
     }).startOf('day');
 
