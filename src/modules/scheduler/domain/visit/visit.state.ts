@@ -18,8 +18,8 @@ import { TimeInterval } from '../shared';
 import { ClientId } from './../client';
 import { OfficeId } from './../office';
 import { RequiredEmployees } from './required-employees';
-
 import { VisitId } from './visit-id';
+import { DateTimeType } from '../../../shared/database/types';
 
 type CreateVisitState = {
   id: VisitId;
@@ -63,10 +63,10 @@ export abstract class VisitState extends AggregateRoot {
   @Property({ name: 'required_employees', type: RequiredEmployeesType })
   protected _requiredEmployees: RequiredEmployees;
 
-  @Property({ name: 'created_at' })
+  @Property({ name: 'created_at', type: DateTimeType })
   protected _createdAt: DateTime;
 
-  @Property({ name: 'updated_at' })
+  @Property({ name: 'updated_at', type: DateTimeType })
   protected _updatedAt: DateTime;
 
   @Property({ name: 'version', version: true })

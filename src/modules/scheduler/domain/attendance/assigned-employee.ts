@@ -5,6 +5,7 @@ import { AssignedEmployeeId } from './assigned-employee-id';
 // eslint-disable-next-line import/no-cycle -- Required by MikroORM
 import { Attendance } from './attendance';
 import { EmployeeId } from '../employee';
+import { DateTimeType } from '../../../shared/database/types';
 
 @Entity({ tableName: 'attendance_employee', customRepository: () => Object })
 export class AssignedEmployee {
@@ -14,7 +15,7 @@ export class AssignedEmployee {
   @Property({ type: EmployeeIdType })
   employeeId: EmployeeId;
 
-  @Property()
+  @Property({ type: DateTimeType })
   assignedAt: DateTime;
 
   @ManyToOne(() => Attendance)

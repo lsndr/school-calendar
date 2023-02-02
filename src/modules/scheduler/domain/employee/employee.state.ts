@@ -4,6 +4,7 @@ import { AggregateRoot } from '../../../shared/domain';
 import { EmployeeIdType, OfficeIdType } from '../../database';
 import { EmployeeId } from './employee-id';
 import { OfficeId } from './../office';
+import { DateTimeType } from '../../../shared/database/types';
 
 type CreateEmployeeState = {
   id: EmployeeId;
@@ -23,10 +24,10 @@ export abstract class EmployeeState extends AggregateRoot {
   @Property({ name: 'office_id', type: OfficeIdType })
   protected _officeId: OfficeId;
 
-  @Property({ name: 'created_at' })
+  @Property({ name: 'created_at', type: DateTimeType })
   protected _createdAt: DateTime;
 
-  @Property({ name: 'updated_at' })
+  @Property({ name: 'updated_at', type: DateTimeType })
   protected _updatedAt: DateTime;
 
   @Property({ name: 'version', version: true })
