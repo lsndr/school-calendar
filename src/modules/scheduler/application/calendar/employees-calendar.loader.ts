@@ -66,28 +66,32 @@ export class EmployeesCalendarLoader {
         .toISO();
 
       for (let i = 0; i < numberOfUnassignedEmployees; i++) {
-        events.push({
-          visitId: version.id,
-          name: version.name,
-          startsAt,
-          duration: attendance ? attendance.duration : version.duration,
-          assignedEmployees: numberOfAssignedEmployees,
-          requiredEmployees: version.requiredEmployees,
-        });
+        events.push(
+          new CalendarEmployeeEventDto({
+            visitId: version.id,
+            name: version.name,
+            startsAt,
+            duration: attendance ? attendance.duration : version.duration,
+            assignedEmployees: numberOfAssignedEmployees,
+            requiredEmployees: version.requiredEmployees,
+          }),
+        );
       }
 
       const employeeIds = attendance?.employeeIds || [];
 
       for (const employeeId of employeeIds) {
-        events.push({
-          visitId: version.id,
-          name: version.name,
-          startsAt,
-          duration: attendance ? attendance.duration : version.duration,
-          assignedEmployees: numberOfAssignedEmployees,
-          requiredEmployees: version.requiredEmployees,
-          employeeId,
-        });
+        events.push(
+          new CalendarEmployeeEventDto({
+            visitId: version.id,
+            name: version.name,
+            startsAt,
+            duration: attendance ? attendance.duration : version.duration,
+            assignedEmployees: numberOfAssignedEmployees,
+            requiredEmployees: version.requiredEmployees,
+            employeeId,
+          }),
+        );
       }
     }
 
