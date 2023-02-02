@@ -47,7 +47,7 @@ describe('EmployeesCalendarService', () => {
   });
 
   it('should properly load events for a day', async () => {
-    const { office1, dailyVisit1, employee1 } = await seed(orm);
+    const { office1, dailyVisit1, employee1 } = await seedDaily(orm);
 
     const result = await service.getForPeriod(
       office1.id.value,
@@ -94,7 +94,7 @@ describe('EmployeesCalendarService', () => {
   });
 });
 
-async function seed(orm: MikroORM) {
+async function seedDaily(orm: MikroORM) {
   const em = orm.em.fork();
 
   const office1 = Office.create({
