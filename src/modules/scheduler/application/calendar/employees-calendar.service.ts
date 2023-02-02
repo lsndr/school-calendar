@@ -38,7 +38,7 @@ export class EmployeesCalendarService {
       officeId: office.id,
       from,
       to,
-      timeZone: office.timeZone,
+      timeZone: office.time_zone,
     });
   }
 }
