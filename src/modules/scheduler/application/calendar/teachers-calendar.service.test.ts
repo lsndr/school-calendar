@@ -15,6 +15,7 @@ import {
   TimeZone,
   Subject,
   SubjectId,
+  WeeklyRecurrence,
 } from '../../domain';
 import { LessonsLoader } from './lessons.loader';
 import { TeachersCalendarLoader } from './teachers-calendar.loader';
@@ -46,55 +47,117 @@ describe('TeachersCalendarService', () => {
     await orm.close();
   });
 
-  it('should properly load events for a day', async () => {
-    const { school1, dailySubject1, teacher1 } = await seedDaily(orm);
+  describe('Day', () => {
+    it('should properly load events for 2023-01-02', async () => {
+      const { school1, dailySubject1, teacher1 } = await seedDay(orm);
 
-    const result = await service.getForPeriod(
-      school1.id.value,
-      new TeachersCalendarQueryDto({
-        startDate: '2023-01-01',
-        days: 1,
-      }),
-    );
+      const result = await service.getForPeriod(
+        school1.id.value,
+        new TeachersCalendarQueryDto({
+          startDate: '2023-01-02',
+          days: 1,
+        }),
+      );
 
-    expect(result).toEqual({
-      teachers: [
-        {
-          id: teacher1.id.value,
-          name: 'Teacher 1',
-        },
-      ],
-      events: [
-        {
-          assignedTeachers: 0,
-          duration: 120,
-          name: 'Daily Subject 1',
-          requiredTeachers: 3,
-          startsAt: '2023-01-01T16:00:00.000+03:00',
-          subjectId: dailySubject1.id.value,
-        },
-        {
-          assignedTeachers: 0,
-          duration: 120,
-          name: 'Daily Subject 1',
-          requiredTeachers: 3,
-          startsAt: '2023-01-01T16:00:00.000+03:00',
-          subjectId: dailySubject1.id.value,
-        },
-        {
-          assignedTeachers: 0,
-          duration: 120,
-          name: 'Daily Subject 1',
-          requiredTeachers: 3,
-          startsAt: '2023-01-01T16:00:00.000+03:00',
-          subjectId: dailySubject1.id.value,
-        },
-      ],
+      expect(result).toEqual({
+        teachers: [
+          {
+            id: teacher1.id.value,
+            name: 'Teacher 1',
+          },
+        ],
+        events: [
+          {
+            assignedTeachers: 0,
+            duration: 120,
+            name: 'Daily Subject 1',
+            requiredTeachers: 3,
+            startsAt: '2023-01-02T16:00:00.000+03:00',
+            subjectId: dailySubject1.id.value,
+          },
+          {
+            assignedTeachers: 0,
+            duration: 120,
+            name: 'Daily Subject 1',
+            requiredTeachers: 3,
+            startsAt: '2023-01-02T16:00:00.000+03:00',
+            subjectId: dailySubject1.id.value,
+          },
+          {
+            assignedTeachers: 0,
+            duration: 120,
+            name: 'Daily Subject 1',
+            requiredTeachers: 3,
+            startsAt: '2023-01-02T16:00:00.000+03:00',
+            subjectId: dailySubject1.id.value,
+          },
+        ],
+      });
+    });
+
+    it('should properly load events for 2023-01-09', async () => {
+      const { school1, dailySubject1, weeklySubject1, teacher1 } =
+        await seedDay(orm);
+
+      const result = await service.getForPeriod(
+        school1.id.value,
+        new TeachersCalendarQueryDto({
+          startDate: '2023-01-09',
+          days: 1,
+        }),
+      );
+
+      expect(result).toEqual({
+        teachers: [
+          {
+            id: teacher1.id.value,
+            name: 'Teacher 1',
+          },
+        ],
+        events: [
+          {
+            assignedTeachers: 0,
+            duration: 120,
+            teacherId: undefined,
+            name: 'Weekly Subject 1',
+            requiredTeachers: 1,
+            startsAt: '2023-01-09T16:00:00.000+03:00',
+            subjectId: weeklySubject1.id.value,
+          },
+          {
+            assignedTeachers: 0,
+            duration: 120,
+            teacherId: undefined,
+            name: 'Daily Subject 1',
+            requiredTeachers: 3,
+            startsAt: '2023-01-09T16:00:00.000+03:00',
+            subjectId: dailySubject1.id.value,
+          },
+          {
+            assignedTeachers: 0,
+            duration: 120,
+            teacherId: undefined,
+            name: 'Daily Subject 1',
+            requiredTeachers: 3,
+            startsAt: '2023-01-09T16:00:00.000+03:00',
+            subjectId: dailySubject1.id.value,
+          },
+          {
+            assignedTeachers: 0,
+            duration: 120,
+            teacherId: undefined,
+            name: 'Daily Subject 1',
+            requiredTeachers: 3,
+            startsAt: '2023-01-09T16:00:00.000+03:00',
+            subjectId: dailySubject1.id.value,
+          },
+        ],
+      });
     });
   });
 });
 
-async function seedDaily(orm: MikroORM) {
+async function seedDay(orm: MikroORM) {
   const em = orm.em.fork();
 
   const school1 = School.create({
@@ -140,10 +203,27 @@ async function seedDaily(orm: MikroORM) {
     }),
   });
 
+  const weeklySubject1 = Subject.create({
+    id: SubjectId.create(),
+    name: 'Weekly Subject 1',
+    school: school1,
+    group: group1,
+    recurrence: WeeklyRecurrence.create([0]),
+    time: TimeInterval.create({
+      startsAt: 960,
+      duration: 120,
+    }),
+    requiredTeachers: RequiredTeachers.create(1),
+    now: DateTime.fromISO('2023-01-03T13:00:00', {
+      zone: 'Europe/Moscow',
+    }),
+  });
+
   em.persist(school1);
   em.persist(group1);
   em.persist(teacher1);
   em.persist(dailySubject1);
+  em.persist(weeklySubject1);
 
   await em.flush();
 
@@ -152,5 +232,6 @@ async function seedDaily(orm: MikroORM) {
     group1,
     teacher1,
     dailySubject1,
+    weeklySubject1,
   };
 }
