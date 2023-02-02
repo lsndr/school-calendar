@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsDateString } from 'class-validator';
+import { IsDateString, IsInt, Max } from 'class-validator';
 
 export class EmployeesCalendarQueryDto {
   @ApiProperty()
@@ -7,11 +7,12 @@ export class EmployeesCalendarQueryDto {
   dateFrom: string;
 
   @ApiProperty()
-  @IsDateString()
-  dateTo: string;
+  @Max(7)
+  @IsInt()
+  days: number;
 
   constructor(dto: EmployeesCalendarQueryDto) {
     this.dateFrom = dto?.dateFrom;
-    this.dateTo = dto?.dateTo;
+    this.days = dto?.days;
   }
 }
