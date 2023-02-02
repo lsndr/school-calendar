@@ -65,28 +65,32 @@ export class TeachersCalendarLoader {
         .toISO();
 
       for (let i = 0; i < numberOfUnassignedTeachers; i++) {
-        events.push(new CalendarTeacherEventDto({
-          subjectId: version.id,
-          name: version.name,
-          startsAt,
-          duration: lesson ? lesson.duration : version.duration,
-          assignedTeachers: numberOfAssignedTeachers,
-          requiredTeachers: version.requiredTeachers,
-        }));
+        events.push(
+          new CalendarTeacherEventDto({
+            subjectId: version.id,
+            name: version.name,
+            startsAt,
+            duration: lesson ? lesson.duration : version.duration,
+            assignedTeachers: numberOfAssignedTeachers,
+            requiredTeachers: version.requiredTeachers,
+          }),
+        );
       }
 
       const teacherIds = lesson?.teacherIds || [];
 
       for (const teacherId of teacherIds) {
-        events.push(new CalendarTeacherEventDto({
-          subjectId: version.id,
-          name: version.name,
-          startsAt,
-          duration: lesson ? lesson.duration : version.duration,
-          assignedTeachers: numberOfAssignedTeachers,
-          requiredTeachers: version.requiredTeachers,
-          teacherId,
-        }));
+        events.push(
+          new CalendarTeacherEventDto({
+            subjectId: version.id,
+            name: version.name,
+            startsAt,
+            duration: lesson ? lesson.duration : version.duration,
+            assignedTeachers: numberOfAssignedTeachers,
+            requiredTeachers: version.requiredTeachers,
+            teacherId,
+          }),
+        );
       }
     }
 
