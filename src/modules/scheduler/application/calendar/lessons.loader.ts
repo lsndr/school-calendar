@@ -60,7 +60,7 @@ export class LessonsLoader {
           subjectId: lesson.subject_id,
           startsAt: lesson.time_starts_at,
           duration: lesson.time_duration,
-          date: DateTime.fromSQL(lesson.date).setZone(options.timeZone, {
+          date: lesson.date.setZone(options.timeZone, {
             keepLocalTime: true,
           }),
           teacherIds: lesson.teacher_ids,

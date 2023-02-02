@@ -341,7 +341,7 @@ export class LessonsService {
     return new LessonDto({
       assignedTeachers,
       subjectId: lessonRecord.subject_id,
-      date: lessonRecord.date,
+      date: lessonRecord.date.toISODate(),
       time: new TimeIntervalDto({
         startsAt: lessonRecord.time_starts_at,
         duration: lessonRecord.time_duration,
