@@ -1,8 +1,11 @@
 import { Test } from '@nestjs/testing';
 import {
+  Attendance,
+  AttendanceId,
   Client,
   ClientId,
   DailyRecurrence,
+  ExactDate,
   Office,
   OfficeId,
   RequiredEmployees,
@@ -11,32 +14,36 @@ import {
   Visit,
   VisitId,
   WeeklyRecurrence,
-} from '../../../domain';
+} from '../../domain';
 import { DateTime } from 'luxon';
-import { VisitVersionsLoader } from './visit-versions.loader';
+import { AttendancesLoader } from './attendances.loader';
 import { MikroORM } from '@mikro-orm/postgresql';
-import { testMikroormProvider } from '../../../../../../test-utils';
+import { testMikroormProvider } from '../../../../../test-utils';
 
-describe('VisitVersionsLoader', () => {
-  let loader: VisitVersionsLoader;
+describe('AttendancesLoader', () => {
+  let loader: AttendancesLoader;
   let office: Office;
   let orm: MikroORM;
 
   let visit1: Visit;
+  let visit2: Visit;
   let client: Client;
+
+  let attendace1: Attendance;
+  let attendace2: Attendance;
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
-      controllers: [],
-      providers: [VisitVersionsLoader, testMikroormProvider],
+      providers: [AttendancesLoader, testMikroormProvider],
     }).compile();
 
-    loader = moduleRef.get(VisitVersionsLoader);
+    loader = moduleRef.get(AttendancesLoader);
     orm = moduleRef.get(MikroORM);
   });
 
   beforeAll(async () => {
     const em = orm.em.fork();
+
     const now = DateTime.fromISO('2023-01-25T11:48:38', {
       zone: 'Europe/Moscow',
     });
@@ -44,6 +51,7 @@ describe('VisitVersionsLoader', () => {
     const officeRepository = em.getRepository(Office);
     const clientRepository = em.getRepository(Client);
     const visitRepository = em.getRepository(Visit);
+    const attendanceRepository = em.getRepository(Attendance);
 
     office = Office.create({
       id: OfficeId.create(),
@@ -73,7 +81,7 @@ describe('VisitVersionsLoader', () => {
       now: now.minus({ days: 2 }),
     });
 
-    const visit2 = Visit.create({
+    visit2 = Visit.create({
       id: VisitId.create(),
       office,
       name: 'Visit 2',
@@ -87,76 +95,77 @@ describe('VisitVersionsLoader', () => {
       now: now.minus({ weeks: 4 }),
     });
 
+    attendace1 = Attendance.create({
+      id: AttendanceId.create(),
+      visit: visit1,
+      date: ExactDate.create({
+        day: 26,
+        month: 1,
+        year: 2023,
+      }),
+      time: visit1.time,
+      office,
+      now,
+    });
+
+    attendace2 = Attendance.create({
+      id: AttendanceId.create(),
+      visit: visit2,
+      date: ExactDate.create({
+        day: 28,
+        month: 1,
+        year: 2023,
+      }),
+      time: TimeInterval.create({
+        startsAt: 0,
+        duration: 120,
+      }),
+      office,
+      now,
+    });
+
     officeRepository.persist(office);
     clientRepository.persist(client);
     visitRepository.persist(visit1);
     visitRepository.persist(visit2);
-
-    await em.flush();
-
-    const visit = await visitRepository
-      .createQueryBuilder()
-      .where({
-        id: visit1.id.value,
-      })
-      .getSingleResult();
-
-    if (!visit) {
-      throw new Error('Visit Not found');
-    }
-
-    visit.setName('Visit 1 Version 2', now);
-    visit.setTime(
-      TimeInterval.create({
-        startsAt: 120,
-        duration: 600,
-      }),
-      now,
-    );
+    attendanceRepository.persist(attendace1);
+    attendanceRepository.persist(attendace2);
 
     await em.flush();
   });
 
   it('should load visit 1 since visit 1 version 2 starts later', async () => {
-    const visits = await loader.load({
-      officeId: office.id.value,
+    const attendances = await loader.load({
       timeZone: 'Europe/Moscow',
-      from: DateTime.fromISO('2023-01-25T00:00:00', {
+      officeId: visit1.officeId.value,
+      from: DateTime.fromISO('2023-01-26T00:00:00', {
         zone: 'Europe/Moscow',
       }),
-      to: DateTime.fromISO('2023-01-26T00:00:00', {
+      to: DateTime.fromISO('2023-01-29T00:00:00', {
         zone: 'Europe/Moscow',
       }),
     });
 
-    expect(Array.from(visits)).toEqual([
+    expect(Array.from(attendances)).toEqual([
       {
-        clientId: client.id.value,
-        date: DateTime.fromISO('2023-01-25T00:00:00', {
+        date: DateTime.fromISO('2023-01-26T00:00:00', {
           zone: 'Europe/Moscow',
         }),
         duration: 60,
-        id: visit1.id.value,
-        name: 'Visit 1',
+        employeeIds: null,
         startsAt: 720,
-        requiredEmployees: 2,
+        visitId: visit1.id.value,
+      },
+      {
+        date: DateTime.fromISO('2023-01-28T00:00:00', {
+          zone: 'Europe/Moscow',
+        }),
+        duration: 120,
+        employeeIds: null,
+        startsAt: 0,
+        visitId: visit2.id.value,
       },
     ]);
-  });
-
-  it.skip('should properly load week from 2023-01-23 to 2023-01-30T00:00:00', async () => {
-    const visits = await loader.load({
-      officeId: office.id.value,
-      timeZone: 'Europe/Moscow',
-      from: DateTime.fromISO('2023-01-23T00:00:00', {
-        zone: 'Europe/Moscow',
-      }),
-      to: DateTime.fromISO('2023-01-30T00:00:00', {
-        zone: 'Europe/Moscow',
-      }),
-    });
-
-    expect(Array.from(visits)).toEqual([]);
   });
 
   afterAll(async () => {
