@@ -15,6 +15,7 @@ import {
   TimeZone,
   Visit,
   VisitId,
+  WeeklyRecurrence,
 } from '../../domain';
 import { AttendancesLoader } from './attendances.loader';
 import { EmployeesCalendarLoader } from './employees-calendar.loader';
@@ -46,55 +47,118 @@ describe('EmployeesCalendarService', () => {
     await orm.close();
   });
 
-  it('should properly load events for a day', async () => {
-    const { office1, dailyVisit1, employee1 } = await seedDaily(orm);
+  describe('Day', () => {
+    it('should properly load events for 2023-01-02', async () => {
+      const { office1, dailyVisit1, employee1 } = await seedDay(orm);
 
-    const result = await service.getForPeriod(
-      office1.id.value,
-      new EmployeesCalendarQueryDto({
-        startDate: '2023-01-01',
-        days: 1,
-      }),
-    );
+      const result = await service.getForPeriod(
+        office1.id.value,
+        new EmployeesCalendarQueryDto({
+          startDate: '2023-01-02',
+          days: 1,
+        }),
+      );
 
-    expect(result).toEqual({
-      employees: [
-        {
-          id: employee1.id.value,
-          name: 'Employee 1',
-        },
-      ],
-      events: [
-        {
-          assignedEmployees: 0,
-          duration: 120,
-          name: 'Daily Visit 1',
-          requiredEmployees: 3,
-          startsAt: '2023-01-01T16:00:00.000+03:00',
-          visitId: dailyVisit1.id.value,
-        },
-        {
-          assignedEmployees: 0,
-          duration: 120,
-          name: 'Daily Visit 1',
-          requiredEmployees: 3,
-          startsAt: '2023-01-01T16:00:00.000+03:00',
-          visitId: dailyVisit1.id.value,
-        },
-        {
-          assignedEmployees: 0,
-          duration: 120,
-          name: 'Daily Visit 1',
-          requiredEmployees: 3,
-          startsAt: '2023-01-01T16:00:00.000+03:00',
-          visitId: dailyVisit1.id.value,
-        },
-      ],
+      expect(result).toEqual({
+        employees: [
+          {
+            id: employee1.id.value,
+            name: 'Employee 1',
+          },
+        ],
+        events: [
+          {
+            assignedEmployees: 0,
+            duration: 120,
+            name: 'Daily Visit 1',
+            requiredEmployees: 3,
+            startsAt: '2023-01-02T16:00:00.000+03:00',
+            visitId: dailyVisit1.id.value,
+          },
+          {
+            assignedEmployees: 0,
+            duration: 120,
+            name: 'Daily Visit 1',
+            requiredEmployees: 3,
+            startsAt: '2023-01-02T16:00:00.000+03:00',
+            visitId: dailyVisit1.id.value,
+          },
+          {
+            assignedEmployees: 0,
+            duration: 120,
+            name: 'Daily Visit 1',
+            requiredEmployees: 3,
+            startsAt: '2023-01-02T16:00:00.000+03:00',
+            visitId: dailyVisit1.id.value,
+          },
+        ],
+      });
+    });
+
+    it('should properly load events for 2023-01-09', async () => {
+      const { office1, dailyVisit1, weeklyVisit1, employee1 } = await seedDay(
+        orm,
+      );
+
+      const result = await service.getForPeriod(
+        office1.id.value,
+        new EmployeesCalendarQueryDto({
+          startDate: '2023-01-09',
+          days: 1,
+        }),
+      );
+
+      expect(result).toEqual({
+        employees: [
+          {
+            id: employee1.id.value,
+            name: 'Employee 1',
+          },
+        ],
+        events: [
+          {
+            assignedEmployees: 0,
+            duration: 120,
+            employeeId: undefined,
+            name: 'Weekly Visit 1',
+            requiredEmployees: 1,
+            startsAt: '2023-01-09T16:00:00.000+03:00',
+            visitId: weeklyVisit1.id.value,
+          },
+          {
+            assignedEmployees: 0,
+            duration: 120,
+            employeeId: undefined,
+            name: 'Daily Visit 1',
+            requiredEmployees: 3,
+            startsAt: '2023-01-09T16:00:00.000+03:00',
+            visitId: dailyVisit1.id.value,
+          },
+          {
+            assignedEmployees: 0,
+            duration: 120,
+            employeeId: undefined,
+            name: 'Daily Visit 1',
+            requiredEmployees: 3,
+            startsAt: '2023-01-09T16:00:00.000+03:00',
+            visitId: dailyVisit1.id.value,
+          },
+          {
+            assignedEmployees: 0,
+            duration: 120,
+            employeeId: undefined,
+            name: 'Daily Visit 1',
+            requiredEmployees: 3,
+            startsAt: '2023-01-09T16:00:00.000+03:00',
+            visitId: dailyVisit1.id.value,
+          },
+        ],
+      });
     });
   });
 });
 
-async function seedDaily(orm: MikroORM) {
+async function seedDay(orm: MikroORM) {
   const em = orm.em.fork();
 
   const office1 = Office.create({
@@ -140,10 +204,27 @@ async function seedDaily(orm: MikroORM) {
     }),
   });
 
+  const weeklyVisit1 = Visit.create({
+    id: VisitId.create(),
+    name: 'Weekly Visit 1',
+    office: office1,
+    client: client1,
+    recurrence: WeeklyRecurrence.create([0]),
+    time: TimeInterval.create({
+      startsAt: 960,
+      duration: 120,
+    }),
+    requiredEmployees: RequiredEmployees.create(1),
+    now: DateTime.fromISO('2023-01-03T13:00:00', {
+      zone: 'Europe/Moscow',
+    }),
+  });
+
   em.persist(office1);
   em.persist(client1);
   em.persist(employee1);
   em.persist(dailyVisit1);
+  em.persist(weeklyVisit1);
 
   await em.flush();
 
@@ -152,5 +233,6 @@ async function seedDaily(orm: MikroORM) {
     client1,
     employee1,
     dailyVisit1,
+    weeklyVisit1,
   };
 }
