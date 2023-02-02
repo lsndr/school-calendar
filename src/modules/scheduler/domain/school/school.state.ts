@@ -4,6 +4,7 @@ import { AggregateRoot } from '../../../shared/domain';
 import { SchoolIdType, TimeZoneType } from '../../database';
 import { SchoolId } from './school-id';
 import { TimeZone } from './../shared';
+import { DateTimeType } from '../../../shared/database/types';
 
 type CreateSchoolState = {
   id: SchoolId;
@@ -23,10 +24,10 @@ export abstract class SchoolState extends AggregateRoot {
   @Property({ name: 'time_zone', type: TimeZoneType })
   protected _timeZone: TimeZone;
 
-  @Property({ name: 'created_at' })
+  @Property({ name: 'created_at', type: DateTimeType })
   protected _createdAt: DateTime;
 
-  @Property({ name: 'updated_at' })
+  @Property({ name: 'updated_at', type: DateTimeType })
   protected _updatedAt: DateTime;
 
   @Property({ name: 'version', version: true })

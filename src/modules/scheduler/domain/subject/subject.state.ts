@@ -18,8 +18,8 @@ import { TimeInterval } from '../shared';
 import { GroupId } from './../group';
 import { SchoolId } from './../school';
 import { RequiredTeachers } from './required-teachers';
-
 import { SubjectId } from './subject-id';
+import { DateTimeType } from '../../../shared/database/types';
 
 type CreateSubjectState = {
   id: SubjectId;
@@ -63,10 +63,10 @@ export abstract class SubjectState extends AggregateRoot {
   @Property({ name: 'required_teachers', type: RequiredTeachersType })
   protected _requiredTeachers: RequiredTeachers;
 
-  @Property({ name: 'created_at' })
+  @Property({ name: 'created_at', type: DateTimeType })
   protected _createdAt: DateTime;
 
-  @Property({ name: 'updated_at' })
+  @Property({ name: 'updated_at', type: DateTimeType })
   protected _updatedAt: DateTime;
 
   @Property({ name: 'version', version: true })

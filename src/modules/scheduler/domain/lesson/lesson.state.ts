@@ -6,6 +6,7 @@ import {
   Property,
 } from '@mikro-orm/core';
 import { DateTime } from 'luxon';
+import { DateTimeType } from '../../../shared/database/types';
 import { AggregateRoot } from '../../../shared/domain';
 import {
   SchoolIdType,
@@ -53,10 +54,10 @@ export abstract class LessonState extends AggregateRoot {
   @Embedded(() => TimeInterval, { prefix: 'time_' })
   protected _time: TimeInterval;
 
-  @Property({ name: 'created_at' })
+  @Property({ name: 'created_at', type: DateTimeType })
   protected _createdAt: DateTime;
 
-  @Property({ name: 'updated_at' })
+  @Property({ name: 'updated_at', type: DateTimeType })
   protected _updatedAt: DateTime;
 
   @Property({ name: 'version', version: true })

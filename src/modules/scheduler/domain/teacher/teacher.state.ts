@@ -4,6 +4,7 @@ import { AggregateRoot } from '../../../shared/domain';
 import { TeacherIdType, SchoolIdType } from '../../database';
 import { TeacherId } from './teacher-id';
 import { SchoolId } from './../school';
+import { DateTimeType } from '../../../shared/database/types';
 
 type CreateTeacherState = {
   id: TeacherId;
@@ -23,10 +24,10 @@ export abstract class TeacherState extends AggregateRoot {
   @Property({ name: 'school_id', type: SchoolIdType })
   protected _schoolId: SchoolId;
 
-  @Property({ name: 'created_at' })
+  @Property({ name: 'created_at', type: DateTimeType })
   protected _createdAt: DateTime;
 
-  @Property({ name: 'updated_at' })
+  @Property({ name: 'updated_at', type: DateTimeType })
   protected _updatedAt: DateTime;
 
   @Property({ name: 'version', version: true })

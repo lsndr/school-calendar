@@ -5,6 +5,7 @@ import { AssignedTeacherId } from './assigned-teacher-id';
 // eslint-disable-next-line import/no-cycle -- Required by MikroORM
 import { Lesson } from './lesson';
 import { TeacherId } from '../teacher';
+import { DateTimeType } from '../../../shared/database/types';
 
 @Entity({ tableName: 'lesson_teacher', customRepository: () => Object })
 export class AssignedTeacher {
@@ -14,7 +15,7 @@ export class AssignedTeacher {
   @Property({ type: TeacherIdType })
   teacherId: TeacherId;
 
-  @Property()
+  @Property({ type: DateTimeType })
   assignedAt: DateTime;
 
   @ManyToOne(() => Lesson)
