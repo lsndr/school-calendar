@@ -67,6 +67,11 @@ export class SubjectVersionsLoader {
             query2
               .where('active_till', '>=', options.from.toUTC().toSQL())
               .andWhere('active_till', '<', options.to.toUTC().toSQL());
+          })
+          .orWhere((query2) => {
+            query2
+              .whereNull('active_till')
+              .andWhere('active_since', '<', options.to.toUTC().toSQL());
           });
       })
       .orderBy('active_since', 'desc');
@@ -87,9 +92,6 @@ export class SubjectVersionsLoader {
           ? subject.active_till.setZone(options.timeZone).endOf('day')
           : null;
 
-        // Если active_since больше from, то юзать active_since,
-        // так как в выборку могу попасть лишние даты.
-
         const datesFrom = (
           subject.active_since.toMillis() > options.from.toMillis()
             ? subject.active_since
@@ -98,8 +100,6 @@ export class SubjectVersionsLoader {
           .setZone(options.timeZone)
           .startOf('day');
         const datesTo = options.to;
-
-        // Генерим нужные нам даты.
 
         const dates = extractDatesFromPeriodicity(datesFrom, datesTo, {
           timeZone: options.timeZone,
