@@ -101,7 +101,7 @@ export class TeachersCalendarLoader {
 
     return await knex
       .select(['id', 'name'])
-      .from('teachers')
+      .from('teacher')
       .where('school_id', schoolId);
   }
 }

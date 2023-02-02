@@ -20,7 +20,7 @@ export class TeachersCalendarService {
 
     const school = await knex
       .select(['id', 'time_zone'])
-      .from('schools')
+      .from('school')
       .where('id', schoolId)
       .first();
 

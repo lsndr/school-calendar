@@ -47,7 +47,7 @@ describe('TeachersCalendarService', () => {
   });
 
   it('should properly load events for a day', async () => {
-    const { school1, dailySubject1, teacher1 } = await seed(orm);
+    const { school1, dailySubject1, teacher1 } = await seedDaily(orm);
 
     const result = await service.getForPeriod(
       school1.id.value,
@@ -94,7 +94,7 @@ describe('TeachersCalendarService', () => {
   });
 });
 
-async function seed(orm: MikroORM) {
+async function seedDaily(orm: MikroORM) {
   const em = orm.em.fork();
 
   const school1 = School.create({
