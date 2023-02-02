@@ -38,7 +38,7 @@ export class TeachersCalendarService {
       schoolId: school.id,
       from,
       to,
-      timeZone: school.timeZone,
+      timeZone: school.time_zone,
     });
   }
 }
