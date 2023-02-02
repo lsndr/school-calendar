@@ -1,0 +1,9 @@
+{
+  "name": "Events PoW",
+  "dockerComposeFile": "docker-compose.yml",
+  "workspaceFolder": "/workspace",
+  "service": "app",
+  "remoteUser": "node",
+  "forwardPorts": [8080],
+  "postCreateCommand": "npm install && cp .env.example .env && cp .env.test.example .env.test"
+}
