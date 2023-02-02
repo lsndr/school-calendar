@@ -62,7 +62,7 @@ export class AttendancesLoader {
           visitId: attendance.visit_id,
           startsAt: attendance.time_starts_at,
           duration: attendance.time_duration,
-          date: DateTime.fromSQL(attendance.date).setZone(options.timeZone, {
+          date: attendance.date.setZone(options.timeZone, {
             keepLocalTime: true,
           }),
           employeeIds: attendance.employee_ids,

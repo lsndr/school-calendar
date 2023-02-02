@@ -341,7 +341,7 @@ export class AttendancesService {
     return new AttendanceDto({
       assignedEmployees,
       visitId: attendanceRecord.visit_id,
-      date: attendanceRecord.date,
+      date: attendanceRecord.date.toISODate(),
       time: new TimeIntervalDto({
         startsAt: attendanceRecord.time_starts_at,
         duration: attendanceRecord.time_duration,

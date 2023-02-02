@@ -22,18 +22,10 @@ export const ENTITIES = [
   AssignedEmployee,
 ] as const;
 
-types.setTypeParser(types.builtins.TIMESTAMP, (val) =>
-  DateTime.fromSQL(val, { setZone: true }),
-);
-
-types.setTypeParser(types.builtins.TIMESTAMPTZ, (val) =>
-  DateTime.fromSQL(val, { setZone: true }),
-);
-
-export const mikroormProvider: Provider = {
+export const mikroormProvider = {
   provide: MikroORM,
-  useFactory: () => {
-    return MikroORM.init({
+  useFactory: async () => {
+    const orm = await MikroORM.init({
       entities: [...ENTITIES],
       clientUrl: process.env['DB_URL'],
       pool: {
@@ -46,5 +38,19 @@ export const mikroormProvider: Provider = {
         allOrNothing: true,
       },
     });
+
+    types.setTypeParser(types.builtins.TIMESTAMP, (val) =>
+      DateTime.fromSQL(val, { setZone: true }),
+    );
+
+    types.setTypeParser(types.builtins.TIMESTAMPTZ, (val) =>
+      DateTime.fromSQL(val, { setZone: true }),
+    );
+
+    types.setTypeParser(types.builtins.DATE, (val) =>
+      DateTime.fromSQL(val, { setZone: true }),
+    );
+
+    return orm;
   },
-};
+} satisfies Provider;
