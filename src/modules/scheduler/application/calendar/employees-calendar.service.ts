@@ -28,7 +28,7 @@ export class EmployeesCalendarService {
       throw new Error('Office not found');
     }
 
-    const from = DateTime.fromISO(query.dateFrom, {
+    const from = DateTime.fromISO(query.startDate, {
       zone: office.time_zone,
     }).startOf('day');
 
