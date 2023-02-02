@@ -14,11 +14,11 @@ import {
   Subject,
   SubjectId,
   WeeklyRecurrence,
-} from '../../../domain';
+} from '../../domain';
 import { DateTime } from 'luxon';
 import { LessonsLoader } from './lessons.loader';
 import { MikroORM } from '@mikro-orm/postgresql';
-import { testMikroormProvider } from '../../../../../../test-utils';
+import { testMikroormProvider } from '../../../../../test-utils';
 
 describe('LessonsLoader', () => {
   let loader: LessonsLoader;

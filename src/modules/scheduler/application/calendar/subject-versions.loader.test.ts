@@ -11,11 +11,11 @@ import {
   Subject,
   SubjectId,
   WeeklyRecurrence,
-} from '../../../domain';
+} from '../../domain';
 import { DateTime } from 'luxon';
 import { SubjectVersionsLoader } from './subject-versions.loader';
 import { MikroORM } from '@mikro-orm/postgresql';
-import { testMikroormProvider } from '../../../../../../test-utils';
+import { testMikroormProvider } from '../../../../../test-utils';
 
 describe('SubjectVersionsLoader', () => {
   let loader: SubjectVersionsLoader;
