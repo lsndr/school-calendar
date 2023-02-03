@@ -5,6 +5,7 @@ services:
     build: ./app
     volumes:
       - ..:/workspace:cached
+      - node_modules:/workspace/node_modules
     command: sleep infinity
   postgres:
     build: ./postgres
@@ -34,3 +35,4 @@ services:
       - PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED=False
 volumes:
   postgres-data:
+  node_modules:
