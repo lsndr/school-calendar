@@ -1,4 +1,7 @@
-module.exports = {
+/* eslint-disable import/no-default-export -- Required by jest */
+import { Config } from 'jest';
+
+export default {
   testEnvironment: 'node',
   collectCoverageFrom: ['**/*.ts'],
   coverageDirectory: './coverage',
@@ -20,4 +23,4 @@ module.exports = {
       },
     ],
   },
-};
+} satisfies Config;
