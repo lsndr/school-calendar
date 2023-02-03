@@ -2,10 +2,12 @@
   "extends": "./tsconfig.json",
   "exclude": [
     "node_modules",
-    "test",
+    "test-utils",
     "dist",
     "**/*.test.ts",
     "**/*.spec.ts",
-    "migrations"
+    "migrations",
+    "jest.setup.ts",
+    "mikro-orm.config.ts"
   ]
 }
