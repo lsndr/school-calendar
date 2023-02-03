@@ -24,7 +24,6 @@ services:
       - 8080:80
     volumes:
       - ./pgadmin4/servers.json:/pgadmin4/servers.json
-      - ./pgadmin4/pgpass:/pgpass
     environment:
       - PGADMIN_DEFAULT_EMAIL=test@test.com
       - PGADMIN_DEFAULT_PASSWORD=test
@@ -33,6 +32,10 @@ services:
       - PGADMIN_CONFIG_PROXY_X_HOST_COUNT=1
       - PGADMIN_CONFIG_PROXY_X_PREFIX_COUNT=1
       - PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED=False
+    entrypoint:
+      - "/bin/sh"
+      - "-c"
+      - "/bin/echo 'postgres:5432:*:dev:dev' > /tmp/pgpassfile && chmod 600 /tmp/pgpassfile && /entrypoint.sh"
 volumes:
   postgres-data:
   node_modules:
