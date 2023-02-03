@@ -1,4 +1,5 @@
 import {
+  EntityName,
   EventSubscriber,
   Subscriber,
   TransactionEventArgs,
@@ -7,9 +8,14 @@ import { Knex } from '@mikro-orm/postgresql';
 import { randomUUID } from 'crypto';
 import { DateTime } from 'luxon';
 import { AggregateRoot } from '../../../shared/domain';
+import { Lesson } from '../../domain';
 
 @Subscriber()
 export class OutboxSubscriber implements EventSubscriber {
+  getSubscribedEntities(): EntityName<any>[] {
+    return [Lesson];
+  }
+
   async beforeTransactionCommit(args: TransactionEventArgs) {
     const uow = args.uow;
     const knex: Knex = args.transaction;
@@ -19,9 +25,14 @@ export class OutboxSubscriber implements EventSubscriber {
     }
 
     const changeSets = uow.getChangeSets();
+    const subscribedEntities = this.getSubscribedEntities();
 
     for (const changeSet of changeSets) {
       const entity = changeSet.entity;
+
+      if (!subscribedEntities.includes(entity.constructor)) {
+        continue;
+      }
 
       if (!(entity instanceof AggregateRoot)) {
         continue;
