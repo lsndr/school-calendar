@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsTimeZone, MaxLength, MinLength } from 'class-validator';
+import { IsString, MaxLength, MinLength } from 'class-validator';
 
 export class CreateOfficeDto {
   @MinLength(1)
@@ -8,7 +8,7 @@ export class CreateOfficeDto {
   @ApiProperty()
   name: string;
 
-  @IsTimeZone()
+  //@IsTimeZone()
   @ApiProperty({
     type: 'string',
     format: 'time-zone',
