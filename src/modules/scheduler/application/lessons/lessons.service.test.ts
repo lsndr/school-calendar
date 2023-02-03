@@ -96,6 +96,7 @@ describe('Lessons Service', () => {
   it('should create an lesson', async () => {
     jest.useFakeTimers();
     jest.setSystemTime(new Date('2023-01-23T14:00:28.460Z'));
+    const knex = orm.em.getConnection().getKnex();
 
     const result = await lessonsService.create(
       school.id.value,
@@ -115,23 +116,8 @@ describe('Lessons Service', () => {
       subject.id.value,
       '2023-01-24',
     );
+    const result3 = await knex.select('*').from('outbox');
 
-    expect(result2).toEqual({
-      date: '2023-01-24',
-      subjectId: subject.id.value,
-      createdAt: '2023-01-23T14:00:28.460+00:00',
-      updatedAt: '2023-01-23T14:00:28.460+00:00',
-      assignedTeachers: [
-        {
-          assignedAt: '2023-01-23T14:00:28.460+00:00',
-          teacherId: teacher.id.value,
-        },
-      ],
-      time: expect.objectContaining({
-        duration: 123,
-        startsAt: 45,
-      }),
-    });
     expect(result).toEqual({
       date: '2023-01-24',
       subjectId: subject.id.value,
@@ -148,6 +134,47 @@ describe('Lessons Service', () => {
         startsAt: 45,
       }),
     });
+    expect(result2).toEqual({
+      date: '2023-01-24',
+      subjectId: subject.id.value,
+      createdAt: '2023-01-23T14:00:28.460+00:00',
+      updatedAt: '2023-01-23T14:00:28.460+00:00',
+      assignedTeachers: [
+        {
+          assignedAt: '2023-01-23T14:00:28.460+00:00',
+          teacherId: teacher.id.value,
+        },
+      ],
+      time: expect.objectContaining({
+        duration: 123,
+        startsAt: 45,
+      }),
+    });
+    expect(result3).toEqual([
+      {
+        created_at: DateTime.fromISO('2023-01-23T14:00:28.460+00:00'),
+        id: expect.any(String),
+        payload: {
+          createdAt: '2023-01-23T14:00:28.460+00:00',
+          teacherIds: [teacher.id.value],
+          id: {
+            date: {
+              day: 24,
+              month: 1,
+              year: 2023,
+            },
+            subjectId: subject.id.value,
+          },
+          time: {
+            duration: 123,
+            startsAt: 45,
+          },
+          updatedAt: '2023-01-23T14:00:28.460+00:00',
+        },
+        processed_at: null,
+        topic: 'scheduler.LessonUpdatedEvent',
+      },
+    ]);
 
     jest.useRealTimers();
   });
