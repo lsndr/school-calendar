@@ -6,5 +6,26 @@
   "remoteUser": "node",
   "forwardPorts": [8080],
   "waitFor": "postCreateCommand",
-  "postCreateCommand": "sudo chown node node_modules && npm install && cp .env.example .env && cp .env.test.example .env.test"
+  "postCreateCommand": "sudo chown node node_modules && npm install && cp .env.example .env && cp .env.test.example .env.test",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "vivaxy.vscode-conventional-commits",
+        "firsttris.vscode-jest-runner",
+        "redhat.vscode-yaml"
+      ],
+      "settings": {
+        "editor.defaultFormatter": "dbaeumer.vscode-eslint",
+        "eslint.format.enable": true,
+        "[typescript]": {
+          "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+        },
+        "[javascript]": {
+          "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+        },
+        "conventionalCommits.scopes": ["scheduler", "common"]
+      }
+    }
+  }
 }
