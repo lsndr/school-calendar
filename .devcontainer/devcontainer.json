@@ -13,7 +13,8 @@
         "dbaeumer.vscode-eslint",
         "vivaxy.vscode-conventional-commits",
         "firsttris.vscode-jest-runner",
-        "redhat.vscode-yaml"
+        "redhat.vscode-yaml",
+        "Gruntfuggly.todo-tree"
       ],
       "settings": {
         "editor.defaultFormatter": "dbaeumer.vscode-eslint",
