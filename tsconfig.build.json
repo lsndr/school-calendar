@@ -8,6 +8,7 @@
     "**/*.spec.ts",
     "migrations",
     "jest.setup.ts",
+    "jest.config.ts",
     "mikro-orm.config.ts"
   ]
 }
