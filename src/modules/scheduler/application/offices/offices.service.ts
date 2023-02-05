@@ -53,4 +53,26 @@ export class OfficesService {
       timeZone: record.time_zone,
     });
   }
+
+  async findMany() {
+    const knex = this.orm.em.getConnection().getKnex();
+
+    const records = await knex
+      .select(['id', 'time_zone', 'name'])
+      .from('office');
+
+    const offices: OfficeDto[] = [];
+
+    for (const record of records) {
+      offices.push(
+        new OfficeDto({
+          id: record.id,
+          name: record.name,
+          timeZone: record.time_zone,
+        }),
+      );
+    }
+
+    return offices;
+  }
 }
