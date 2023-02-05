@@ -2,7 +2,7 @@ import { Migration } from '@mikro-orm/migrations';
 
 export class Migration20230201082844 extends Migration {
   async up(): Promise<void> {
-    const knex = this.getKnex();
+    const knex = this.ctx || this.getKnex();
 
     return knex.schema.createTable('outbox', (table) => {
       table.text('id').primary();
@@ -14,7 +14,7 @@ export class Migration20230201082844 extends Migration {
   }
 
   override async down(): Promise<void> {
-    const knex = this.getKnex();
+    const knex = this.ctx || this.getKnex();
 
     return knex.schema.dropTable('outbox');
   }
