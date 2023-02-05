@@ -4,7 +4,7 @@ import { MikroORM } from '@mikro-orm/postgresql';
 
 @Module({
   imports: [],
-  providers: [],
+  providers: [mikroormProvider],
   exports: [mikroormProvider],
 })
 export class SharedModule {
