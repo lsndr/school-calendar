@@ -36,6 +36,24 @@ describe('Clients Service', () => {
     });
   });
 
+  it('should find a client', async () => {
+    const office = await seedOffice(orm);
+
+    await clientsService.create(office.id.value, {
+      name: 'Client 1',
+    });
+    const result = await clientsService.create(office.id.value, {
+      name: 'Client 2',
+    });
+
+    const result2 = await clientsService.findOne(office.id.value, result.id);
+
+    expect(result2).toEqual({
+      id: expect.any(String),
+      name: 'Client 2',
+    });
+  });
+
   it('should fail to create a client if office not found', async () => {
     const result = () =>
       clientsService.create(
