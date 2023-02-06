@@ -23,12 +23,9 @@ describe('Groups Service', () => {
   it('should create a group', async () => {
     const school = await seedSchool(orm);
 
-    const result = await groupsService.create(
-      new CreateGroupDto({
-        name: 'Test Group',
-        schoolId: school.id.value,
-      }),
-    );
+    const result = await groupsService.create(school.id.value, {
+      name: 'Test Group',
+    });
 
     const result2 = await groupsService.findOne(school.id.value, result.id);
 
@@ -42,9 +39,9 @@ describe('Groups Service', () => {
   it('should fail to create a group if school not found', async () => {
     const result = () =>
       groupsService.create(
+        'wrong-school-id',
         new CreateGroupDto({
           name: 'Test Group',
-          schoolId: 'wrong-school-id',
         }),
       );
 
@@ -52,13 +49,12 @@ describe('Groups Service', () => {
   });
 
   it('should fail to create a group if school not found', async () => {
-    const result = () =>
-      groupsService.create(
-        new CreateGroupDto({
-          name: 'Test group',
-          schoolId: 'wrong-school-id',
-        }),
-      );
+    const result = groupsService.create(
+      'wrong-school-id',
+      new CreateGroupDto({
+        name: 'Test Group',
+      }),
+    );
 
     await expect(result).rejects.toThrowError('School not found');
   });
@@ -67,17 +63,14 @@ describe('Groups Service', () => {
     const school1 = await seedSchool(orm);
     const school2 = await seedSchool(orm);
 
-    await groupsService.create({
-      name: 'group 11',
-      schoolId: school1.id.value,
+    await groupsService.create(school1.id.value, {
+      name: 'Group 11',
     });
-    await groupsService.create({
-      name: 'group 12',
-      schoolId: school1.id.value,
+    await groupsService.create(school1.id.value, {
+      name: 'Group 12',
     });
-    await groupsService.create({
-      name: 'group 21',
-      schoolId: school2.id.value,
+    await groupsService.create(school2.id.value, {
+      name: 'Group 21',
     });
 
     const result = await groupsService.findMany(school1.id.value);
@@ -85,11 +78,11 @@ describe('Groups Service', () => {
     expect(result).toEqual([
       {
         id: expect.any(String),
-        name: 'group 11',
+        name: 'Group 11',
       },
       {
         id: expect.any(String),
-        name: 'group 12',
+        name: 'Group 12',
       },
     ]);
   });

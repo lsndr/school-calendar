@@ -8,12 +8,7 @@ export class CreateGroupDto {
   @ApiProperty()
   name: string;
 
-  @ApiProperty()
-  @IsString()
-  schoolId: string;
-
   constructor(dto: CreateGroupDto) {
     this.name = dto?.name;
-    this.schoolId = dto?.schoolId;
   }
 }

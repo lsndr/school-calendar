@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { SharedModule } from '../shared/shared.module';
 import { GroupsController } from './api/groups.controller';
 import { SchoolsController } from './api/schools.controller';
-import { SchoolsService, GroupsService } from './application';
+import { GroupsService, SchoolsService } from './application';
 
 @Module({
   imports: [SharedModule],
