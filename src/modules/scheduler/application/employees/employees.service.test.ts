@@ -30,7 +30,7 @@ describe('Employees Service', () => {
       }),
     );
 
-    const result2 = await employeesService.findOne(result.id);
+    const result2 = await employeesService.findOne(office.id.value, result.id);
 
     expect(result).toEqual(result2);
     expect(result).toEqual({

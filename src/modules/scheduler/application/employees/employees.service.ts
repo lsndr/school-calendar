@@ -43,13 +43,14 @@ export class EmployeesService {
     });
   }
 
-  async findOne(id: string) {
+  async findOne(officeId: string, id: string) {
     const knex = this.orm.em.getConnection().getKnex();
 
     const record = await knex
       .select(['id', 'name'])
       .from('employee')
       .where('id', id)
+      .where('office_id', officeId)
       .first();
 
     if (!record) {
