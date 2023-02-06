@@ -1,5 +1,17 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiOkResponse } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Get,
+  NotFoundException,
+  Param,
+  Post,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiOkResponse,
+  ApiNotFoundResponse,
+} from '@nestjs/swagger';
 import { CreateOfficeDto, OfficeDto, OfficesService } from '../application';
 
 @ApiTags('Offices')
@@ -21,10 +33,17 @@ export class OfficesController {
     return this.officesService.create(dto);
   }
 
-  @ApiOperation({ operationId: 'createOffice' })
+  @ApiOperation({ operationId: 'findOfficeById' })
   @ApiOkResponse({ type: OfficeDto })
-  @Post()
-  async createOffice(@Body() dto: CreateOfficeDto): Promise<OfficeDto> {
-    return this.officesService.create(dto);
+  @ApiNotFoundResponse()
+  @Get('/:id')
+  async findOfficeById(@Param('id') id: string): Promise<OfficeDto> {
+    const office = await this.officesService.findOne(id);
+
+    if (!office) {
+      throw new NotFoundException();
+    }
+
+    return office;
   }
 }
