@@ -8,10 +8,9 @@ import { CreateTeacherDto } from './create-teacher.dto';
 
 describe('Teachers Service', () => {
   let teachersService: TeachersService;
-  let school: School;
   let orm: MikroORM;
 
-  beforeAll(async () => {
+  beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
       controllers: [],
       providers: [TeachersService, testMikroormProvider],
@@ -21,19 +20,9 @@ describe('Teachers Service', () => {
     orm = moduleRef.get(MikroORM);
   });
 
-  beforeEach(async () => {
-    school = School.create({
-      id: SchoolId.create(),
-      name: 'Test School',
-      timeZone: TimeZone.create('Europe/Moscow'),
-      now: DateTime.now(),
-    });
-
-    const schoolRepository = orm.em.fork().getRepository(School);
-    await schoolRepository.persistAndFlush(school);
-  });
-
   it('should create an teacher', async () => {
+    const school = await seedSchool(orm);
+
     const result = await teachersService.create(
       school.id.value,
       new CreateTeacherDto({
@@ -62,7 +51,49 @@ describe('Teachers Service', () => {
     await expect(result).rejects.toThrowError('School not found');
   });
 
-  afterAll(async () => {
+  it('should find teachers', async () => {
+    const school1 = await seedSchool(orm);
+    const school2 = await seedSchool(orm);
+
+    await teachersService.create(school1.id.value, {
+      name: 'Teacher 11',
+    });
+    await teachersService.create(school1.id.value, {
+      name: 'Teacher 12',
+    });
+    await teachersService.create(school2.id.value, {
+      name: 'Teacher 21',
+    });
+
+    const result = await teachersService.findMany(school1.id.value);
+
+    expect(result).toEqual([
+      {
+        id: expect.any(String),
+        name: 'Teacher 11',
+      },
+      {
+        id: expect.any(String),
+        name: 'Teacher 12',
+      },
+    ]);
+  });
+
+  afterEach(async () => {
     await orm.close();
   });
 });
+
+async function seedSchool(orm: MikroORM) {
+  const school = School.create({
+    id: SchoolId.create(),
+    name: 'Test School',
+    timeZone: TimeZone.create('Europe/Moscow'),
+    now: DateTime.now(),
+  });
+
+  const schoolRepository = orm.em.fork();
+  await schoolRepository.persistAndFlush(school);
+
+  return school;
+}
