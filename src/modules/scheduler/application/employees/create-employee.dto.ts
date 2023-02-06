@@ -8,12 +8,7 @@ export class CreateEmployeeDto {
   @ApiProperty()
   name: string;
 
-  @ApiProperty()
-  @IsString()
-  officeId: string;
-
   constructor(dto: CreateEmployeeDto) {
     this.name = dto?.name;
-    this.officeId = dto?.officeId;
   }
 }
