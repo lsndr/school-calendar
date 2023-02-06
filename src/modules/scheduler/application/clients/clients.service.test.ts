@@ -8,10 +8,9 @@ import { CreateClientDto } from './create-client.dto';
 
 describe('Clients Service', () => {
   let clientsService: ClientsService;
-  let office: Office;
   let orm: MikroORM;
 
-  beforeAll(async () => {
+  beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
       controllers: [],
       providers: [ClientsService, testMikroormProvider],
@@ -21,19 +20,9 @@ describe('Clients Service', () => {
     orm = moduleRef.get(MikroORM);
   });
 
-  beforeEach(async () => {
-    office = Office.create({
-      id: OfficeId.create(),
-      name: 'Test Office',
-      timeZone: TimeZone.create('Europe/Moscow'),
-      now: DateTime.now(),
-    });
-
-    const officeRepository = orm.em.fork();
-    await officeRepository.persistAndFlush(office);
-  });
-
   it('should create a client', async () => {
+    const office = await seedOffice(orm);
+
     const result = await clientsService.create({
       name: 'Test Client',
       officeId: office.id.value,
@@ -60,7 +49,64 @@ describe('Clients Service', () => {
     await expect(result).rejects.toThrowError('Office not found');
   });
 
-  afterAll(async () => {
+  it('should fail to create a client if office not found', async () => {
+    const result = () =>
+      clientsService.create(
+        new CreateClientDto({
+          name: 'Test Client',
+          officeId: 'wrong-office-id',
+        }),
+      );
+
+    await expect(result).rejects.toThrowError('Office not found');
+  });
+
+  it('should find clients', async () => {
+    const office1 = await seedOffice(orm);
+    const office2 = await seedOffice(orm);
+
+    await clientsService.create({
+      name: 'Client 11',
+      officeId: office1.id.value,
+    });
+    await clientsService.create({
+      name: 'Client 12',
+      officeId: office1.id.value,
+    });
+    await clientsService.create({
+      name: 'Client 21',
+      officeId: office2.id.value,
+    });
+
+    const result = await clientsService.findMany(office1.id.value);
+
+    expect(result).toEqual([
+      {
+        id: expect.any(String),
+        name: 'Client 11',
+      },
+      {
+        id: expect.any(String),
+        name: 'Client 12',
+      },
+    ]);
+  });
+
+  afterEach(async () => {
     await orm.close();
   });
 });
+
+async function seedOffice(orm: MikroORM) {
+  const office = Office.create({
+    id: OfficeId.create(),
+    name: 'Test Office',
+    timeZone: TimeZone.create('Europe/Moscow'),
+    now: DateTime.now(),
+  });
+
+  const officeRepository = orm.em.fork();
+  await officeRepository.persistAndFlush(office);
+
+  return office;
+}

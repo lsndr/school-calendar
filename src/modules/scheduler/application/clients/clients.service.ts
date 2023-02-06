@@ -62,4 +62,26 @@ export class ClientsService {
       name: record.name,
     });
   }
+
+  async findMany(officeId: string) {
+    const knex = this.orm.em.getConnection().getKnex();
+
+    const records = await knex
+      .select(['id', 'name'])
+      .from('client')
+      .where('office_id', officeId);
+
+    const clients: ClientDto[] = [];
+
+    for (const record of records) {
+      clients.push(
+        new ClientDto({
+          id: record.id,
+          name: record.name,
+        }),
+      );
+    }
+
+    return clients;
+  }
 }
