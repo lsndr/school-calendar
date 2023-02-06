@@ -23,9 +23,8 @@ describe('Clients Service', () => {
   it('should create a client', async () => {
     const office = await seedOffice(orm);
 
-    const result = await clientsService.create({
+    const result = await clientsService.create(office.id.value, {
       name: 'Test Client',
-      officeId: office.id.value,
     });
 
     const result2 = await clientsService.findOne(office.id.value, result.id);
@@ -40,9 +39,9 @@ describe('Clients Service', () => {
   it('should fail to create a client if office not found', async () => {
     const result = () =>
       clientsService.create(
+        'wrong-office-id',
         new CreateClientDto({
           name: 'Test Client',
-          officeId: 'wrong-office-id',
         }),
       );
 
@@ -52,9 +51,9 @@ describe('Clients Service', () => {
   it('should fail to create a client if office not found', async () => {
     const result = () =>
       clientsService.create(
+        'wrong-office-id',
         new CreateClientDto({
           name: 'Test Client',
-          officeId: 'wrong-office-id',
         }),
       );
 
@@ -65,17 +64,14 @@ describe('Clients Service', () => {
     const office1 = await seedOffice(orm);
     const office2 = await seedOffice(orm);
 
-    await clientsService.create({
+    await clientsService.create(office1.id.value, {
       name: 'Client 11',
-      officeId: office1.id.value,
     });
-    await clientsService.create({
+    await clientsService.create(office1.id.value, {
       name: 'Client 12',
-      officeId: office1.id.value,
     });
-    await clientsService.create({
+    await clientsService.create(office2.id.value, {
       name: 'Client 21',
-      officeId: office2.id.value,
     });
 
     const result = await clientsService.findMany(office1.id.value);

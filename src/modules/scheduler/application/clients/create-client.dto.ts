@@ -8,12 +8,7 @@ export class CreateClientDto {
   @ApiProperty()
   name: string;
 
-  @ApiProperty()
-  @IsString()
-  officeId: string;
-
   constructor(dto: CreateClientDto) {
     this.name = dto?.name;
-    this.officeId = dto?.officeId;
   }
 }
