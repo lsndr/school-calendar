@@ -61,4 +61,26 @@ export class TeachersService {
       name: record.name,
     });
   }
+
+  async findMany(schoolId: string) {
+    const knex = this.orm.em.getConnection().getKnex();
+
+    const records = await knex
+      .select(['id', 'name'])
+      .from('teacher')
+      .where('school_id', schoolId);
+
+    const teachers: TeacherDto[] = [];
+
+    for (const record of records) {
+      teachers.push(
+        new TeacherDto({
+          id: record.id,
+          name: record.name,
+        }),
+      );
+    }
+
+    return teachers;
+  }
 }

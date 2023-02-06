@@ -1,4 +1,4 @@
-import { Body, Controller, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiOkResponse } from '@nestjs/swagger';
 import { TeachersService, TeacherDto, CreateTeacherDto } from '../application';
 
@@ -15,5 +15,12 @@ export class TeachersController {
     @Body() dto: CreateTeacherDto,
   ): Promise<TeacherDto> {
     return this.teachersService.create(schoolId, dto);
+  }
+
+  @ApiOperation({ operationId: 'findMany' })
+  @ApiOkResponse({ type: [TeacherDto] })
+  @Get()
+  findMany(@Param('schoolId') schoolId: string): Promise<TeacherDto[]> {
+    return this.teachersService.findMany(schoolId);
   }
 }
