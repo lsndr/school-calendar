@@ -36,6 +36,24 @@ describe('Groups Service', () => {
     });
   });
 
+  it('should find a group', async () => {
+    const school = await seedSchool(orm);
+
+    await groupsService.create(school.id.value, {
+      name: 'Group 1',
+    });
+    const result = await groupsService.create(school.id.value, {
+      name: 'Group 2',
+    });
+
+    const result2 = await groupsService.findOne(school.id.value, result.id);
+
+    expect(result2).toEqual({
+      id: expect.any(String),
+      name: 'Group 2',
+    });
+  });
+
   it('should fail to create a group if school not found', async () => {
     const result = () =>
       groupsService.create(
