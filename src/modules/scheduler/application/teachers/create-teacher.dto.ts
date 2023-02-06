@@ -8,12 +8,7 @@ export class CreateTeacherDto {
   @ApiProperty()
   name: string;
 
-  @ApiProperty()
-  @IsString()
-  schoolId: string;
-
   constructor(dto: CreateTeacherDto) {
     this.name = dto?.name;
-    this.schoolId = dto?.schoolId;
   }
 }

@@ -9,7 +9,7 @@ import { MikroORM } from '@mikro-orm/postgresql';
 export class TeachersService {
   constructor(private readonly orm: MikroORM) {}
 
-  async create(dto: CreateTeacherDto) {
+  async create(schoolId: string, dto: CreateTeacherDto) {
     const em = this.orm.em.fork();
     const schoolRepository = em.getRepository(School);
     const teacherRepository = em.getRepository(Teacher);
@@ -17,7 +17,7 @@ export class TeachersService {
     const school = await schoolRepository
       .createQueryBuilder()
       .where({
-        id: dto.schoolId,
+        id: schoolId,
       })
       .getSingleResult();
 

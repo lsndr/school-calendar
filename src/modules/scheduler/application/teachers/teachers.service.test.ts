@@ -35,9 +35,9 @@ describe('Teachers Service', () => {
 
   it('should create an teacher', async () => {
     const result = await teachersService.create(
+      school.id.value,
       new CreateTeacherDto({
         name: 'Test Teacher',
-        schoolId: school.id.value,
       }),
     );
 
@@ -53,9 +53,9 @@ describe('Teachers Service', () => {
   it('should fail to create an teacher if school not found', async () => {
     const result = () =>
       teachersService.create(
+        'wrong-school-id',
         new CreateTeacherDto({
           name: 'Test Group',
-          schoolId: 'wrong-school-id',
         }),
       );
 
