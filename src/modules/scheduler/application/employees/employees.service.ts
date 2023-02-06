@@ -61,4 +61,26 @@ export class EmployeesService {
       name: record.name,
     });
   }
+
+  async findMany(officeId: string) {
+    const knex = this.orm.em.getConnection().getKnex();
+
+    const records = await knex
+      .select(['id', 'name'])
+      .from('employee')
+      .where('office_id', officeId);
+
+    const employees: EmployeeDto[] = [];
+
+    for (const record of records) {
+      employees.push(
+        new EmployeeDto({
+          id: record.id,
+          name: record.name,
+        }),
+      );
+    }
+
+    return employees;
+  }
 }
