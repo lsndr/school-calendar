@@ -35,9 +35,9 @@ describe('Employees Service', () => {
 
   it('should create an employee', async () => {
     const result = await employeesService.create(
+      office.id.value,
       new CreateEmployeeDto({
         name: 'Test Employee',
-        officeId: office.id.value,
       }),
     );
 
@@ -52,9 +52,8 @@ describe('Employees Service', () => {
 
   it('should fail to create an employee if office not found', async () => {
     const result = () =>
-      employeesService.create({
+      employeesService.create('wrong-office-id', {
         name: 'Test Client',
-        officeId: 'wrong-office-id',
       });
 
     await expect(result).rejects.toThrowError('Office not found');
