@@ -44,12 +44,13 @@ export class ClientsService {
     });
   }
 
-  async findOne(id: string) {
+  async findOne(officeId: string, id: string) {
     const knex = this.orm.em.getConnection().getKnex();
 
     const record = await knex
       .select(['id', 'name'])
       .from('client')
+      .where('office_id', officeId)
       .where('id', id)
       .first();
 

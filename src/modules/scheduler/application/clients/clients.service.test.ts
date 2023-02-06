@@ -28,7 +28,7 @@ describe('Clients Service', () => {
       officeId: office.id.value,
     });
 
-    const result2 = await clientsService.findOne(result.id);
+    const result2 = await clientsService.findOne(office.id.value, result.id);
 
     expect(result).toEqual(result2);
     expect(result).toEqual({
