@@ -44,12 +44,13 @@ export class GroupsService {
     });
   }
 
-  async findOne(id: string) {
+  async findOne(schoolId: string, id: string) {
     const knex = this.orm.em.getConnection().getKnex();
 
     const record = await knex
       .select(['id', 'name'])
       .from('group')
+      .where('school_id', schoolId)
       .where('id', id)
       .first();
 
