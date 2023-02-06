@@ -1,3 +1,4 @@
+import { UnprocessableEntityException } from '@nestjs/common';
 import { ApiProperty, getSchemaPath } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 import {
@@ -37,6 +38,8 @@ export class CreateSubjectDto {
         return new BiWeeklyRecurrenceDto(value);
       } else if (value.type === 'monthly') {
         return new MonthlyRecurrenceDto(value);
+      } else {
+        throw new UnprocessableEntityException();
       }
     },
     { toClassOnly: true },
@@ -66,6 +69,7 @@ export class CreateSubjectDto {
   @ApiProperty({
     type: TimeIntervalDto,
   })
+  @ValidateNested()
   @Type(() => TimeIntervalDto)
   time: TimeIntervalDto;
 
@@ -73,7 +77,10 @@ export class CreateSubjectDto {
   @IsString()
   groupId: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    minimum: 1,
+    maximum: 3,
+  })
   @Min(1)
   @Max(3)
   @IsInt()
