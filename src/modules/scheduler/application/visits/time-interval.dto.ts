@@ -5,13 +5,19 @@ export class TimeIntervalDto {
   @Min(0)
   @Max(1439)
   @IsInt()
-  @ApiProperty()
+  @ApiProperty({
+    minimum: 0,
+    maximum: 1439,
+  })
   startsAt: number;
 
   @Min(1)
   @Max(1440)
   @IsInt()
-  @ApiProperty()
+  @ApiProperty({
+    minimum: 1,
+    maximum: 1440,
+  })
   duration: number;
 
   constructor(timeInterval: TimeIntervalDto) {

@@ -1,10 +1,16 @@
-import { ApiProperty, getSchemaPath } from '@nestjs/swagger';
+import { ApiExtraModels, ApiProperty, getSchemaPath } from '@nestjs/swagger';
 import { BiWeeklyRecurrenceDto } from './biweekly-recurrence.dto';
 import { DailyRecurrenceDto } from './daily-recurrence.dto';
 import { MonthlyRecurrenceDto } from './monthly-recurrence.dto';
 import { TimeIntervalDto } from './time-interval.dto';
 import { WeeklyRecurrenceDto } from './weekly-recurrence.dto';
 
+@ApiExtraModels(
+  DailyRecurrenceDto,
+  WeeklyRecurrenceDto,
+  BiWeeklyRecurrenceDto,
+  MonthlyRecurrenceDto,
+)
 export class VisitDto {
   @ApiProperty()
   id: string;
