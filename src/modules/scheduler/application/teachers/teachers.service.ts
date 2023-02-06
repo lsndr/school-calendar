@@ -43,13 +43,14 @@ export class TeachersService {
     });
   }
 
-  async findOne(id: string) {
+  async findOne(schoolId: string, id: string) {
     const knex = this.orm.em.getConnection().getKnex();
 
     const record = await knex
       .select(['id', 'name'])
       .from('teacher')
       .where('id', id)
+      .where('school_id', schoolId)
       .first();
 
     if (!record) {

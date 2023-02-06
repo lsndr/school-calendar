@@ -30,7 +30,7 @@ describe('Teachers Service', () => {
       }),
     );
 
-    const result2 = await teachersService.findOne(result.id);
+    const result2 = await teachersService.findOne(school.id.value, result.id);
 
     expect(result).toEqual(result2);
     expect(result).toEqual({

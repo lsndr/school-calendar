@@ -1,5 +1,17 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiOkResponse } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Get,
+  NotFoundException,
+  Param,
+  Post,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiOkResponse,
+  ApiNotFoundResponse,
+} from '@nestjs/swagger';
 import { TeachersService, TeacherDto, CreateTeacherDto } from '../application';
 
 @ApiTags('Teachers')
@@ -22,5 +34,22 @@ export class TeachersController {
   @Get()
   findMany(@Param('schoolId') schoolId: string): Promise<TeacherDto[]> {
     return this.teachersService.findMany(schoolId);
+  }
+
+  @ApiOperation({ operationId: 'findById' })
+  @ApiOkResponse({ type: TeacherDto })
+  @ApiNotFoundResponse()
+  @Get('/:id')
+  async findById(
+    @Param('schoolId') schoolId: string,
+    @Param('id') id: string,
+  ): Promise<TeacherDto> {
+    const teacher = await this.teachersService.findOne(schoolId, id);
+
+    if (!teacher) {
+      throw new NotFoundException();
+    }
+
+    return teacher;
   }
 }
