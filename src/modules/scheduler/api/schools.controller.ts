@@ -19,25 +19,25 @@ import { CreateSchoolDto, SchoolDto, SchoolsService } from '../application';
 export class SchoolsController {
   constructor(private readonly schoolsService: SchoolsService) {}
 
-  @ApiOperation({ operationId: 'findSchools' })
+  @ApiOperation({ operationId: 'findMany' })
   @ApiOkResponse({ type: [SchoolDto] })
   @Get()
-  async findSchools(): Promise<SchoolDto[]> {
+  async findMany(): Promise<SchoolDto[]> {
     return await this.schoolsService.findMany();
   }
 
-  @ApiOperation({ operationId: 'createSchool' })
+  @ApiOperation({ operationId: 'create' })
   @ApiOkResponse({ type: SchoolDto })
   @Post()
-  async createSchool(@Body() dto: CreateSchoolDto): Promise<SchoolDto> {
+  async create(@Body() dto: CreateSchoolDto): Promise<SchoolDto> {
     return await this.schoolsService.create(dto);
   }
 
-  @ApiOperation({ operationId: 'findSchoolById' })
+  @ApiOperation({ operationId: 'findById' })
   @ApiOkResponse({ type: SchoolDto })
   @ApiNotFoundResponse()
   @Get('/:id')
-  async findSchoolById(@Param('id') id: string): Promise<SchoolDto> {
+  async findById(@Param('id') id: string): Promise<SchoolDto> {
     const school = await this.schoolsService.findOne(id);
 
     if (!school) {
