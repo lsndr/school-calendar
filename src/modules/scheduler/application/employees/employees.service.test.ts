@@ -8,10 +8,9 @@ import { CreateEmployeeDto } from './create-employee.dto';
 
 describe('Employees Service', () => {
   let employeesService: EmployeesService;
-  let office: Office;
   let orm: MikroORM;
 
-  beforeAll(async () => {
+  beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
       controllers: [],
       providers: [EmployeesService, testMikroormProvider],
@@ -21,19 +20,9 @@ describe('Employees Service', () => {
     orm = moduleRef.get(MikroORM);
   });
 
-  beforeEach(async () => {
-    office = Office.create({
-      id: OfficeId.create(),
-      name: 'Test Office',
-      timeZone: TimeZone.create('Europe/Moscow'),
-      now: DateTime.now(),
-    });
-
-    const officeRepository = orm.em.fork().getRepository(Office);
-    await officeRepository.persistAndFlush(office);
-  });
-
   it('should create an employee', async () => {
+    const office = await seedOffice(orm);
+
     const result = await employeesService.create(
       office.id.value,
       new CreateEmployeeDto({
@@ -59,7 +48,49 @@ describe('Employees Service', () => {
     await expect(result).rejects.toThrowError('Office not found');
   });
 
-  afterAll(async () => {
+  it('should find employees', async () => {
+    const office1 = await seedOffice(orm);
+    const office2 = await seedOffice(orm);
+
+    await employeesService.create(office1.id.value, {
+      name: 'Employee 11',
+    });
+    await employeesService.create(office1.id.value, {
+      name: 'Employee 12',
+    });
+    await employeesService.create(office2.id.value, {
+      name: 'Employee 21',
+    });
+
+    const result = await employeesService.findMany(office1.id.value);
+
+    expect(result).toEqual([
+      {
+        id: expect.any(String),
+        name: 'Employee 11',
+      },
+      {
+        id: expect.any(String),
+        name: 'Employee 12',
+      },
+    ]);
+  });
+
+  afterEach(async () => {
     await orm.close();
   });
 });
+
+async function seedOffice(orm: MikroORM) {
+  const office = Office.create({
+    id: OfficeId.create(),
+    name: 'Test Office',
+    timeZone: TimeZone.create('Europe/Moscow'),
+    now: DateTime.now(),
+  });
+
+  const officeRepository = orm.em.fork();
+  await officeRepository.persistAndFlush(office);
+
+  return office;
+}
