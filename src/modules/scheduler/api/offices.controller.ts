@@ -19,25 +19,25 @@ import { CreateOfficeDto, OfficeDto, OfficesService } from '../application';
 export class OfficesController {
   constructor(private readonly officesService: OfficesService) {}
 
-  @ApiOperation({ operationId: 'findOffices' })
+  @ApiOperation({ operationId: 'findMany' })
   @ApiOkResponse({ type: [OfficeDto] })
   @Get()
-  async findOffices(): Promise<OfficeDto[]> {
+  async findMany(): Promise<OfficeDto[]> {
     return this.officesService.findMany();
   }
 
-  @ApiOperation({ operationId: 'createOffice' })
+  @ApiOperation({ operationId: 'create' })
   @ApiOkResponse({ type: OfficeDto })
   @Post()
-  async createOffice(@Body() dto: CreateOfficeDto): Promise<OfficeDto> {
+  async create(@Body() dto: CreateOfficeDto): Promise<OfficeDto> {
     return this.officesService.create(dto);
   }
 
-  @ApiOperation({ operationId: 'findOfficeById' })
+  @ApiOperation({ operationId: 'findById' })
   @ApiOkResponse({ type: OfficeDto })
   @ApiNotFoundResponse()
   @Get('/:id')
-  async findOfficeById(@Param('id') id: string): Promise<OfficeDto> {
+  async findById(@Param('id') id: string): Promise<OfficeDto> {
     const office = await this.officesService.findOne(id);
 
     if (!office) {
