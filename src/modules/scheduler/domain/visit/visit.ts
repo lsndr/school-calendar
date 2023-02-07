@@ -93,4 +93,9 @@ export class Visit extends VisitState {
     this._time = time;
     this._updatedAt = now;
   }
+
+  setRequiredEmployees(requiredEmployees: RequiredEmployees, now: DateTime) {
+    this._requiredEmployees = requiredEmployees;
+    this._updatedAt = now;
+  }
 }
