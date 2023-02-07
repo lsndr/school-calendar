@@ -16,6 +16,7 @@ import { UpdateLessonDto } from './update-lesson.dto';
 import { AssignTeachersDto } from './assign-teachers.dto';
 import { UnassignTeachersDto } from './unassign-teachers.dto';
 import { MikroORM } from '@mikro-orm/postgresql';
+import { AssignedTeacherDto } from './assigned-teacher.dto';
 
 @Injectable()
 export class LessonsService {
@@ -176,7 +177,7 @@ export class LessonsService {
     });
   }
 
-  async assignTeacher(
+  async assignTeachers(
     schoolId: string,
     subjectId: string,
     date: string,
@@ -230,19 +231,15 @@ export class LessonsService {
       lesson.assignTeacher(teacher, subject, school, now);
     }
 
-    const assignedTeachers = lesson.assignedTeachers.map((teacher) => ({
-      teacherId: teacher.teacherId.value,
-      assignedAt: teacher.assignedAt.toISO(),
-    }));
+    await em.flush();
 
-    return new LessonDto({
-      subjectId: lesson.subjectId.value,
-      date: lesson.date.toDateTime().toISODate(),
-      assignedTeachers,
-      time: new TimeIntervalDto(lesson.time),
-      updatedAt: lesson.updatedAt.toISO(),
-      createdAt: lesson.createdAt.toISO(),
-    });
+    return lesson.assignedTeachers.map(
+      (at) =>
+        new AssignedTeacherDto({
+          teacherId: at.teacherId.value,
+          assignedAt: at.assignedAt.toISO(),
+        }),
+    );
   }
 
   async unassignTeacher(
@@ -332,10 +329,11 @@ export class LessonsService {
     }
 
     const assignedTeachers = (lessonRecord.assigned_teachers || []).map(
-      (teacher: any) => ({
-        teacherId: teacher.teacher_id,
-        assignedAt: DateTime.fromISO(teacher.assigned_at).toISO(),
-      }),
+      (teacher: any) =>
+        new AssignedTeacherDto({
+          teacherId: teacher.teacher_id,
+          assignedAt: DateTime.fromISO(teacher.assigned_at).toISO(),
+        }),
     );
 
     return new LessonDto({

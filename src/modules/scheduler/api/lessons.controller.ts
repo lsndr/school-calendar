@@ -13,7 +13,13 @@ import {
   ApiNotFoundResponse,
 } from '@nestjs/swagger';
 import { ParseIsoDatePipe } from '../../shared/api';
-import { LessonDto, LessonsService, CreateLessonDto } from '../application';
+import {
+  AssignedTeacherDto,
+  AssignTeachersDto,
+  LessonDto,
+  LessonsService,
+  CreateLessonDto,
+} from '../application';
 
 @ApiTags('Lessons')
 @Controller('schools/:schoolId/subjects/:subjectId/lessons')
@@ -47,5 +53,18 @@ export class LessonsController {
     }
 
     return lesson;
+  }
+
+  @ApiOperation({ operationId: 'assignTeachers' })
+  @ApiOkResponse({ type: LessonDto })
+  @ApiNotFoundResponse()
+  @Get('/:date/assign-teachers')
+  assingTeachers(
+    @Param('schoolId') schoolId: string,
+    @Param('subjectId') subjectId: string,
+    @Param('date', ParseIsoDatePipe) date: string,
+    @Body() dto: AssignTeachersDto,
+  ): Promise<AssignedTeacherDto[]> {
+    return this.lessonsService.assignTeachers(schoolId, subjectId, date, dto);
   }
 }
