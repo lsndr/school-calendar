@@ -127,4 +127,52 @@ export class VisitsService {
       updatedAt: record.updated_at.toISO(),
     });
   }
+
+  async findMany(officeId: string) {
+    const knex = this.orm.em.getConnection().getKnex();
+
+    const records = await knex
+      .select([
+        'id',
+        'name',
+        'recurrence_type',
+        'recurrence_days',
+        'recurrence_week1',
+        'recurrence_week2',
+        'time_starts_at',
+        'time_duration',
+        'client_id',
+        'required_employees',
+        'created_at',
+        'updated_at',
+      ])
+      .from('visit')
+      .where('office_id', officeId);
+
+    const visits: VisitDto[] = [];
+
+    for (const record of records) {
+      visits.push(
+        new VisitDto({
+          id: record.id,
+          name: record.name,
+          recurrence: mapRawRecurrenceToDto(record.recurrence_type, {
+            days: record.recurrence_days,
+            week1: record.recurrence_week1,
+            week2: record.recurrence_week2,
+          }),
+          time: new TimeIntervalDto({
+            startsAt: record.time_starts_at,
+            duration: record.time_duration,
+          }),
+          clientId: record.client_id,
+          requiredEmployees: record.required_employees,
+          createdAt: record.created_at.toISO(),
+          updatedAt: record.updated_at.toISO(),
+        }),
+      );
+    }
+
+    return visits;
+  }
 }
