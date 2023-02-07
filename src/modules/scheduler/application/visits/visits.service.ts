@@ -83,7 +83,7 @@ export class VisitsService {
     });
   }
 
-  async findOne(id: string) {
+  async findOne(officeId: string, id: string) {
     const knex = this.orm.em.getConnection().getKnex();
 
     const record = await knex
@@ -103,6 +103,7 @@ export class VisitsService {
       ])
       .from('visit')
       .where('id', id)
+      .andWhere('office_id', officeId)
       .first();
 
     if (!record) {

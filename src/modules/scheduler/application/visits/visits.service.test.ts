@@ -44,7 +44,7 @@ describe('Visits Service', () => {
       }),
     );
 
-    const result2 = await visitsService.findOne(result.id);
+    const result2 = await visitsService.findOne(office.id.value, result.id);
     const logs = await knex.select('*').from('visit_log');
 
     expect(result).toEqual({

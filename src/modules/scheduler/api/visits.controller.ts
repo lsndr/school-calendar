@@ -1,4 +1,11 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  NotFoundException,
+  Param,
+  Post,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiOkResponse } from '@nestjs/swagger';
 import {
   ClientDto,
@@ -27,5 +34,21 @@ export class VisitsController {
   @Get()
   async findMany(@Param('officeId') officeId: string): Promise<VisitDto[]> {
     return this.visitsService.findMany(officeId);
+  }
+
+  @ApiOperation({ operationId: 'findOneById' })
+  @ApiOkResponse({ type: VisitDto })
+  @Get('/:id')
+  async update(
+    @Param('officeId') officeId: string,
+    @Param('id') id: string,
+  ): Promise<VisitDto> {
+    const visit = await this.visitsService.findOne(officeId, id);
+
+    if (!visit) {
+      throw new NotFoundException();
+    }
+
+    return visit;
   }
 }
