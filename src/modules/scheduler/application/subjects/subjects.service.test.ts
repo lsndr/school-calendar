@@ -44,7 +44,7 @@ describe('Subjects Service', () => {
       }),
     );
 
-    const result2 = await subjectsService.findOne(result.id);
+    const result2 = await subjectsService.findOne(school.id.value, result.id);
     const logs = await knex.select('*').from('subject_log');
 
     expect(result).toEqual({

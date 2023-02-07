@@ -84,7 +84,7 @@ export class SubjectsService {
     });
   }
 
-  async findOne(id: string) {
+  async findOne(schoolId: string, id: string) {
     const knex = this.orm.em.getConnection().getKnex();
 
     const record = await knex
@@ -104,6 +104,7 @@ export class SubjectsService {
       ])
       .from('subject')
       .where('id', id)
+      .andWhere('school_id', schoolId)
       .first();
 
     if (!record) {

@@ -1,4 +1,11 @@
-import { Body, Controller, Param, Post, Get } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  NotFoundException,
+  Param,
+  Post,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiOkResponse } from '@nestjs/swagger';
 import {
   GroupDto,
@@ -27,5 +34,21 @@ export class SubjectsController {
   @Get()
   findMany(@Param('schoolId') schoolId: string): Promise<SubjectDto[]> {
     return this.subjectsService.findMany(schoolId);
+  }
+
+  @ApiOperation({ operationId: 'findOneById' })
+  @ApiOkResponse({ type: SubjectDto })
+  @Get('/:id')
+  async update(
+    @Param('schoolId') schoolId: string,
+    @Param('id') id: string,
+  ): Promise<SubjectDto> {
+    const subject = await this.subjectsService.findOne(schoolId, id);
+
+    if (!subject) {
+      throw new NotFoundException();
+    }
+
+    return subject;
   }
 }
