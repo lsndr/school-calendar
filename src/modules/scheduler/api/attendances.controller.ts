@@ -14,6 +14,8 @@ import {
 } from '@nestjs/swagger';
 import { ParseIsoDatePipe } from '../../shared/api';
 import {
+  AssignedEmployeeDto,
+  AssignEmployeesDto,
   AttendanceDto,
   AttendancesService,
   CreateAttendanceDto,
@@ -55,5 +57,23 @@ export class AttendancesController {
     }
 
     return attendance;
+  }
+
+  @ApiOperation({ operationId: 'assignEmployees' })
+  @ApiOkResponse({ type: AttendanceDto })
+  @ApiNotFoundResponse()
+  @Get('/:date/assign-employees')
+  async assingEmployees(
+    @Param('officeId') officeId: string,
+    @Param('visitId') visitId: string,
+    @Param('date', ParseIsoDatePipe) date: string,
+    @Body() dto: AssignEmployeesDto,
+  ): Promise<AssignedEmployeeDto[]> {
+    return this.attendancesService.assignEmployees(
+      officeId,
+      visitId,
+      date,
+      dto,
+    );
   }
 }

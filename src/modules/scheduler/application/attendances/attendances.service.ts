@@ -16,6 +16,7 @@ import { UpdateAttendanceDto } from './update-attendance.dto';
 import { AssignEmployeesDto } from './assign-employees.dto';
 import { UnassignEmployeesDto } from './unassign-employees.dto';
 import { MikroORM } from '@mikro-orm/postgresql';
+import { AssignedEmployeeDto } from './assigned-employee.dto';
 
 @Injectable()
 export class AttendancesService {
@@ -176,7 +177,7 @@ export class AttendancesService {
     });
   }
 
-  async assignEmployee(
+  async assignEmployees(
     officeId: string,
     visitId: string,
     date: string,
@@ -230,19 +231,15 @@ export class AttendancesService {
       attendance.assignEmployee(employee, visit, office, now);
     }
 
-    const assignedEmployees = attendance.assignedEmployees.map((employee) => ({
-      employeeId: employee.employeeId.value,
-      assignedAt: employee.assignedAt.toISO(),
-    }));
+    await em.flush();
 
-    return new AttendanceDto({
-      visitId: attendance.visitId.value,
-      date: attendance.date.toDateTime().toISODate(),
-      assignedEmployees,
-      time: new TimeIntervalDto(attendance.time),
-      updatedAt: attendance.updatedAt.toISO(),
-      createdAt: attendance.createdAt.toISO(),
-    });
+    return attendance.assignedEmployees.map(
+      (ae) =>
+        new AssignedEmployeeDto({
+          employeeId: ae.employeeId.value,
+          assignedAt: ae.assignedAt.toISO(),
+        }),
+    );
   }
 
   async unassignEmployee(
