@@ -7,14 +7,14 @@ import { MikroORM } from '@mikro-orm/postgresql';
 import { WeeklyRecurrenceDto } from './weekly-recurrence.dto';
 import { testMikroormProvider } from '../../../../../test-utils';
 import { CreateSubjectDto } from './create-subject.dto';
+import { DailyRecurrenceDto } from './daily-recurrence.dto';
+import { MonthlyRecurrenceDto } from './monthly-recurrence.dto';
 
 describe('Subjects Service', () => {
   let subjectsService: SubjectsService;
-  let school: School;
-  let group: Group;
   let orm: MikroORM;
 
-  beforeAll(async () => {
+  beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
       providers: [SubjectsService, testMikroormProvider],
     }).compile();
@@ -23,37 +23,12 @@ describe('Subjects Service', () => {
     orm = moduleRef.get(MikroORM);
   });
 
-  beforeEach(async () => {
-    const id = SchoolId.create();
-
-    school = School.create({
-      id,
-      name: 'School Name',
-      timeZone: TimeZone.create('Europe/Moscow'),
-      now: DateTime.now(),
-    });
-
-    const schoolRepository = orm.em.fork().getRepository(School);
-    await schoolRepository.persistAndFlush(school);
-  });
-
-  beforeEach(async () => {
-    const id = GroupId.create();
-    group = Group.create({
-      id,
-      name: 'Group Name',
-      school: school,
-      now: DateTime.now(),
-    });
-
-    const groupRepository = orm.em.fork().getRepository(Group);
-    await groupRepository.persistAndFlush(group);
-  });
-
   it('should create a subject with weekly periodicity', async () => {
     jest.useFakeTimers();
     jest.setSystemTime(new Date('2023-01-22T12:48:38.529Z'));
 
+    const school = await seedSchool(orm);
+    const group = await seedGroup(school, orm);
     const knex = orm.em.getConnection().getKnex();
 
     const result = await subjectsService.create(
@@ -126,6 +101,9 @@ describe('Subjects Service', () => {
     jest.useFakeTimers();
     jest.setSystemTime(new Date('2023-01-22T12:48:38.529Z'));
 
+    const school = await seedSchool(orm);
+    const group = await seedGroup(school, orm);
+
     const act = () =>
       subjectsService.create('wrong school id', {
         name: 'Test Subject',
@@ -142,7 +120,123 @@ describe('Subjects Service', () => {
     jest.useRealTimers();
   });
 
-  afterAll(async () => {
+  it('should find schools', async () => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date('2023-01-22T12:48:38.529Z'));
+
+    const school1 = await seedSchool(orm);
+    const school2 = await seedSchool(orm);
+    const group1 = await seedGroup(school1, orm);
+    const group2 = await seedGroup(school1, orm);
+    const group3 = await seedGroup(school2, orm);
+
+    await subjectsService.create(
+      group1.schoolId.value,
+      new CreateSubjectDto({
+        name: 'Test Subject 1',
+        recurrence: new WeeklyRecurrenceDto({
+          days: [0, 2, 3],
+        }),
+        time: new TimeIntervalDto({ startsAt: 0, duration: 120 }),
+        groupId: group1.id.value,
+        requiredTeachers: 3,
+      }),
+    );
+
+    await subjectsService.create(
+      group2.schoolId.value,
+      new CreateSubjectDto({
+        name: 'Test Subject 2',
+        recurrence: new MonthlyRecurrenceDto({
+          days: [0, 2, 3],
+        }),
+        time: new TimeIntervalDto({ startsAt: 630, duration: 240 }),
+        groupId: group2.id.value,
+        requiredTeachers: 2,
+      }),
+    );
+
+    await subjectsService.create(
+      group3.schoolId.value,
+      new CreateSubjectDto({
+        name: 'Test Subject 3',
+        recurrence: new DailyRecurrenceDto(),
+        time: new TimeIntervalDto({ startsAt: 400, duration: 200 }),
+        groupId: group3.id.value,
+        requiredTeachers: 2,
+      }),
+    );
+
+    const result = await subjectsService.findMany(school1.id.value);
+
+    expect(result).toEqual([
+      {
+        groupId: group1.id.value,
+        createdAt: '2023-01-22T12:48:38.529+00:00',
+        id: expect.any(String),
+        name: 'Test Subject 1',
+        recurrence: new WeeklyRecurrenceDto({
+          days: [0, 2, 3],
+        }),
+        requiredTeachers: 3,
+        time: new TimeIntervalDto({
+          duration: 120,
+          startsAt: 0,
+        }),
+        updatedAt: '2023-01-22T12:48:38.529+00:00',
+      },
+      {
+        groupId: group2.id.value,
+        createdAt: '2023-01-22T12:48:38.529+00:00',
+        id: expect.any(String),
+        name: 'Test Subject 2',
+        recurrence: new MonthlyRecurrenceDto({
+          days: [0, 2, 3],
+        }),
+        requiredTeachers: 2,
+        time: new TimeIntervalDto({
+          duration: 240,
+          startsAt: 630,
+        }),
+        updatedAt: '2023-01-22T12:48:38.529+00:00',
+      },
+    ]);
+
+    jest.useRealTimers();
+  });
+
+  afterEach(async () => {
     await orm.close();
   });
 });
+
+async function seedSchool(orm: MikroORM) {
+  const id = SchoolId.create();
+
+  const school = School.create({
+    id,
+    name: 'School Name',
+    timeZone: TimeZone.create('Europe/Moscow'),
+    now: DateTime.now(),
+  });
+
+  const schoolRepository = orm.em.fork().getRepository(School);
+  await schoolRepository.persistAndFlush(school);
+
+  return school;
+}
+
+async function seedGroup(school: School, orm: MikroORM) {
+  const id = GroupId.create();
+  const group = Group.create({
+    id,
+    name: 'Group Name',
+    school: school,
+    now: DateTime.now(),
+  });
+
+  const groupRepository = orm.em.fork().getRepository(Group);
+  await groupRepository.persistAndFlush(group);
+
+  return group;
+}
