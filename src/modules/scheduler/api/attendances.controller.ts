@@ -19,6 +19,7 @@ import {
   AttendanceDto,
   AttendancesService,
   CreateAttendanceDto,
+  UnassignEmployeesDto,
 } from '../application';
 
 @ApiTags('Attendances')
@@ -70,6 +71,24 @@ export class AttendancesController {
     @Body() dto: AssignEmployeesDto,
   ): Promise<AssignedEmployeeDto[]> {
     return this.attendancesService.assignEmployees(
+      officeId,
+      visitId,
+      date,
+      dto,
+    );
+  }
+
+  @ApiOperation({ operationId: 'unassignEmployees' })
+  @ApiOkResponse({ type: AttendanceDto })
+  @ApiNotFoundResponse()
+  @Get('/:date/unassign-employees')
+  async unassingEmployees(
+    @Param('officeId') officeId: string,
+    @Param('visitId') visitId: string,
+    @Param('date', ParseIsoDatePipe) date: string,
+    @Body() dto: UnassignEmployeesDto,
+  ): Promise<AssignedEmployeeDto[]> {
+    return this.attendancesService.unassignEmployees(
       officeId,
       visitId,
       date,

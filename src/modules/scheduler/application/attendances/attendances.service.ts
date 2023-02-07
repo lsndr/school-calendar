@@ -242,7 +242,7 @@ export class AttendancesService {
     );
   }
 
-  async unassignEmployee(
+  async unassignEmployees(
     officeId: string,
     visitId: string,
     date: string,
@@ -282,19 +282,12 @@ export class AttendancesService {
       attendance.unassignEmployee(id, office, now);
     }
 
-    const assignedEmployees = attendance.assignedEmployees.map((employee) => ({
+    await em.flush();
+
+    return attendance.assignedEmployees.map((employee) => ({
       employeeId: employee.employeeId.value,
       assignedAt: employee.assignedAt.toISO(),
     }));
-
-    return new AttendanceDto({
-      visitId: attendance.visitId.value,
-      date: attendance.date.toDateTime().toISODate(),
-      assignedEmployees,
-      time: new TimeIntervalDto(attendance.time),
-      updatedAt: attendance.updatedAt.toISO(),
-      createdAt: attendance.createdAt.toISO(),
-    });
   }
 
   async findOne(officeId: string, visitId: string, date: string) {
