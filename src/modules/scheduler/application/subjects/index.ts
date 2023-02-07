@@ -6,3 +6,4 @@ export * from './time-interval.dto';
 export * from './subject.dto';
 export * from './weekly-recurrence.dto';
 export * from './subjects.service';
+export * from './update-subject.dto';

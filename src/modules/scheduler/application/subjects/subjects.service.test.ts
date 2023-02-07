@@ -205,6 +205,92 @@ describe('Subjects Service', () => {
     jest.useRealTimers();
   });
 
+  it('should update subject', async () => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date('2023-01-22T12:48:38.529Z'));
+
+    const knex = orm.em.getConnection().getKnex();
+    const school = await seedSchool(orm);
+    const group = await seedGroup(school, orm);
+    const subject = await subjectsService.create(
+      group.schoolId.value,
+      new CreateSubjectDto({
+        name: 'Old Name',
+        recurrence: new WeeklyRecurrenceDto({
+          days: [0, 2, 3],
+        }),
+        time: new TimeIntervalDto({ startsAt: 0, duration: 120 }),
+        groupId: group.id.value,
+        requiredTeachers: 3,
+      }),
+    );
+
+    jest.setSystemTime(new Date('2023-01-23T15:12:45.529Z'));
+
+    const result = await subjectsService.update(
+      group.schoolId.value,
+      subject.id,
+      {
+        name: 'New name',
+        recurrence: new DailyRecurrenceDto(),
+        time: new TimeIntervalDto({ startsAt: 600, duration: 200 }),
+        requiredTeachers: 1,
+      },
+    );
+
+    if (!result) {
+      throw new Error('Not found');
+    }
+
+    const result2 = await subjectsService.findOne(school.id.value, result.id);
+    const logs = await knex.select('*').from('subject_log');
+
+    expect(result).toEqual({
+      id: subject.id,
+      name: 'New name',
+      recurrence: expect.objectContaining({
+        type: 'daily',
+      }),
+      time: expect.objectContaining({
+        startsAt: 600,
+        duration: 200,
+      }),
+      requiredTeachers: 1,
+      groupId: subject.groupId,
+      createdAt: '2023-01-22T12:48:38.529+00:00',
+      updatedAt: '2023-01-23T15:12:45.529+00:00',
+    });
+    expect(result2).toEqual(result);
+    expect(logs).toEqual([
+      {
+        subject_id: result.id,
+        name: 'Old Name',
+        recurrence_type: 'weekly',
+        recurrence_days: [0, 2, 3],
+        recurrence_week1: null,
+        recurrence_week2: null,
+        time_starts_at: 0,
+        time_duration: 120,
+        required_teachers: 3,
+        created_at: DateTime.fromISO('2023-01-22T12:48:38.529Z'),
+      },
+      {
+        subject_id: result.id,
+        name: 'New name',
+        recurrence_type: 'daily',
+        recurrence_days: null,
+        recurrence_week1: null,
+        recurrence_week2: null,
+        time_starts_at: 600,
+        time_duration: 200,
+        required_teachers: 1,
+        created_at: DateTime.fromISO('2023-01-23T15:12:45.529Z'),
+      },
+    ]);
+
+    jest.useRealTimers();
+  });
+
   afterEach(async () => {
     await orm.close();
   });

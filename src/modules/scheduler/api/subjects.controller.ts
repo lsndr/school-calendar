@@ -4,12 +4,14 @@ import {
   Get,
   NotFoundException,
   Param,
+  Patch,
   Post,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiOkResponse } from '@nestjs/swagger';
 import {
   GroupDto,
   CreateSubjectDto,
+  UpdateSubjectDto,
   SubjectDto,
   SubjectsService,
 } from '../application';
@@ -39,11 +41,28 @@ export class SubjectsController {
   @ApiOperation({ operationId: 'findOneById' })
   @ApiOkResponse({ type: SubjectDto })
   @Get('/:id')
-  async update(
+  async findOneById(
     @Param('schoolId') schoolId: string,
     @Param('id') id: string,
   ): Promise<SubjectDto> {
     const subject = await this.subjectsService.findOne(schoolId, id);
+
+    if (!subject) {
+      throw new NotFoundException();
+    }
+
+    return subject;
+  }
+
+  @ApiOperation({ operationId: 'update' })
+  @ApiOkResponse({ type: SubjectDto })
+  @Patch('/:id')
+  async update(
+    @Param('schoolId') schoolId: string,
+    @Param('id') id: string,
+    @Body() dto: UpdateSubjectDto,
+  ): Promise<SubjectDto> {
+    const subject = await this.subjectsService.update(schoolId, id, dto);
 
     if (!subject) {
       throw new NotFoundException();

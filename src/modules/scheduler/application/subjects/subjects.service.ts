@@ -17,6 +17,7 @@ import {
 } from './mappers';
 import { TimeIntervalDto } from './time-interval.dto';
 import { MikroORM } from '@mikro-orm/postgresql';
+import { UpdateSubjectDto } from './update-subject.dto';
 
 @Injectable()
 export class SubjectsService {
@@ -176,5 +177,55 @@ export class SubjectsService {
     }
 
     return subjects;
+  }
+
+  async update(schoolId: string, id: string, dto: UpdateSubjectDto) {
+    const em = this.orm.em.fork();
+    const subjectRepository = em.getRepository(Subject);
+    const now = DateTime.now();
+
+    const subject = await subjectRepository
+      .createQueryBuilder()
+      .where({
+        id,
+        school_id: schoolId,
+      })
+      .getSingleResult();
+
+    if (!subject) {
+      return;
+    }
+
+    if (typeof dto.name !== 'undefined') {
+      subject.setName(dto.name, now);
+    }
+
+    if (typeof dto.recurrence !== 'undefined') {
+      subject.setRecurrence(mapDtoToRecurrence(dto.recurrence), now);
+    }
+
+    if (typeof dto.requiredTeachers !== 'undefined') {
+      subject.setRequiredTeachers(
+        RequiredTeachers.create(dto.requiredTeachers),
+        now,
+      );
+    }
+
+    if (typeof dto.time !== 'undefined') {
+      subject.setTime(TimeInterval.create(dto.time), now);
+    }
+
+    await em.flush();
+
+    return new SubjectDto({
+      id: subject.id.value,
+      name: subject.name,
+      recurrence: mapRecurrenceToDto(subject.recurrence),
+      time: new TimeIntervalDto(subject.time),
+      groupId: subject.groupId.value,
+      requiredTeachers: subject.requiredTeachers.value,
+      createdAt: subject.createdAt.toISO(),
+      updatedAt: subject.updatedAt.toISO(),
+    });
   }
 }
