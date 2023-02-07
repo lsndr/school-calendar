@@ -3,7 +3,7 @@ import { Config } from 'jest';
 
 export default {
   testEnvironment: 'node',
-  collectCoverageFrom: ['src/**/*.ts', '!**/*.controller.ts'],
+  collectCoverageFrom: ['src/**/*.ts', '!**/*.controller.ts', '!**/*.dto.ts'],
   coverageDirectory: './coverage',
   globalSetup: './jest.setup.ts',
   transform: {
