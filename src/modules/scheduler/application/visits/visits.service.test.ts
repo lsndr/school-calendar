@@ -7,14 +7,14 @@ import { MikroORM } from '@mikro-orm/postgresql';
 import { WeeklyRecurrenceDto } from './weekly-recurrence.dto';
 import { testMikroormProvider } from '../../../../../test-utils';
 import { CreateVisitDto } from './create-visit.dto';
+import { DailyRecurrenceDto } from './daily-recurrence.dto';
+import { MonthlyRecurrenceDto } from './monthly-recurrence.dto';
 
 describe('Visits Service', () => {
   let visitsService: VisitsService;
-  let office: Office;
-  let client: Client;
   let orm: MikroORM;
 
-  beforeAll(async () => {
+  beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
       providers: [VisitsService, testMikroormProvider],
     }).compile();
@@ -23,37 +23,12 @@ describe('Visits Service', () => {
     orm = moduleRef.get(MikroORM);
   });
 
-  beforeEach(async () => {
-    const id = OfficeId.create();
-
-    office = Office.create({
-      id,
-      name: 'Office Name',
-      timeZone: TimeZone.create('Europe/Moscow'),
-      now: DateTime.now(),
-    });
-
-    const officeRepository = orm.em.fork().getRepository(Office);
-    await officeRepository.persistAndFlush(office);
-  });
-
-  beforeEach(async () => {
-    const id = ClientId.create();
-    client = Client.create({
-      id,
-      name: 'Client Name',
-      office: office,
-      now: DateTime.now(),
-    });
-
-    const clientRepository = orm.em.fork().getRepository(Client);
-    await clientRepository.persistAndFlush(client);
-  });
-
   it('should create a visit with weekly periodicity', async () => {
     jest.useFakeTimers();
     jest.setSystemTime(new Date('2023-01-22T12:48:38.529Z'));
 
+    const office = await seedOffice(orm);
+    const client = await seedClient(office, orm);
     const knex = orm.em.getConnection().getKnex();
 
     const result = await visitsService.create(
@@ -126,6 +101,9 @@ describe('Visits Service', () => {
     jest.useFakeTimers();
     jest.setSystemTime(new Date('2023-01-22T12:48:38.529Z'));
 
+    const office = await seedOffice(orm);
+    const client = await seedClient(office, orm);
+
     const act = () =>
       visitsService.create('wrong office id', {
         name: 'Test Visit',
@@ -142,7 +120,123 @@ describe('Visits Service', () => {
     jest.useRealTimers();
   });
 
-  afterAll(async () => {
+  it('should find offices', async () => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date('2023-01-22T12:48:38.529Z'));
+
+    const office1 = await seedOffice(orm);
+    const office2 = await seedOffice(orm);
+    const client1 = await seedClient(office1, orm);
+    const client2 = await seedClient(office1, orm);
+    const client3 = await seedClient(office2, orm);
+
+    await visitsService.create(
+      client1.officeId.value,
+      new CreateVisitDto({
+        name: 'Test Visit 1',
+        recurrence: new WeeklyRecurrenceDto({
+          days: [0, 2, 3],
+        }),
+        time: new TimeIntervalDto({ startsAt: 0, duration: 120 }),
+        clientId: client1.id.value,
+        requiredEmployees: 3,
+      }),
+    );
+
+    await visitsService.create(
+      client2.officeId.value,
+      new CreateVisitDto({
+        name: 'Test Visit 2',
+        recurrence: new MonthlyRecurrenceDto({
+          days: [0, 2, 3],
+        }),
+        time: new TimeIntervalDto({ startsAt: 630, duration: 240 }),
+        clientId: client2.id.value,
+        requiredEmployees: 2,
+      }),
+    );
+
+    await visitsService.create(
+      client3.officeId.value,
+      new CreateVisitDto({
+        name: 'Test Visit 3',
+        recurrence: new DailyRecurrenceDto(),
+        time: new TimeIntervalDto({ startsAt: 400, duration: 200 }),
+        clientId: client3.id.value,
+        requiredEmployees: 2,
+      }),
+    );
+
+    const result = await visitsService.findMany(office1.id.value);
+
+    expect(result).toEqual([
+      {
+        clientId: client1.id.value,
+        createdAt: '2023-01-22T12:48:38.529+00:00',
+        id: expect.any(String),
+        name: 'Test Visit 1',
+        recurrence: new WeeklyRecurrenceDto({
+          days: [0, 2, 3],
+        }),
+        requiredEmployees: 3,
+        time: new TimeIntervalDto({
+          duration: 120,
+          startsAt: 0,
+        }),
+        updatedAt: '2023-01-22T12:48:38.529+00:00',
+      },
+      {
+        clientId: client2.id.value,
+        createdAt: '2023-01-22T12:48:38.529+00:00',
+        id: expect.any(String),
+        name: 'Test Visit 2',
+        recurrence: new MonthlyRecurrenceDto({
+          days: [0, 2, 3],
+        }),
+        requiredEmployees: 2,
+        time: new TimeIntervalDto({
+          duration: 240,
+          startsAt: 630,
+        }),
+        updatedAt: '2023-01-22T12:48:38.529+00:00',
+      },
+    ]);
+
+    jest.useRealTimers();
+  });
+
+  afterEach(async () => {
     await orm.close();
   });
 });
+
+async function seedOffice(orm: MikroORM) {
+  const id = OfficeId.create();
+
+  const office = Office.create({
+    id,
+    name: 'Office Name',
+    timeZone: TimeZone.create('Europe/Moscow'),
+    now: DateTime.now(),
+  });
+
+  const officeRepository = orm.em.fork().getRepository(Office);
+  await officeRepository.persistAndFlush(office);
+
+  return office;
+}
+
+async function seedClient(office: Office, orm: MikroORM) {
+  const id = ClientId.create();
+  const client = Client.create({
+    id,
+    name: 'Client Name',
+    office: office,
+    now: DateTime.now(),
+  });
+
+  const clientRepository = orm.em.fork().getRepository(Client);
+  await clientRepository.persistAndFlush(client);
+
+  return client;
+}
