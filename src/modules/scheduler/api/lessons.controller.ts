@@ -19,6 +19,7 @@ import {
   LessonDto,
   LessonsService,
   CreateLessonDto,
+  UnassignTeachersDto,
 } from '../application';
 
 @ApiTags('Lessons')
@@ -66,5 +67,18 @@ export class LessonsController {
     @Body() dto: AssignTeachersDto,
   ): Promise<AssignedTeacherDto[]> {
     return this.lessonsService.assignTeachers(schoolId, subjectId, date, dto);
+  }
+
+  @ApiOperation({ operationId: 'unassignTeachers' })
+  @ApiOkResponse({ type: LessonDto })
+  @ApiNotFoundResponse()
+  @Get('/:date/unassign-teachers')
+  unassingTeachers(
+    @Param('schoolId') schoolId: string,
+    @Param('subjectId') subjectId: string,
+    @Param('date', ParseIsoDatePipe) date: string,
+    @Body() dto: UnassignTeachersDto,
+  ): Promise<AssignedTeacherDto[]> {
+    return this.lessonsService.unassignTeachers(schoolId, subjectId, date, dto);
   }
 }

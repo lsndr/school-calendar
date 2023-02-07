@@ -242,7 +242,7 @@ export class LessonsService {
     );
   }
 
-  async unassignTeacher(
+  async unassignTeachers(
     schoolId: string,
     subjectId: string,
     date: string,
@@ -282,19 +282,12 @@ export class LessonsService {
       lesson.unassignTeacher(id, school, now);
     }
 
-    const assignedTeachers = lesson.assignedTeachers.map((teacher) => ({
+    await em.flush();
+
+    return lesson.assignedTeachers.map((teacher) => ({
       teacherId: teacher.teacherId.value,
       assignedAt: teacher.assignedAt.toISO(),
     }));
-
-    return new LessonDto({
-      subjectId: lesson.subjectId.value,
-      date: lesson.date.toDateTime().toISODate(),
-      assignedTeachers,
-      time: new TimeIntervalDto(lesson.time),
-      updatedAt: lesson.updatedAt.toISO(),
-      createdAt: lesson.createdAt.toISO(),
-    });
   }
 
   async findOne(schoolId: string, subjectId: string, date: string) {
