@@ -4,7 +4,9 @@ import { GroupsController } from './api/groups.controller';
 import { TeachersController } from './api/teachers.controller';
 import { SchoolsController } from './api/schools.controller';
 import { SubjectsController } from './api/subjects.controller';
+import { LessonsController } from './api/lessons.controller';
 import {
+  LessonsService,
   GroupsService,
   TeachersService,
   SchoolsService,
@@ -13,12 +15,19 @@ import {
 
 @Module({
   imports: [SharedModule],
-  providers: [SchoolsService, GroupsService, TeachersService, SubjectsService],
+  providers: [
+    SchoolsService,
+    GroupsService,
+    TeachersService,
+    SubjectsService,
+    LessonsService,
+  ],
   controllers: [
     SchoolsController,
     GroupsController,
     TeachersController,
     SubjectsController,
+    LessonsController,
   ],
   exports: [],
 })
