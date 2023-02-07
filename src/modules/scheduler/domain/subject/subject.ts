@@ -93,4 +93,9 @@ export class Subject extends SubjectState {
     this._time = time;
     this._updatedAt = now;
   }
+
+  setRequiredTeachers(requiredTeachers: RequiredTeachers, now: DateTime) {
+    this._requiredTeachers = requiredTeachers;
+    this._updatedAt = now;
+  }
 }
