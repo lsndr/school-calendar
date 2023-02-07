@@ -331,7 +331,7 @@ export class LessonsService {
       return;
     }
 
-    const assignedTeachers = lessonRecord.assigned_teachers.map(
+    const assignedTeachers = (lessonRecord.assigned_teachers || []).map(
       (teacher: any) => ({
         teacherId: teacher.teacher_id,
         assignedAt: DateTime.fromISO(teacher.assigned_at).toISO(),
