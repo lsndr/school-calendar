@@ -26,10 +26,6 @@ export class CreateVisitDto {
   @ValidateNested()
   @Transform(
     ({ value }) => {
-      if (!('type' in value)) {
-        return;
-      }
-
       if (value.type === 'daily') {
         return new DailyRecurrenceDto();
       } else if (value.type === 'weekly') {
