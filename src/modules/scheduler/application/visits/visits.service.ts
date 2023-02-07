@@ -17,6 +17,7 @@ import {
 } from './mappers';
 import { TimeIntervalDto } from './time-interval.dto';
 import { MikroORM } from '@mikro-orm/postgresql';
+import { UpdateVisitDto } from './update-visit.dto';
 
 @Injectable()
 export class VisitsService {
@@ -175,5 +176,55 @@ export class VisitsService {
     }
 
     return visits;
+  }
+
+  async update(officeId: string, id: string, dto: UpdateVisitDto) {
+    const em = this.orm.em.fork();
+    const visitRepository = em.getRepository(Visit);
+    const now = DateTime.now();
+
+    const visit = await visitRepository
+      .createQueryBuilder()
+      .where({
+        id,
+        office_id: officeId,
+      })
+      .getSingleResult();
+
+    if (!visit) {
+      return;
+    }
+
+    if (typeof dto.name !== 'undefined') {
+      visit.setName(dto.name, now);
+    }
+
+    if (typeof dto.recurrence !== 'undefined') {
+      visit.setRecurrence(mapDtoToRecurrence(dto.recurrence), now);
+    }
+
+    if (typeof dto.requiredEmployees !== 'undefined') {
+      visit.setRequiredEmployees(
+        RequiredEmployees.create(dto.requiredEmployees),
+        now,
+      );
+    }
+
+    if (typeof dto.time !== 'undefined') {
+      visit.setTime(TimeInterval.create(dto.time), now);
+    }
+
+    await em.flush();
+
+    return new VisitDto({
+      id: visit.id.value,
+      name: visit.name,
+      recurrence: mapRecurrenceToDto(visit.recurrence),
+      time: new TimeIntervalDto(visit.time),
+      clientId: visit.clientId.value,
+      requiredEmployees: visit.requiredEmployees.value,
+      createdAt: visit.createdAt.toISO(),
+      updatedAt: visit.updatedAt.toISO(),
+    });
   }
 }

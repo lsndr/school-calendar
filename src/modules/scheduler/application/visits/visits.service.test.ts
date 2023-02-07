@@ -205,6 +205,88 @@ describe('Visits Service', () => {
     jest.useRealTimers();
   });
 
+  it('should update visit', async () => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date('2023-01-22T12:48:38.529Z'));
+
+    const knex = orm.em.getConnection().getKnex();
+    const office = await seedOffice(orm);
+    const client = await seedClient(office, orm);
+    const visit = await visitsService.create(
+      client.officeId.value,
+      new CreateVisitDto({
+        name: 'Old Name',
+        recurrence: new WeeklyRecurrenceDto({
+          days: [0, 2, 3],
+        }),
+        time: new TimeIntervalDto({ startsAt: 0, duration: 120 }),
+        clientId: client.id.value,
+        requiredEmployees: 3,
+      }),
+    );
+
+    jest.setSystemTime(new Date('2023-01-23T15:12:45.529Z'));
+
+    const result = await visitsService.update(client.officeId.value, visit.id, {
+      name: 'New name',
+      recurrence: new DailyRecurrenceDto(),
+      time: new TimeIntervalDto({ startsAt: 600, duration: 200 }),
+      requiredEmployees: 1,
+    });
+
+    if (!result) {
+      throw new Error('Not found');
+    }
+
+    const result2 = await visitsService.findOne(office.id.value, result.id);
+    const logs = await knex.select('*').from('visit_log');
+
+    expect(result).toEqual({
+      id: visit.id,
+      name: 'New name',
+      recurrence: expect.objectContaining({
+        type: 'daily',
+      }),
+      time: expect.objectContaining({
+        startsAt: 600,
+        duration: 200,
+      }),
+      requiredEmployees: 1,
+      clientId: visit.clientId,
+      createdAt: '2023-01-22T12:48:38.529+00:00',
+      updatedAt: '2023-01-23T15:12:45.529+00:00',
+    });
+    expect(result2).toEqual(result);
+    expect(logs).toEqual([
+      {
+        visit_id: result.id,
+        name: 'Old Name',
+        recurrence_type: 'weekly',
+        recurrence_days: [0, 2, 3],
+        recurrence_week1: null,
+        recurrence_week2: null,
+        time_starts_at: 0,
+        time_duration: 120,
+        required_employees: 3,
+        created_at: DateTime.fromISO('2023-01-22T12:48:38.529Z'),
+      },
+      {
+        visit_id: result.id,
+        name: 'New name',
+        recurrence_type: 'daily',
+        recurrence_days: null,
+        recurrence_week1: null,
+        recurrence_week2: null,
+        time_starts_at: 600,
+        time_duration: 200,
+        required_employees: 1,
+        created_at: DateTime.fromISO('2023-01-23T15:12:45.529Z'),
+      },
+    ]);
+
+    jest.useRealTimers();
+  });
+
   afterEach(async () => {
     await orm.close();
   });

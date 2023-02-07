@@ -6,3 +6,4 @@ export * from './time-interval.dto';
 export * from './visit.dto';
 export * from './weekly-recurrence.dto';
 export * from './visits.service';
+export * from './update-visit.dto';

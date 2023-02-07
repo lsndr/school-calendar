@@ -4,12 +4,14 @@ import {
   Get,
   NotFoundException,
   Param,
+  Patch,
   Post,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiOkResponse } from '@nestjs/swagger';
 import {
   ClientDto,
   CreateVisitDto,
+  UpdateVisitDto,
   VisitDto,
   VisitsService,
 } from '../application';
@@ -39,11 +41,28 @@ export class VisitsController {
   @ApiOperation({ operationId: 'findOneById' })
   @ApiOkResponse({ type: VisitDto })
   @Get('/:id')
-  async update(
+  async findOneById(
     @Param('officeId') officeId: string,
     @Param('id') id: string,
   ): Promise<VisitDto> {
     const visit = await this.visitsService.findOne(officeId, id);
+
+    if (!visit) {
+      throw new NotFoundException();
+    }
+
+    return visit;
+  }
+
+  @ApiOperation({ operationId: 'update' })
+  @ApiOkResponse({ type: VisitDto })
+  @Patch('/:id')
+  async update(
+    @Param('officeId') officeId: string,
+    @Param('id') id: string,
+    @Body() dto: UpdateVisitDto,
+  ): Promise<VisitDto> {
+    const visit = await this.visitsService.update(officeId, id, dto);
 
     if (!visit) {
       throw new NotFoundException();
