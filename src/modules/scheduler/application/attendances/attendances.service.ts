@@ -331,7 +331,7 @@ export class AttendancesService {
       return;
     }
 
-    const assignedEmployees = attendanceRecord.assigned_employees.map(
+    const assignedEmployees = (attendanceRecord.assigned_employees || []).map(
       (employee: any) => ({
         employeeId: employee.employee_id,
         assignedAt: DateTime.fromISO(employee.assigned_at).toISO(),

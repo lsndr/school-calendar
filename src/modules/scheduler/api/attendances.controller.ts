@@ -1,5 +1,18 @@
-import { Body, Controller, Param, Post } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiOkResponse } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Get,
+  NotFoundException,
+  Param,
+  Post,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiOkResponse,
+  ApiNotFoundResponse,
+} from '@nestjs/swagger';
+import { ParseIsoDatePipe } from '../../shared/api';
 import {
   AttendanceDto,
   AttendancesService,
@@ -20,5 +33,27 @@ export class AttendancesController {
     @Body() dto: CreateAttendanceDto,
   ): Promise<AttendanceDto> {
     return this.attendancesService.create(officeId, visitId, dto);
+  }
+
+  @ApiOperation({ operationId: 'findByDate' })
+  @ApiOkResponse({ type: AttendanceDto })
+  @ApiNotFoundResponse()
+  @Get('/:date')
+  async findByDate(
+    @Param('officeId') officeId: string,
+    @Param('visitId') visitId: string,
+    @Param('date', ParseIsoDatePipe) date: string,
+  ): Promise<AttendanceDto> {
+    const attendance = await this.attendancesService.findOne(
+      officeId,
+      visitId,
+      date,
+    );
+
+    if (!attendance) {
+      throw new NotFoundException();
+    }
+
+    return attendance;
   }
 }
