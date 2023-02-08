@@ -4,7 +4,7 @@
   "workspaceFolder": "/workspace",
   "service": "app",
   "remoteUser": "node",
-  "forwardPorts": ["pgadmin4:8080"],
+  "forwardPorts": ["pgadmin4:8080", "app:3000"],
   "waitFor": "postCreateCommand",
   "postCreateCommand": "sudo chown node node_modules && npm install && cp .env.example .env && cp .env.test.example .env.test",
   "customizations": {
