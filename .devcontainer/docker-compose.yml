@@ -21,7 +21,7 @@ services:
     build: ./pgadmin4
     restart: always
     ports:
-      - 8080:80
+      - 80:80
     volumes:
       - ./pgadmin4/servers.json:/pgadmin4/servers.json
     environment:
