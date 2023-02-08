@@ -25,7 +25,12 @@
         "[javascript]": {
           "editor.defaultFormatter": "dbaeumer.vscode-eslint"
         },
-        "conventionalCommits.scopes": ["scheduler", "common"]
+        "conventionalCommits.scopes": [
+          "scheduler",
+          "common",
+          "devcontainer",
+          "shared"
+        ]
       }
     }
   }
