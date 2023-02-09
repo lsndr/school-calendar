@@ -256,11 +256,12 @@ export class LessonsService {
 
     const [lesson, school] = await Promise.all([
       lessonRepository
-        .createQueryBuilder()
+        .createQueryBuilder('a')
+        .leftJoinAndSelect('a._assignedTeachers', 'ae')
         .where({
-          subjectId,
+          subject_id: subjectId,
           date,
-          schoolId,
+          school_id: schoolId,
         })
         .getSingleResult(),
       schoolRepository
