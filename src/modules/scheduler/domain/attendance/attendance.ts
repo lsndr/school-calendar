@@ -146,7 +146,6 @@ export class Attendance extends AttendanceState {
     }
 
     this._updatedAt = now;
-
     this.addOrReplaceUpdatedEvent();
   }
 
