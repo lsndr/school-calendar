@@ -192,11 +192,12 @@ export class LessonsService {
 
     const [lesson, school, subject, teachers] = await Promise.all([
       lessonRepository
-        .createQueryBuilder()
+        .createQueryBuilder('a')
+        .leftJoinAndSelect('a._assignedTeachers', 'ae')
         .where({
-          subjectId,
+          subject_id: subjectId,
           date,
-          schoolId,
+          school_id: schoolId,
         })
         .getSingleResult(),
       schoolRepository
@@ -205,11 +206,11 @@ export class LessonsService {
         .getSingleResult(),
       subjectRepository
         .createQueryBuilder()
-        .where({ id: subjectId, schoolId: schoolId })
+        .where({ id: subjectId, school_id: schoolId })
         .getSingleResult(),
       teacherRepository
         .createQueryBuilder()
-        .where({ id: { $in: dto.teacherIds }, schoolId: schoolId })
+        .where({ id: { $in: dto.teacherIds }, school_id: schoolId })
         .getResult(),
     ]);
 
