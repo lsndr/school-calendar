@@ -47,7 +47,6 @@ export abstract class LessonState extends AggregateRoot {
   @OneToMany({
     entity: () => AssignedTeacher,
     mappedBy: 'lesson',
-    orphanRemoval: true,
   })
   protected _assignedTeachers: Collection<AssignedTeacher>;
 
