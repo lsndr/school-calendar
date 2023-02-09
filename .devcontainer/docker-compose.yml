@@ -30,6 +30,7 @@ services:
       - PGADMIN_CONFIG_PROXY_X_HOST_COUNT=1
       - PGADMIN_CONFIG_PROXY_X_PREFIX_COUNT=1
       - PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED=False
+      - PGADMIN_LISTEN_PORT=8080
     entrypoint:
       - "/bin/sh"
       - "-c"

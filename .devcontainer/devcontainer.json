@@ -4,7 +4,7 @@
   "workspaceFolder": "/workspace",
   "service": "app",
   "remoteUser": "node",
-  "forwardPorts": ["pgadmin4:80"],
+  "forwardPorts": ["pgadmin4:8080"],
   "waitFor": "postCreateCommand",
   "postCreateCommand": "sudo chown node node_modules && npm install && cp .env.example .env && cp .env.test.example .env.test",
   "postAttachCommand": "git config --global --add safe.directory ${containerWorkspaceFolder}",
