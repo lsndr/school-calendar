@@ -256,11 +256,12 @@ export class AttendancesService {
 
     const [attendance, office] = await Promise.all([
       attendanceRepository
-        .createQueryBuilder()
+        .createQueryBuilder('a')
+        .leftJoinAndSelect('a._assignedEmployees', 'ae')
         .where({
-          visitId,
+          visit_id: visitId,
           date,
-          officeId,
+          office_id: officeId,
         })
         .getSingleResult(),
       officeRepository
