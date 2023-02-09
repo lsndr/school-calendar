@@ -1,6 +1,6 @@
 import { Entity, ManyToOne, PrimaryKey, Property, Rel } from '@mikro-orm/core';
 import { DateTime } from 'luxon';
-import { EmployeeIdType } from '../../database';
+import { AssignedEmployeeIdType, EmployeeIdType } from '../../database';
 import { AssignedEmployeeId } from './assigned-employee-id';
 // eslint-disable-next-line import/no-cycle -- Required by MikroORM
 import { Attendance } from './attendance';
@@ -9,7 +9,7 @@ import { DateTimeType } from '../../../shared/database/types';
 
 @Entity({ tableName: 'attendance_employee', customRepository: () => Object })
 export class AssignedEmployee {
-  @PrimaryKey({ type: EmployeeIdType })
+  @PrimaryKey({ type: AssignedEmployeeIdType })
   id: AssignedEmployeeId;
 
   @Property({ type: EmployeeIdType })
