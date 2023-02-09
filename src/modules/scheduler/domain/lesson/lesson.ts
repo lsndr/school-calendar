@@ -146,7 +146,6 @@ export class Lesson extends LessonState {
     }
 
     this._updatedAt = now;
-
     this.addOrReplaceUpdatedEvent();
   }
 
