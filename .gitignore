@@ -37,3 +37,4 @@ lerna-debug.log*
 .env.test
 /coverage
 .vscode
+nohup.out
