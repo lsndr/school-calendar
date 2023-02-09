@@ -221,6 +221,92 @@ describe('Lessons Service', () => {
     jest.useRealTimers();
   });
 
+  it('should unassign an teacher from lesson', async () => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date('2023-01-23T14:00:28.460Z'));
+    const knex = orm.em.getConnection().getKnex();
+    const school = await seedSchool(orm);
+    const group = await seedGroup(school, orm);
+    const subject = await seedSubject(school, group, orm);
+    const teacher = await seedTeacher(school, orm);
+    await seedLesson(
+      {
+        school,
+        subject,
+        date: ExactDate.create({
+          year: 2023,
+          month: 1,
+          day: 28,
+        }),
+        time: TimeInterval.create({
+          startsAt: 45,
+          duration: 123,
+        }),
+        assingTeacher: teacher,
+      },
+      orm,
+    );
+    await knex.delete().from('outbox');
+
+    jest.setSystemTime(new Date('2023-01-24T01:00:28.460Z'));
+
+    const result = await lessonsService.unassignTeachers(
+      school.id.value,
+      subject.id.value,
+      '2023-01-28',
+      new AssignTeachersDto({
+        teacherIds: [teacher.id.value],
+      }),
+    );
+
+    const result2 = await lessonsService.findOne(
+      school.id.value,
+      subject.id.value,
+      '2023-01-28',
+    );
+    const outbox = await knex.select('*').from('outbox');
+
+    expect(result).toEqual([]);
+    expect(result2).toEqual({
+      date: '2023-01-28',
+      subjectId: subject.id.value,
+      createdAt: '2023-01-23T14:00:28.460+00:00',
+      updatedAt: '2023-01-24T01:00:28.460+00:00',
+      assignedTeachers: [],
+      time: expect.objectContaining({
+        duration: 123,
+        startsAt: 45,
+      }),
+    });
+    expect(outbox).toEqual([
+      {
+        created_at: DateTime.fromISO('2023-01-24T01:00:28.460+00:00'),
+        id: expect.any(String),
+        payload: {
+          createdAt: '2023-01-23T14:00:28.460+00:00',
+          teacherIds: [],
+          id: {
+            date: {
+              day: 28,
+              month: 1,
+              year: 2023,
+            },
+            subjectId: subject.id.value,
+          },
+          time: {
+            duration: 123,
+            startsAt: 45,
+          },
+          updatedAt: '2023-01-24T01:00:28.460+00:00',
+        },
+        processed_at: null,
+        topic: 'scheduler.LessonUpdatedEvent',
+      },
+    ]);
+
+    jest.useRealTimers();
+  });
+
   afterEach(async () => {
     await orm.close();
   });
@@ -296,11 +382,12 @@ async function seedLesson(
     school: School;
     date: ExactDate;
     time: TimeInterval;
+    assingTeacher?: Teacher;
   },
   orm: MikroORM,
 ) {
   const id = LessonId.create();
-  const group = Lesson.create({
+  const lesson = Lesson.create({
     id,
     subject: data.subject,
     school: data.school,
@@ -309,8 +396,17 @@ async function seedLesson(
     now: DateTime.now(),
   });
 
-  const groupRepository = orm.em.fork().getRepository(Group);
-  await groupRepository.persistAndFlush(group);
+  if (data.assingTeacher) {
+    lesson.assignTeacher(
+      data.assingTeacher,
+      data.subject,
+      data.school,
+      DateTime.now(),
+    );
+  }
 
-  return group;
+  const lessonRepository = orm.em.fork().getRepository(Lesson);
+  await lessonRepository.persistAndFlush(lesson);
+
+  return lesson;
 }
