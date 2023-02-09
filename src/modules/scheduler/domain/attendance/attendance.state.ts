@@ -48,7 +48,6 @@ export abstract class AttendanceState extends AggregateRoot {
   @OneToMany({
     entity: () => AssignedEmployee,
     mappedBy: 'attendance',
-    orphanRemoval: true,
   })
   protected _assignedEmployees: Collection<AssignedEmployee>;
 
