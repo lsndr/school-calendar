@@ -12,6 +12,12 @@ export class Migration20230209144735 extends Migration {
   override async down(): Promise<void> {
     const knex = this.ctx || this.getKnex();
 
+    await knex('lesson_teacher')
+      .update({
+        lesson_id: 'unattached',
+      })
+      .whereNull('lesson_id');
+
     return knex.schema.alterTable('lesson_teacher', (table) => {
       table.dropNullable('lesson_id');
     });
