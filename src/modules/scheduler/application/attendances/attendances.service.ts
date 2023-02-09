@@ -192,11 +192,12 @@ export class AttendancesService {
 
     const [attendance, office, visit, employees] = await Promise.all([
       attendanceRepository
-        .createQueryBuilder()
+        .createQueryBuilder('a')
+        .leftJoinAndSelect('a._assignedEmployees', 'ae')
         .where({
-          visitId,
+          visit_id: visitId,
           date,
-          officeId,
+          office_id: officeId,
         })
         .getSingleResult(),
       officeRepository
@@ -205,11 +206,11 @@ export class AttendancesService {
         .getSingleResult(),
       visitRepository
         .createQueryBuilder()
-        .where({ id: visitId, officeId: officeId })
+        .where({ id: visitId, office_id: officeId })
         .getSingleResult(),
       employeeRepository
         .createQueryBuilder()
-        .where({ id: { $in: dto.employeeIds }, officeId: officeId })
+        .where({ id: { $in: dto.employeeIds }, office_id: officeId })
         .getResult(),
     ]);
 
