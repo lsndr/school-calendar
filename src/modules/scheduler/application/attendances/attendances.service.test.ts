@@ -221,6 +221,92 @@ describe('Attendances Service', () => {
     jest.useRealTimers();
   });
 
+  it('should unassign an employee from attendance', async () => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date('2023-01-23T14:00:28.460Z'));
+    const knex = orm.em.getConnection().getKnex();
+    const office = await seedOffice(orm);
+    const client = await seedClient(office, orm);
+    const visit = await seedVisit(office, client, orm);
+    const employee = await seedEmployee(office, orm);
+    await seedAttendance(
+      {
+        office,
+        visit,
+        date: ExactDate.create({
+          year: 2023,
+          month: 1,
+          day: 28,
+        }),
+        time: TimeInterval.create({
+          startsAt: 45,
+          duration: 123,
+        }),
+        assingEmployee: employee,
+      },
+      orm,
+    );
+    await knex.delete().from('outbox');
+
+    jest.setSystemTime(new Date('2023-01-24T01:00:28.460Z'));
+
+    const result = await attendancesService.unassignEmployees(
+      office.id.value,
+      visit.id.value,
+      '2023-01-28',
+      new AssignEmployeesDto({
+        employeeIds: [employee.id.value],
+      }),
+    );
+
+    const result2 = await attendancesService.findOne(
+      office.id.value,
+      visit.id.value,
+      '2023-01-28',
+    );
+    const outbox = await knex.select('*').from('outbox');
+
+    expect(result).toEqual([]);
+    expect(result2).toEqual({
+      date: '2023-01-28',
+      visitId: visit.id.value,
+      createdAt: '2023-01-23T14:00:28.460+00:00',
+      updatedAt: '2023-01-24T01:00:28.460+00:00',
+      assignedEmployees: [],
+      time: expect.objectContaining({
+        duration: 123,
+        startsAt: 45,
+      }),
+    });
+    expect(outbox).toEqual([
+      {
+        created_at: DateTime.fromISO('2023-01-24T01:00:28.460+00:00'),
+        id: expect.any(String),
+        payload: {
+          createdAt: '2023-01-23T14:00:28.460+00:00',
+          employeeIds: [],
+          id: {
+            date: {
+              day: 28,
+              month: 1,
+              year: 2023,
+            },
+            visitId: visit.id.value,
+          },
+          time: {
+            duration: 123,
+            startsAt: 45,
+          },
+          updatedAt: '2023-01-24T01:00:28.460+00:00',
+        },
+        processed_at: null,
+        topic: 'scheduler.AttendanceUpdatedEvent',
+      },
+    ]);
+
+    jest.useRealTimers();
+  });
+
   afterEach(async () => {
     await orm.close();
   });
@@ -291,11 +377,17 @@ async function seedEmployee(office: Office, orm: MikroORM) {
 }
 
 async function seedAttendance(
-  data: { visit: Visit; office: Office; date: ExactDate; time: TimeInterval },
+  data: {
+    visit: Visit;
+    office: Office;
+    date: ExactDate;
+    time: TimeInterval;
+    assingEmployee?: Employee;
+  },
   orm: MikroORM,
 ) {
   const id = AttendanceId.create();
-  const client = Attendance.create({
+  const attendance = Attendance.create({
     id,
     visit: data.visit,
     office: data.office,
@@ -304,8 +396,17 @@ async function seedAttendance(
     now: DateTime.now(),
   });
 
-  const clientRepository = orm.em.fork().getRepository(Client);
-  await clientRepository.persistAndFlush(client);
+  if (data.assingEmployee) {
+    attendance.assignEmployee(
+      data.assingEmployee,
+      data.visit,
+      data.office,
+      DateTime.now(),
+    );
+  }
 
-  return client;
+  const attendanceRepository = orm.em.fork().getRepository(Attendance);
+  await attendanceRepository.persistAndFlush(attendance);
+
+  return attendance;
 }
