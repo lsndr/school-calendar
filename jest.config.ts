@@ -8,6 +8,7 @@ export default {
     '!**/*.controller.ts',
     '!**/*.dto.ts',
     '!**/*.pipe.ts',
+    '!**/*.module.ts',
   ],
   coverageDirectory: './coverage',
   globalSetup: './jest.setup.ts',
