@@ -20,7 +20,10 @@
     "test:integration": "jest --runInBand --testPathPattern=\\.test\\.ts$",
     "migration:create": "mikro-orm migration:create --blank",
     "migration:up": "mikro-orm migration:up",
-    "migration:down": "mikro-orm migration:down"
+    "migration:down": "mikro-orm migration:down",
+    "dev:up": "devcontainer up --workspace-folder ./",
+    "dev:stop": "devcontainer stop",
+    "dev:exec": "devcontainer exec --workspace-folder ./"
   },
   "dependencies": {
     "@mikro-orm/cli": "^5.6.8",
@@ -46,6 +49,7 @@
     "node": ">=18.0.0"
   },
   "devDependencies": {
+    "@devcontainers/cli": "^0.30.0",
     "@nestjs/cli": "^9.1.8",
     "@nestjs/schematics": "^9.0.4",
     "@nestjs/testing": "^9.2.1",
