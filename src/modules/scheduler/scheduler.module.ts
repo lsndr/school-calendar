@@ -5,6 +5,7 @@ import { ClientsController } from './api/clients.controller';
 import { EmployeesController } from './api/employees.controller';
 import { OfficesController } from './api/offices.controller';
 import { VisitsController } from './api/visits.controller';
+import { CalendarController } from './api/calendar.controller';
 import {
   AttendancesService,
   ClientsService,
@@ -12,6 +13,12 @@ import {
   OfficesService,
   VisitsService,
 } from './application';
+import {
+  AttendancesLoader,
+  EmployeesCalendarLoader,
+  EmployeesCalendarService,
+  VisitVersionsLoader,
+} from './application/calendar';
 
 @Module({
   imports: [SharedModule],
@@ -21,6 +28,10 @@ import {
     EmployeesService,
     VisitsService,
     AttendancesService,
+    EmployeesCalendarService,
+    VisitVersionsLoader,
+    AttendancesLoader,
+    EmployeesCalendarLoader,
   ],
   controllers: [
     OfficesController,
@@ -28,6 +39,7 @@ import {
     EmployeesController,
     VisitsController,
     AttendancesController,
+    CalendarController,
   ],
   exports: [],
 })

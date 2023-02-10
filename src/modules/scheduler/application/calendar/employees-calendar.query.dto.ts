@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import { IsDateString, IsInt, Max, Min } from 'class-validator';
 
 export class EmployeesCalendarQueryDto {
@@ -10,6 +11,7 @@ export class EmployeesCalendarQueryDto {
   @Max(7)
   @Min(1)
   @IsInt()
+  @Type(() => Number)
   days: number;
 
   constructor(dto: EmployeesCalendarQueryDto) {
