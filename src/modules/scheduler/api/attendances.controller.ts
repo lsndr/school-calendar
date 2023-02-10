@@ -63,7 +63,7 @@ export class AttendancesController {
   @ApiOperation({ operationId: 'assignEmployees' })
   @ApiOkResponse({ type: AttendanceDto })
   @ApiNotFoundResponse()
-  @Get('/:date/assign-employees')
+  @Post('/:date/assign-employees')
   async assingEmployees(
     @Param('officeId') officeId: string,
     @Param('visitId') visitId: string,
@@ -81,7 +81,7 @@ export class AttendancesController {
   @ApiOperation({ operationId: 'unassignEmployees' })
   @ApiOkResponse({ type: AttendanceDto })
   @ApiNotFoundResponse()
-  @Get('/:date/unassign-employees')
+  @Post('/:date/unassign-employees')
   async unassingEmployees(
     @Param('officeId') officeId: string,
     @Param('visitId') visitId: string,
