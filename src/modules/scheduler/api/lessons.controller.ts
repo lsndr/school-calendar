@@ -59,7 +59,7 @@ export class LessonsController {
   @ApiOperation({ operationId: 'assignTeachers' })
   @ApiOkResponse({ type: LessonDto })
   @ApiNotFoundResponse()
-  @Get('/:date/assign-teachers')
+  @Post('/:date/assign-teachers')
   assingTeachers(
     @Param('schoolId') schoolId: string,
     @Param('subjectId') subjectId: string,
@@ -72,7 +72,7 @@ export class LessonsController {
   @ApiOperation({ operationId: 'unassignTeachers' })
   @ApiOkResponse({ type: LessonDto })
   @ApiNotFoundResponse()
-  @Get('/:date/unassign-teachers')
+  @Post('/:date/unassign-teachers')
   unassingTeachers(
     @Param('schoolId') schoolId: string,
     @Param('subjectId') subjectId: string,
