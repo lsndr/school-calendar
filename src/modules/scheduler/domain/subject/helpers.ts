@@ -1,5 +1,6 @@
 import { DateTime } from 'luxon';
 import { RRule, RRuleSet, Frequency } from 'rrule';
+import { MonthDays, WeekDays } from './recurrence';
 
 type Recurrence =
   | {
@@ -7,16 +8,16 @@ type Recurrence =
     }
   | {
       type: 'weekly';
-      days: number[];
+      days: ReadonlyArray<(typeof WeekDays)[number]>;
     }
   | {
       type: 'biweekly';
-      week1: number[];
-      week2: number[];
+      week1: ReadonlyArray<(typeof WeekDays)[number]>;
+      week2: ReadonlyArray<(typeof WeekDays)[number]>;
     }
   | {
       type: 'monthly';
-      days: number[];
+      days: ReadonlyArray<(typeof MonthDays)[number]>;
     };
 
 type PeriodicityToRruleSetOptions = {
@@ -71,7 +72,7 @@ function periodicityToRruleSet(options: PeriodicityToRruleSetOptions) {
         dtstart,
         until,
         tzid: options.timeZone,
-        byweekday: options.recurence.days,
+        byweekday: [...options.recurence.days],
       }),
     );
   } else if (options.recurence.type === 'biweekly') {
@@ -82,7 +83,7 @@ function periodicityToRruleSet(options: PeriodicityToRruleSetOptions) {
         dtstart,
         until,
         tzid: options.timeZone,
-        byweekday: options.recurence.week1,
+        byweekday: [...options.recurence.week1],
       }),
     );
 
@@ -96,7 +97,7 @@ function periodicityToRruleSet(options: PeriodicityToRruleSetOptions) {
         dtstart: dtstart2,
         until,
         tzid: options.timeZone,
-        byweekday: options.recurence.week1,
+        byweekday: [...options.recurence.week1],
       }),
     );
   } else if (options.recurence.type === 'monthly') {
@@ -106,7 +107,7 @@ function periodicityToRruleSet(options: PeriodicityToRruleSetOptions) {
         dtstart,
         until,
         tzid: options.timeZone,
-        bymonthday: options.recurence.days,
+        bymonthday: [...options.recurence.days],
       }),
     );
   }

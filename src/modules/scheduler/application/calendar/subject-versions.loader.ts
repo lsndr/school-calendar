@@ -1,7 +1,7 @@
 import { MikroORM } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { DateTime } from 'luxon';
-import { extractDatesFromPeriodicity } from './helpers';
+import { extractDatesFromPeriodicity } from '../../domain';
 
 export type SubjectVersionsLoaderOptions = {
   schoolId: string;

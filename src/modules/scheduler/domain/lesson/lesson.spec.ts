@@ -140,7 +140,7 @@ describe('Lesson', () => {
     const id = LessonId.create();
     const now = DateTime.fromISO('2023-01-20T12:00:00.000Z');
     const date = ExactDate.create({
-      day: 21,
+      day: 23,
       month: 1,
       year: 2023,
     });
@@ -168,7 +168,7 @@ describe('Lesson', () => {
   it('should fail to add an teacher if subject belong to another school', () => {
     const now = DateTime.fromISO('2023-01-20T12:00:00.000Z');
     const date = ExactDate.create({
-      day: 21,
+      day: 24,
       month: 1,
       year: 2023,
     });
@@ -194,7 +194,7 @@ describe('Lesson', () => {
   it('should fail to add an teacher school reference has different id', () => {
     const now = DateTime.fromISO('2023-01-20T12:00:00.000Z');
     const date = ExactDate.create({
-      day: 21,
+      day: 23,
       month: 1,
       year: 2023,
     });
@@ -220,7 +220,7 @@ describe('Lesson', () => {
   it('should fail to add an teacher if it belongs to another school', () => {
     const now = DateTime.fromISO('2023-01-20T12:00:00.000Z');
     const date = ExactDate.create({
-      day: 21,
+      day: 24,
       month: 1,
       year: 2023,
     });
@@ -271,9 +271,9 @@ describe('Lesson', () => {
 
   it('should fail to add an teacher to an lesson in past', () => {
     const nowInPast = DateTime.fromISO('2023-01-20T12:00:00.000Z');
-    const nowInFuture = DateTime.fromISO('2023-01-22T12:00:00.000Z');
+    const nowInFuture = DateTime.fromISO('2023-01-25T12:00:00.000Z');
     const date = ExactDate.create({
-      day: 21,
+      day: 23,
       month: 1,
       year: 2023,
     });
@@ -301,7 +301,7 @@ describe('Lesson', () => {
     const now = DateTime.fromISO('2023-01-20T12:00:00.000Z');
     const id = LessonId.create();
     const date = ExactDate.create({
-      day: 21,
+      day: 23,
       month: 1,
       year: 2023,
     });

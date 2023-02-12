@@ -57,6 +57,10 @@ export class Lesson extends LessonState {
 
   static create(data: CreateLesson) {
     this.assertNotInPast(data.date, data.time, data.school, data.now);
+    assert.ok(
+      data.subject.doesOccureOn(data.date, data.school),
+      'Date is not in subject recurrence',
+    );
 
     const eventsManager = new AggregateEvents();
     const lesson = new this({

@@ -2,14 +2,15 @@ import { Entity } from '@mikro-orm/core';
 import * as assert from 'assert';
 import { DateTime } from 'luxon';
 import { Recurrence } from './recurrence';
-import { TimeInterval } from '../shared';
+import { ExactDate, TimeInterval } from '../shared';
 import { Group } from './../group';
 import { School } from './../school';
 import { RequiredTeachers } from './required-teachers';
 import { SubjectId } from './subject-id';
 import { SubjectState } from './subject.state';
+import { extractDatesFromPeriodicity } from './helpers';
 
-type CreateSubject = {
+export type CreateSubject = {
   id: SubjectId;
   name: string;
   school: School;
@@ -97,5 +98,26 @@ export class Subject extends SubjectState {
   setRequiredTeachers(requiredTeachers: RequiredTeachers, now: DateTime) {
     this._requiredTeachers = requiredTeachers;
     this._updatedAt = now;
+  }
+
+  doesOccureOn(date: ExactDate, school: School): boolean {
+    assert.ok(
+      this._schoolId.value === school.id.value,
+      'Wrong school provided',
+    );
+
+    const dateTime = date.toDateTime(school.timeZone);
+
+    const dates = extractDatesFromPeriodicity(
+      dateTime,
+      dateTime.plus({ day: 1 }),
+      {
+        timeZone: school.timeZone.value,
+        calculateSince: this._createdAt,
+        recurence: this.recurrence,
+      },
+    );
+
+    return !!dates.next().value;
   }
 }
