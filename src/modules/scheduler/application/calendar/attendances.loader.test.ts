@@ -112,7 +112,7 @@ describe('AttendancesLoader', () => {
       id: AttendanceId.create(),
       visit: visit2,
       date: ExactDate.create({
-        day: 28,
+        day: 27,
         month: 1,
         year: 2023,
       }),
@@ -157,7 +157,7 @@ describe('AttendancesLoader', () => {
         visitId: visit1.id.value,
       },
       {
-        date: DateTime.fromISO('2023-01-28T00:00:00', {
+        date: DateTime.fromISO('2023-01-27T00:00:00', {
           zone: 'Europe/Moscow',
         }),
         duration: 120,

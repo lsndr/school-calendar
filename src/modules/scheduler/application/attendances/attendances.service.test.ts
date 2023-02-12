@@ -142,7 +142,7 @@ describe('Attendances Service', () => {
         date: ExactDate.create({
           year: 2023,
           month: 1,
-          day: 28,
+          day: 27,
         }),
         time: TimeInterval.create({
           startsAt: 45,
@@ -157,7 +157,7 @@ describe('Attendances Service', () => {
     const result = await attendancesService.assignEmployees(
       office.id.value,
       visit.id.value,
-      '2023-01-28',
+      '2023-01-27',
       new AssignEmployeesDto({
         employeeIds: [employee.id.value],
       }),
@@ -166,7 +166,7 @@ describe('Attendances Service', () => {
     const result2 = await attendancesService.findOne(
       office.id.value,
       visit.id.value,
-      '2023-01-28',
+      '2023-01-27',
     );
     const outbox = await knex.select('*').from('outbox');
 
@@ -177,7 +177,7 @@ describe('Attendances Service', () => {
       },
     ]);
     expect(result2).toEqual({
-      date: '2023-01-28',
+      date: '2023-01-27',
       visitId: visit.id.value,
       createdAt: '2023-01-23T14:00:28.460+00:00',
       updatedAt: '2023-01-24T01:00:28.460+00:00',
@@ -201,7 +201,7 @@ describe('Attendances Service', () => {
           employeeIds: [employee.id.value],
           id: {
             date: {
-              day: 28,
+              day: 27,
               month: 1,
               year: 2023,
             },
@@ -236,7 +236,7 @@ describe('Attendances Service', () => {
         date: ExactDate.create({
           year: 2023,
           month: 1,
-          day: 28,
+          day: 27,
         }),
         time: TimeInterval.create({
           startsAt: 45,
@@ -253,7 +253,7 @@ describe('Attendances Service', () => {
     const result = await attendancesService.unassignEmployees(
       office.id.value,
       visit.id.value,
-      '2023-01-28',
+      '2023-01-27',
       new AssignEmployeesDto({
         employeeIds: [employee.id.value],
       }),
@@ -262,13 +262,13 @@ describe('Attendances Service', () => {
     const result2 = await attendancesService.findOne(
       office.id.value,
       visit.id.value,
-      '2023-01-28',
+      '2023-01-27',
     );
     const outbox = await knex.select('*').from('outbox');
 
     expect(result).toEqual([]);
     expect(result2).toEqual({
-      date: '2023-01-28',
+      date: '2023-01-27',
       visitId: visit.id.value,
       createdAt: '2023-01-23T14:00:28.460+00:00',
       updatedAt: '2023-01-24T01:00:28.460+00:00',
@@ -287,7 +287,7 @@ describe('Attendances Service', () => {
           employeeIds: [],
           id: {
             date: {
-              day: 28,
+              day: 27,
               month: 1,
               year: 2023,
             },

@@ -57,6 +57,10 @@ export class Attendance extends AttendanceState {
 
   static create(data: CreateAttendance) {
     this.assertNotInPast(data.date, data.time, data.office, data.now);
+    assert.ok(
+      data.visit.doesOccureOn(data.date, data.office),
+      'Date is not in visit recurrence',
+    );
 
     const eventsManager = new AggregateEvents();
     const attendance = new this({

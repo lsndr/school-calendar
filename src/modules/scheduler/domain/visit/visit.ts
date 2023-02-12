@@ -2,14 +2,15 @@ import { Entity } from '@mikro-orm/core';
 import * as assert from 'assert';
 import { DateTime } from 'luxon';
 import { Recurrence } from './recurrence';
-import { TimeInterval } from '../shared';
+import { ExactDate, TimeInterval } from '../shared';
 import { Client } from './../client';
 import { Office } from './../office';
 import { RequiredEmployees } from './required-employees';
 import { VisitId } from './visit-id';
 import { VisitState } from './visit.state';
+import { extractDatesFromPeriodicity } from './helpers';
 
-type CreateVisit = {
+export type CreateVisit = {
   id: VisitId;
   name: string;
   office: Office;
@@ -97,5 +98,26 @@ export class Visit extends VisitState {
   setRequiredEmployees(requiredEmployees: RequiredEmployees, now: DateTime) {
     this._requiredEmployees = requiredEmployees;
     this._updatedAt = now;
+  }
+
+  doesOccureOn(date: ExactDate, office: Office): boolean {
+    assert.ok(
+      this._officeId.value === office.id.value,
+      'Wrong office provided',
+    );
+
+    const dateTime = date.toDateTime(office.timeZone);
+
+    const dates = extractDatesFromPeriodicity(
+      dateTime,
+      dateTime.plus({ day: 1 }),
+      {
+        timeZone: office.timeZone.value,
+        calculateSince: this._createdAt,
+        recurence: this.recurrence,
+      },
+    );
+
+    return !!dates.next().value;
   }
 }
