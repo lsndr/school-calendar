@@ -188,7 +188,7 @@ export class Attendance extends AttendanceState {
       updatedAt: this.updatedAt.toISO(),
     });
 
-    this._eventsManager.replaceInstanceOrAdd(AttendanceUpdatedEvent, event);
+    this._events.replaceInstanceOrAdd(AttendanceUpdatedEvent, event);
   }
 
   protected static assertNotInPast(
