@@ -164,7 +164,7 @@ describe('Attendance', () => {
     const act = () => attendance.assignEmployee(employee3, visit, office, now);
 
     expect(act).toThrow(
-      new DomainError('Attendance1', 'too_many_employees_assigned'),
+      new DomainError('Attendance', 'too_many_employees_assigned'),
     );
   });
 
@@ -192,7 +192,7 @@ describe('Attendance', () => {
     const act = () => attendance.assignEmployee(employee3, visit2, office, now);
 
     expect(act).toThrowError(
-      new DomainError('Attendance1', 'visit_has_wrong_office'),
+      new DomainError('Attendance', 'visit_has_wrong_office'),
     );
   });
 
@@ -219,7 +219,7 @@ describe('Attendance', () => {
 
     const act = () => attendance.assignEmployee(employee3, visit, office2, now);
 
-    expect(act).toThrowError(new DomainError('Attendance1', 'wrong_office'));
+    expect(act).toThrowError(new DomainError('Attendance', 'wrong_office'));
   });
 
   it('should fail to add an employee if it belongs to another office', () => {
@@ -246,7 +246,7 @@ describe('Attendance', () => {
     const act = () => attendance.assignEmployee(employee4, visit, office, now);
 
     expect(act).toThrow(
-      new DomainError('Attendance1', 'employee_has_wrong_office'),
+      new DomainError('Attendance', 'employee_has_wrong_office'),
     );
   });
 
@@ -274,7 +274,7 @@ describe('Attendance', () => {
       });
 
     expect(act).toThrowError(
-      new DomainError('Attendance1', 'attendance_in_past_can_not_be_edited'),
+      new DomainError('Attendance', 'attendance_in_past_can_not_be_edited'),
     );
   });
 
@@ -304,7 +304,7 @@ describe('Attendance', () => {
       attendance.assignEmployee(employee1, visit, office, nowInFuture);
 
     expect(act).toThrowError(
-      new DomainError('Attendance1', 'attendance_in_past_can_not_be_edited'),
+      new DomainError('Attendance', 'attendance_in_past_can_not_be_edited'),
     );
   });
 
