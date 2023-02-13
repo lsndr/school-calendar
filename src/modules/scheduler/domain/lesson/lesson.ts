@@ -1,5 +1,4 @@
 import { Entity } from '@mikro-orm/core';
-import * as assert from 'assert';
 import { DateTime } from 'luxon';
 import { AggregateEvents } from '../../../shared/domain';
 import { Teacher } from '../teacher';
@@ -57,9 +56,9 @@ export class Lesson extends LessonState {
 
   static create(data: CreateLesson) {
     this.assertNotInPast(data.date, data.time, data.school, data.now);
-    assert.ok(
+    this.assert(
       data.subject.doesOccureOn(data.date, data.school),
-      'Date is not in subject recurrence',
+      'date_not_in_subject_recurrence',
     );
 
     const eventsManager = new AggregateEvents();
@@ -107,23 +106,20 @@ export class Lesson extends LessonState {
       return;
     }
 
-    assert.ok(
+    this.assert(
       subject.schoolId.value === this.schoolId.value,
-      "Subject must belong to the lesson's school",
+      'subject_has_wrong_school',
     );
-    assert.ok(
+    this.assert(
       this._assignedTeachers.length + 1 <= subject.requiredTeachers.value,
-      'Too many teachers assigned',
+      'too_many_teachers_assigned',
     );
     this.assertLessonNotInPast(school, now);
-    assert.ok(
+    this.assert(
       teacher.schoolId.value === this.schoolId.value,
-      "Teacher must belong to the lesson's school",
+      'teacher_has_wrong_school',
     );
-    assert.ok(
-      school.id.value === this.schoolId.value,
-      "School must the same as the lesson's school",
-    );
+    this.assert(school.id.value === this.schoolId.value, 'wrong_school');
 
     const assignedTeacher = new AssignedTeacher({
       id: AssignedTeacherId.create(),
@@ -138,10 +134,7 @@ export class Lesson extends LessonState {
 
   unassignTeacher(teacherId: string, school: School, now: DateTime) {
     this.assertLessonNotInPast(school, now);
-    assert.ok(
-      school.id.value === this.schoolId.value,
-      "School must the same as the lesson's school",
-    );
+    this.assert(school.id.value === this.schoolId.value, 'wrong_school');
 
     for (const teacher of this._assignedTeachers) {
       if (teacher.teacherId.value === teacherId) {
@@ -201,9 +194,9 @@ export class Lesson extends LessonState {
       .toDateTime(school.timeZone)
       .plus({ minutes: time.startsAt });
 
-    assert.ok(
+    this.assert(
       now.toMillis() < startsAt.toMillis(),
-      'Lesson in past can not be modified or created',
+      'lesson_in_past_can_not_be_edited',
     );
   }
 }

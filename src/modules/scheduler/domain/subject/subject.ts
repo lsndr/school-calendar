@@ -1,5 +1,4 @@
 import { Entity } from '@mikro-orm/core';
-import * as assert from 'assert';
 import { DateTime } from 'luxon';
 import { Recurrence } from './recurrence';
 import { ExactDate, TimeInterval } from '../shared';
@@ -60,9 +59,9 @@ export class Subject extends SubjectState {
   }
 
   static create(data: CreateSubject) {
-    assert.ok(
+    this.assert(
       data.school.id.value === data.group.schoolId.value,
-      'School id and group school id must match',
+      'group_doesnt_belong_to_school',
     );
 
     const subject = new this({
@@ -101,10 +100,7 @@ export class Subject extends SubjectState {
   }
 
   doesOccureOn(date: ExactDate, school: School): boolean {
-    assert.ok(
-      this._schoolId.value === school.id.value,
-      'Wrong school provided',
-    );
+    this.assert(this._schoolId.value === school.id.value, 'wrong_school');
 
     const dateTime = date.toDateTime(school.timeZone);
 

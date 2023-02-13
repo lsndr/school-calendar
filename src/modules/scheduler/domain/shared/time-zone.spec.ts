@@ -1,3 +1,4 @@
+import { DomainError } from '../../../shared/domain';
 import { TimeZone } from './time-zone';
 
 describe('Time Zone', () => {
@@ -16,6 +17,6 @@ describe('Time Zone', () => {
   it('should create Invalid timezone', () => {
     const act = () => TimeZone.create('Invalid');
 
-    expect(act).toThrowError('Time zone is invalid');
+    expect(act).toThrow(new DomainError('TimeZone', 'tz_invalid'));
   });
 });

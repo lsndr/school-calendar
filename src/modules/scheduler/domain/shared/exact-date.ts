@@ -1,4 +1,3 @@
-import * as assert from 'assert';
 import { DateTime } from 'luxon';
 import { ValueObject } from '../../../shared/domain';
 import { TimeZone } from './time-zone';
@@ -33,7 +32,10 @@ export class ExactDate extends ValueObject<'ExactDate'> {
   }
 
   static fromDateTime(dateTime: DateTime) {
-    assert.ok(dateTime.isValid && dateTime.toMillis() > 0, 'Date is not valid');
+    this.assert(
+      dateTime.isValid && dateTime.toMillis() > 0,
+      'datetime_invalid',
+    );
 
     return new this({
       day: dateTime.day,

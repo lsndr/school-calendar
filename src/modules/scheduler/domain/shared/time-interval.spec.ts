@@ -1,3 +1,4 @@
+import { DomainError } from '../../../shared/domain';
 import { TimeInterval } from './time-interval';
 
 describe('TimeInterval', () => {
@@ -9,7 +10,9 @@ describe('TimeInterval', () => {
           duration: 1,
         });
 
-      expect(act).toThrow('startsAt must be integer');
+      expect(act).toThrow(
+        new DomainError('TimeInterval', 'startsat_is_not_integer'),
+      );
     });
 
     it('should fail if startsAt is NaN', () => {
@@ -19,7 +22,9 @@ describe('TimeInterval', () => {
           duration: 1,
         });
 
-      expect(act).toThrow('startsAt must be integer');
+      expect(act).toThrow(
+        new DomainError('TimeInterval', 'startsat_is_not_integer'),
+      );
     });
 
     it('should fail if startsAt is Infinity', () => {
@@ -29,7 +34,9 @@ describe('TimeInterval', () => {
           duration: 1,
         });
 
-      expect(act).toThrow('startsAt must be integer');
+      expect(act).toThrow(
+        new DomainError('TimeInterval', 'startsat_is_not_integer'),
+      );
     });
 
     it('should fail if startsAt is -1', () => {
@@ -39,7 +46,9 @@ describe('TimeInterval', () => {
           duration: 1,
         });
 
-      expect(act).toThrow('startsAt should not be negative');
+      expect(act).toThrow(
+        new DomainError('TimeInterval', 'startsat_is_negative'),
+      );
     });
 
     it('should fail if startsAt is 1440', () => {
@@ -49,7 +58,9 @@ describe('TimeInterval', () => {
           duration: 1,
         });
 
-      expect(act).toThrow('startsAt must less than 1440');
+      expect(act).toThrow(
+        new DomainError('TimeInterval', 'startsat_greater_than_1339'),
+      );
     });
 
     it('should succeed if startsAt is 0', () => {
@@ -79,7 +90,9 @@ describe('TimeInterval', () => {
           duration: 1.5,
         });
 
-      expect(act).toThrow('duration must be integer');
+      expect(act).toThrow(
+        new DomainError('TimeInterval', 'duration_is_not_integer'),
+      );
     });
 
     it('should fail if duration is NaN', () => {
@@ -89,7 +102,9 @@ describe('TimeInterval', () => {
           duration: NaN,
         });
 
-      expect(act).toThrow('duration must be integer');
+      expect(act).toThrow(
+        new DomainError('TimeInterval', 'duration_is_not_integer'),
+      );
     });
 
     it('should fail if duration is Infinity', () => {
@@ -99,7 +114,9 @@ describe('TimeInterval', () => {
           duration: Infinity,
         });
 
-      expect(act).toThrow('duration must be integer');
+      expect(act).toThrow(
+        new DomainError('TimeInterval', 'duration_is_not_integer'),
+      );
     });
 
     it('should fail if duration is -1', () => {
@@ -109,7 +126,9 @@ describe('TimeInterval', () => {
           duration: -1,
         });
 
-      expect(act).toThrow('duration should be positive');
+      expect(act).toThrow(
+        new DomainError('TimeInterval', 'duration_is_negative'),
+      );
     });
 
     it('should fail if duration is 0', () => {
@@ -119,7 +138,9 @@ describe('TimeInterval', () => {
           duration: 0,
         });
 
-      expect(act).toThrow('duration should be positive');
+      expect(act).toThrow(
+        new DomainError('TimeInterval', 'duration_is_negative'),
+      );
     });
 
     it('should fail if duration is 1441', () => {
@@ -129,7 +150,9 @@ describe('TimeInterval', () => {
           duration: 1441,
         });
 
-      expect(act).toThrow('duration should not exceed 1440');
+      expect(act).toThrow(
+        new DomainError('TimeInterval', 'duration_greater_than_1440'),
+      );
     });
 
     it('should succeed if duration is 1', () => {

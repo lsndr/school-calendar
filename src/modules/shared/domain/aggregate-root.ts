@@ -1,6 +1,7 @@
 import { AggregateEvents } from './aggregate-events';
+import { DomainObject } from './domain-object';
 
-export abstract class AggregateRoot {
+export abstract class AggregateRoot extends DomainObject {
   private _eventsManager?: AggregateEvents;
 
   protected get _events() {
@@ -20,6 +21,7 @@ export abstract class AggregateRoot {
   }
 
   protected constructor() {
+    super();
     //pass
   }
 }

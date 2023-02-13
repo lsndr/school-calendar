@@ -1,5 +1,6 @@
 import { MikroORM } from '@mikro-orm/postgresql';
 import { DateTime } from 'luxon';
+import { DomainError } from '../../../shared/domain';
 import { Group, GroupId } from '../group';
 import { Teacher, TeacherId } from '../teacher';
 import { School, SchoolId } from '../school';
@@ -162,7 +163,9 @@ describe('Lesson', () => {
 
     const act = () => lesson.assignTeacher(teacher3, subject, school, now);
 
-    expect(act).toThrow('Too many teachers assigned');
+    expect(act).toThrow(
+      new DomainError('Lesson1', 'too_many_teachers_assigned'),
+    );
   });
 
   it('should fail to add an teacher if subject belong to another school', () => {
@@ -188,7 +191,9 @@ describe('Lesson', () => {
 
     const act = () => lesson.assignTeacher(teacher3, subject2, school, now);
 
-    expect(act).toThrow("Subject must belong to the lesson's school");
+    expect(act).toThrowError(
+      new DomainError('Lesson1', 'subject_has_wrong_school'),
+    );
   });
 
   it('should fail to add an teacher school reference has different id', () => {
@@ -214,7 +219,7 @@ describe('Lesson', () => {
 
     const act = () => lesson.assignTeacher(teacher3, subject, school2, now);
 
-    expect(act).toThrow("School must the same as the lesson's school");
+    expect(act).toThrowError(new DomainError('Lesson1', 'wrong_school'));
   });
 
   it('should fail to add an teacher if it belongs to another school', () => {
@@ -240,7 +245,7 @@ describe('Lesson', () => {
 
     const act = () => lesson.assignTeacher(teacher4, subject, school, now);
 
-    expect(act).toThrow("Teacher must belong to the lesson's school");
+    expect(act).toThrow(new DomainError('Lesson1', 'teacher_has_wrong_school'));
   });
 
   it('should fail to create an lesson in past', () => {
@@ -266,7 +271,9 @@ describe('Lesson', () => {
         now,
       });
 
-    expect(act).toThrow('Lesson in past can not be modified or created');
+    expect(act).toThrowError(
+      new DomainError('Lesson1', 'lesson_in_past_can_not_be_edited'),
+    );
   });
 
   it('should fail to add an teacher to an lesson in past', () => {
@@ -294,7 +301,9 @@ describe('Lesson', () => {
     const act = () =>
       lesson.assignTeacher(teacher1, subject, school, nowInFuture);
 
-    expect(act).toThrow('Lesson in past can not be modified or created');
+    expect(act).toThrowError(
+      new DomainError('Lesson1', 'lesson_in_past_can_not_be_edited'),
+    );
   });
 
   it('should add an teacher', () => {

@@ -1,4 +1,3 @@
-import * as assert from 'assert';
 import { ValueObject } from '../../../shared/domain';
 
 export class RequiredTeachers extends ValueObject<'RequiredTeachers'> {
@@ -11,9 +10,9 @@ export class RequiredTeachers extends ValueObject<'RequiredTeachers'> {
   }
 
   static create(amount: number) {
-    assert.ok(Number.isInteger(amount), 'amount must be integer');
-    assert.ok(amount > 0, 'amount must more than 0');
-    assert.ok(amount < 4, 'amount must less than 4');
+    this.assert(Number.isInteger(amount), 'amoun_is_not_integer');
+    this.assert(amount > 0, 'amount_is_negative');
+    this.assert(amount < 4, 'amount_greater_than_3');
 
     return new this(amount);
   }

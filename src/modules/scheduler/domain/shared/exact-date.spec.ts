@@ -1,3 +1,4 @@
+import { DomainError } from '../../../shared/domain';
 import { ExactDate } from './exact-date';
 import { TimeZone } from './time-zone';
 
@@ -10,7 +11,7 @@ describe('Exact Date', () => {
         year: 2024,
       });
 
-    expect(act).toThrowError('Date is not valid');
+    expect(act).toThrowError(new DomainError('ExactDate', 'datetime_invalid'));
   });
 
   it('should fail to create a date with invalid month', () => {
@@ -21,7 +22,7 @@ describe('Exact Date', () => {
         year: 2024,
       });
 
-    expect(act).toThrowError('Date is not valid');
+    expect(act).toThrowError(new DomainError('ExactDate', 'datetime_invalid'));
   });
 
   it('should fail to create a date with invalid year', () => {
@@ -32,7 +33,7 @@ describe('Exact Date', () => {
         year: -1,
       });
 
-    expect(act).toThrowError('Date is not valid');
+    expect(act).toThrowError(new DomainError('ExactDate', 'datetime_invalid'));
   });
 
   it('should create a date', () => {
