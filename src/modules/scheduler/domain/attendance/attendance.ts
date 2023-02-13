@@ -1,5 +1,4 @@
 import { Entity } from '@mikro-orm/core';
-import * as assert from 'assert';
 import { DateTime } from 'luxon';
 import { AggregateEvents } from '../../../shared/domain';
 import { Employee } from '../employee';
@@ -57,9 +56,9 @@ export class Attendance extends AttendanceState {
 
   static create(data: CreateAttendance) {
     this.assertNotInPast(data.date, data.time, data.office, data.now);
-    assert.ok(
+    this.assert(
       data.visit.doesOccureOn(data.date, data.office),
-      'Date is not in visit recurrence',
+      'date_not_in_visit_recurrence',
     );
 
     const eventsManager = new AggregateEvents();
@@ -107,23 +106,20 @@ export class Attendance extends AttendanceState {
       return;
     }
 
-    assert.ok(
+    this.assert(
       visit.officeId.value === this.officeId.value,
-      "Visit must belong to the attendance's office",
+      'visit_has_wrong_office',
     );
-    assert.ok(
+    this.assert(
       this._assignedEmployees.length + 1 <= visit.requiredEmployees.value,
-      'Too many employees assigned',
+      'too_many_employees_assigned',
     );
     this.assertAttendanceNotInPast(office, now);
-    assert.ok(
+    this.assert(
       employee.officeId.value === this.officeId.value,
-      "Employee must belong to the attendance's office",
+      'employee_has_wrong_office',
     );
-    assert.ok(
-      office.id.value === this.officeId.value,
-      "Office must the same as the attendance's office",
-    );
+    this.assert(office.id.value === this.officeId.value, 'wrong_office');
 
     const assignedEmployee = new AssignedEmployee({
       id: AssignedEmployeeId.create(),
@@ -138,10 +134,7 @@ export class Attendance extends AttendanceState {
 
   unassignEmployee(employeeId: string, office: Office, now: DateTime) {
     this.assertAttendanceNotInPast(office, now);
-    assert.ok(
-      office.id.value === this.officeId.value,
-      "Office must the same as the attendance's office",
-    );
+    this.assert(office.id.value === this.officeId.value, 'wrong_office');
 
     for (const employee of this._assignedEmployees) {
       if (employee.employeeId.value === employeeId) {
@@ -201,9 +194,9 @@ export class Attendance extends AttendanceState {
       .toDateTime(office.timeZone)
       .plus({ minutes: time.startsAt });
 
-    assert.ok(
+    this.assert(
       now.toMillis() < startsAt.toMillis(),
-      'Attendance in past can not be modified or created',
+      'attendance_in_past_can_not_be_edited',
     );
   }
 }

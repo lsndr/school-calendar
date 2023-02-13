@@ -1,5 +1,6 @@
 import { MikroORM } from '@mikro-orm/postgresql';
 import { DateTime } from 'luxon';
+import { DomainError } from '../../../shared/domain';
 import { Client, ClientId } from '../client';
 import { Employee, EmployeeId } from '../employee';
 import { Office, OfficeId } from '../office';
@@ -162,7 +163,9 @@ describe('Attendance', () => {
 
     const act = () => attendance.assignEmployee(employee3, visit, office, now);
 
-    expect(act).toThrow('Too many employees assigned');
+    expect(act).toThrow(
+      new DomainError('Attendance1', 'too_many_employees_assigned'),
+    );
   });
 
   it('should fail to add an employee if visit belong to another office', () => {
@@ -188,7 +191,9 @@ describe('Attendance', () => {
 
     const act = () => attendance.assignEmployee(employee3, visit2, office, now);
 
-    expect(act).toThrow("Visit must belong to the attendance's office");
+    expect(act).toThrowError(
+      new DomainError('Attendance1', 'visit_has_wrong_office'),
+    );
   });
 
   it('should fail to add an employee office reference has different id', () => {
@@ -214,7 +219,7 @@ describe('Attendance', () => {
 
     const act = () => attendance.assignEmployee(employee3, visit, office2, now);
 
-    expect(act).toThrow("Office must the same as the attendance's office");
+    expect(act).toThrowError(new DomainError('Attendance1', 'wrong_office'));
   });
 
   it('should fail to add an employee if it belongs to another office', () => {
@@ -240,7 +245,9 @@ describe('Attendance', () => {
 
     const act = () => attendance.assignEmployee(employee4, visit, office, now);
 
-    expect(act).toThrow("Employee must belong to the attendance's office");
+    expect(act).toThrow(
+      new DomainError('Attendance1', 'employee_has_wrong_office'),
+    );
   });
 
   it('should fail to create an attendance in past', () => {
@@ -266,7 +273,9 @@ describe('Attendance', () => {
         now,
       });
 
-    expect(act).toThrow('Attendance in past can not be modified or created');
+    expect(act).toThrowError(
+      new DomainError('Attendance1', 'attendance_in_past_can_not_be_edited'),
+    );
   });
 
   it('should fail to add an employee to an attendance in past', () => {
@@ -294,7 +303,9 @@ describe('Attendance', () => {
     const act = () =>
       attendance.assignEmployee(employee1, visit, office, nowInFuture);
 
-    expect(act).toThrow('Attendance in past can not be modified or created');
+    expect(act).toThrowError(
+      new DomainError('Attendance1', 'attendance_in_past_can_not_be_edited'),
+    );
   });
 
   it('should add an employee', () => {

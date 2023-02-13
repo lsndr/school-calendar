@@ -1,5 +1,4 @@
 import { Entity } from '@mikro-orm/core';
-import * as assert from 'assert';
 import { DateTime } from 'luxon';
 import { Recurrence } from './recurrence';
 import { ExactDate, TimeInterval } from '../shared';
@@ -60,9 +59,9 @@ export class Visit extends VisitState {
   }
 
   static create(data: CreateVisit) {
-    assert.ok(
+    this.assert(
       data.office.id.value === data.client.officeId.value,
-      'Office id and client office id must match',
+      'client_doesnt_belong_to_office',
     );
 
     const visit = new this({
@@ -101,10 +100,7 @@ export class Visit extends VisitState {
   }
 
   doesOccureOn(date: ExactDate, office: Office): boolean {
-    assert.ok(
-      this._officeId.value === office.id.value,
-      'Wrong office provided',
-    );
+    this.assert(this._officeId.value === office.id.value, 'wrong_office');
 
     const dateTime = date.toDateTime(office.timeZone);
 

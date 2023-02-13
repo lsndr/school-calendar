@@ -1,4 +1,3 @@
-import * as assert from 'assert';
 import { IANAZone } from 'luxon';
 import { ValueObject } from '../../../shared/domain';
 
@@ -12,7 +11,7 @@ export class TimeZone extends ValueObject<'TimeZone'> {
   }
 
   static create(timeZone: string) {
-    assert.ok(IANAZone.isValidZone(timeZone), 'Time zone is invalid');
+    this.assert(IANAZone.isValidZone(timeZone), 'tz_invalid');
 
     return new this(timeZone);
   }
