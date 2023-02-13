@@ -21,6 +21,7 @@ export default {
             syntax: 'typescript',
             decorators: true,
           },
+          keepClassNames: true,
           transform: {
             legacyDecorator: true,
             decoratorMetadata: true,

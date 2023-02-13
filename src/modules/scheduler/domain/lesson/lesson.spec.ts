@@ -164,7 +164,7 @@ describe('Lesson', () => {
     const act = () => lesson.assignTeacher(teacher3, subject, school, now);
 
     expect(act).toThrow(
-      new DomainError('Lesson1', 'too_many_teachers_assigned'),
+      new DomainError('Lesson', 'too_many_teachers_assigned'),
     );
   });
 
@@ -192,7 +192,7 @@ describe('Lesson', () => {
     const act = () => lesson.assignTeacher(teacher3, subject2, school, now);
 
     expect(act).toThrowError(
-      new DomainError('Lesson1', 'subject_has_wrong_school'),
+      new DomainError('Lesson', 'subject_has_wrong_school'),
     );
   });
 
@@ -219,7 +219,7 @@ describe('Lesson', () => {
 
     const act = () => lesson.assignTeacher(teacher3, subject, school2, now);
 
-    expect(act).toThrowError(new DomainError('Lesson1', 'wrong_school'));
+    expect(act).toThrowError(new DomainError('Lesson', 'wrong_school'));
   });
 
   it('should fail to add an teacher if it belongs to another school', () => {
@@ -245,7 +245,7 @@ describe('Lesson', () => {
 
     const act = () => lesson.assignTeacher(teacher4, subject, school, now);
 
-    expect(act).toThrow(new DomainError('Lesson1', 'teacher_has_wrong_school'));
+    expect(act).toThrow(new DomainError('Lesson', 'teacher_has_wrong_school'));
   });
 
   it('should fail to create an lesson in past', () => {
@@ -272,7 +272,7 @@ describe('Lesson', () => {
       });
 
     expect(act).toThrowError(
-      new DomainError('Lesson1', 'lesson_in_past_can_not_be_edited'),
+      new DomainError('Lesson', 'lesson_in_past_can_not_be_edited'),
     );
   });
 
@@ -302,7 +302,7 @@ describe('Lesson', () => {
       lesson.assignTeacher(teacher1, subject, school, nowInFuture);
 
     expect(act).toThrowError(
-      new DomainError('Lesson1', 'lesson_in_past_can_not_be_edited'),
+      new DomainError('Lesson', 'lesson_in_past_can_not_be_edited'),
     );
   });
 
