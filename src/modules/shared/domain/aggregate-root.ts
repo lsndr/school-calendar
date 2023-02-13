@@ -1,22 +1,22 @@
 import { AggregateEvents } from './aggregate-events';
 
 export abstract class AggregateRoot {
-  private __eventsManager?: AggregateEvents;
+  private _eventsManager?: AggregateEvents;
 
-  protected get _eventsManager() {
-    if (!this.__eventsManager) {
-      this.__eventsManager = new AggregateEvents();
+  protected get _events() {
+    if (!this._eventsManager) {
+      this._eventsManager = new AggregateEvents();
     }
 
-    return this.__eventsManager;
+    return this._eventsManager;
   }
 
-  protected set _eventsManager(em: AggregateEvents) {
-    this.__eventsManager = em;
+  protected set _events(em: AggregateEvents) {
+    this._eventsManager = em;
   }
 
   get events() {
-    return this._eventsManager.events;
+    return this._events.events;
   }
 
   protected constructor() {

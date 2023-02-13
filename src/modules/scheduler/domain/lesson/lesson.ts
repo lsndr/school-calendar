@@ -188,7 +188,7 @@ export class Lesson extends LessonState {
       updatedAt: this.updatedAt.toISO(),
     });
 
-    this._eventsManager.replaceInstanceOrAdd(LessonUpdatedEvent, event);
+    this._events.replaceInstanceOrAdd(LessonUpdatedEvent, event);
   }
 
   protected static assertNotInPast(
