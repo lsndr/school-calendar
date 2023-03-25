@@ -1,5 +1,5 @@
 import { DateTime } from 'luxon';
-import { RRule, RRuleSet, Frequency } from 'rrule';
+import { RRule, RRuleSet, Frequency } from 'rrule-rust';
 import { MonthDays, WeekDays } from './recurrence';
 
 type Recurrence =
@@ -28,8 +28,6 @@ type PeriodicityToRruleSetOptions = {
 };
 
 function periodicityToRruleSet(options: PeriodicityToRruleSetOptions) {
-  const rruleSet = new RRuleSet();
-
   const localStart = options.start.setZone(options.timeZone);
   const dtstart = new Date(
     Date.UTC(
@@ -57,82 +55,94 @@ function periodicityToRruleSet(options: PeriodicityToRruleSetOptions) {
     );
 
   if (options.recurence.type === 'daily') {
-    rruleSet.rrule(
-      new RRule({
-        freq: Frequency.DAILY,
-        dtstart,
-        until,
-        tzid: options.timeZone,
-      }),
+    const rrule = new RRule(Frequency.Daily);
+
+    if (until) {
+      rrule.setUntil(until.getTime());
+    }
+
+    const set = new RRuleSet(dtstart.getTime(), options.timeZone).addRrule(
+      rrule,
     );
+
+    return [set];
   } else if (options.recurence.type === 'weekly') {
-    rruleSet.rrule(
-      new RRule({
-        freq: Frequency.WEEKLY,
-        dtstart,
-        until,
-        tzid: options.timeZone,
-        byweekday: [...options.recurence.days],
-      }),
+    const rrule = new RRule(Frequency.Weekly).setByWeekday(
+      options.recurence.days,
     );
+
+    if (until) {
+      rrule.setUntil(until.getTime());
+    }
+
+    const set = new RRuleSet(dtstart.getTime(), options.timeZone).addRrule(
+      rrule,
+    );
+
+    return [set];
   } else if (options.recurence.type === 'biweekly') {
-    rruleSet.rrule(
-      new RRule({
-        freq: Frequency.WEEKLY,
-        interval: 2,
-        dtstart,
-        until,
-        tzid: options.timeZone,
-        byweekday: [...options.recurence.week1],
-      }),
+    const rrule1 = new RRule(Frequency.Weekly)
+      .setByWeekday(options.recurence.week1)
+      .setInterval(2);
+
+    if (until) {
+      rrule1.setUntil(until.getTime());
+    }
+
+    const set1 = new RRuleSet(dtstart.getTime(), options.timeZone).addRrule(
+      rrule1,
     );
 
     const dtstart2 = new Date(dtstart);
     dtstart2.setDate(dtstart2.getDate() + 7);
 
-    rruleSet.rrule(
-      new RRule({
-        freq: Frequency.WEEKLY,
-        interval: 2,
-        dtstart: dtstart2,
-        until,
-        tzid: options.timeZone,
-        byweekday: [...options.recurence.week1],
-      }),
-    );
-  } else if (options.recurence.type === 'monthly') {
-    rruleSet.rrule(
-      new RRule({
-        freq: Frequency.MONTHLY,
-        dtstart,
-        until,
-        tzid: options.timeZone,
-        bymonthday: [...options.recurence.days],
-      }),
-    );
-  }
+    const rrule2 = new RRule(Frequency.Weekly)
+      .setByWeekday(options.recurence.week2)
+      .setInterval(2);
 
-  return rruleSet;
-}
-
-function* rruleBetween(rruleSet: RRuleSet, from: DateTime, to: DateTime) {
-  const timeZone = rruleSet.tzid();
-
-  const localFrom = from.setZone(timeZone);
-  const localTo = to.setZone(timeZone);
-
-  const dates = rruleSet.between(
-    localFrom.toJSDate(),
-    localTo.toJSDate(),
-    true,
-  );
-
-  for (const date of dates) {
-    if (date.getTime() >= localTo.toMillis()) {
-      continue;
+    if (until) {
+      rrule2.setUntil(until.getTime());
     }
 
-    yield DateTime.fromJSDate(date, { zone: timeZone });
+    const set2 = new RRuleSet(dtstart2.getTime(), options.timeZone).addRrule(
+      rrule2,
+    );
+
+    return [set1, set2];
+  } else if (options.recurence.type === 'monthly') {
+    const rrule = new RRule(Frequency.Monthly).setByWeekday(
+      options.recurence.days,
+    );
+
+    if (until) {
+      rrule.setUntil(until.getTime());
+    }
+
+    const set = new RRuleSet(dtstart.getTime(), options.timeZone).addRrule(
+      rrule,
+    );
+
+    return [set];
+  } else {
+    throw new Error(`Unexpected recurrence type`);
+  }
+}
+
+function* rruleBetween(rruleSets: RRuleSet[], from: DateTime, to: DateTime) {
+  for (const rruleSet of rruleSets) {
+    const timeZone = rruleSet.tzid;
+
+    const dates = rruleSet.between(from.toMillis(), to.toMillis(), true);
+
+    for (const date of dates) {
+      if (date >= to.toMillis()) {
+        continue;
+      }
+
+      yield DateTime.fromMillis(date).setZone(timeZone, {
+        keepLocalTime: true,
+      });
+    }
   }
 }
 
