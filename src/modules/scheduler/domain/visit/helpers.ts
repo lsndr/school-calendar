@@ -62,7 +62,7 @@ function periodicityToRruleSet(options: PeriodicityToRruleSetOptions) {
         freq: Frequency.DAILY,
         dtstart,
         until,
-        tzid: options.timeZone,
+        tzid: 'UTC',
       }),
     );
   } else if (options.recurence.type === 'weekly') {
@@ -71,7 +71,7 @@ function periodicityToRruleSet(options: PeriodicityToRruleSetOptions) {
         freq: Frequency.WEEKLY,
         dtstart,
         until,
-        tzid: options.timeZone,
+        tzid: 'UTC',
         byweekday: [...options.recurence.days],
       }),
     );
@@ -82,7 +82,7 @@ function periodicityToRruleSet(options: PeriodicityToRruleSetOptions) {
         interval: 2,
         dtstart,
         until,
-        tzid: options.timeZone,
+        tzid: 'UTC',
         byweekday: [...options.recurence.week1],
       }),
     );
@@ -96,7 +96,7 @@ function periodicityToRruleSet(options: PeriodicityToRruleSetOptions) {
         interval: 2,
         dtstart: dtstart2,
         until,
-        tzid: options.timeZone,
+        tzid: 'UTC',
         byweekday: [...options.recurence.week1],
       }),
     );
@@ -106,7 +106,7 @@ function periodicityToRruleSet(options: PeriodicityToRruleSetOptions) {
         freq: Frequency.MONTHLY,
         dtstart,
         until,
-        tzid: options.timeZone,
+        tzid: 'UTC',
         bymonthday: [...options.recurence.days],
       }),
     );
@@ -115,24 +115,45 @@ function periodicityToRruleSet(options: PeriodicityToRruleSetOptions) {
   return rruleSet;
 }
 
-function* rruleBetween(rruleSet: RRuleSet, from: DateTime, to: DateTime) {
-  const timeZone = rruleSet.tzid();
-
+function* rruleBetween(
+  rruleSet: RRuleSet,
+  from: DateTime,
+  to: DateTime,
+  timeZone: string,
+) {
   const localFrom = from.setZone(timeZone);
   const localTo = to.setZone(timeZone);
 
-  const dates = rruleSet.between(
-    localFrom.toJSDate(),
-    localTo.toJSDate(),
-    true,
+  const dateFrom = new Date(
+    Date.UTC(
+      localFrom.year,
+      localFrom.month - 1,
+      localFrom.day,
+      localFrom.hour,
+      localFrom.minute,
+      localFrom.second,
+    ),
   );
+
+  const dateTo = new Date(
+    Date.UTC(
+      localTo.year,
+      localTo.month - 1,
+      localTo.day,
+      localTo.hour,
+      localTo.minute,
+      localTo.second,
+    ),
+  );
+
+  const dates = rruleSet.between(dateFrom, dateTo, true);
 
   for (const date of dates) {
     if (date.getTime() >= localTo.toMillis()) {
       continue;
     }
 
-    yield DateTime.fromJSDate(date, { zone: timeZone });
+    yield DateTime.fromJSDate(date).setZone(timeZone, { keepLocalTime: true });
   }
 }
 
@@ -155,5 +176,5 @@ export function extractDatesFromPeriodicity(
     recurence: options.recurence,
   });
 
-  return rruleBetween(rruleSet, from, to);
+  return rruleBetween(rruleSet, from, to, options.timeZone);
 }
