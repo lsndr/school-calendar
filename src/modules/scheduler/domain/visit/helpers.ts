@@ -27,7 +27,7 @@ type PeriodicityToRruleSetOptions = {
   until?: DateTime;
 };
 
-function periodicityToRruleSet(options: PeriodicityToRruleSetOptions) {
+function periodicityToUtcRruleSets(options: PeriodicityToRruleSetOptions) {
   const localStart = options.start.setZone(options.timeZone);
   const dtstart = new Date(
     Date.UTC(
@@ -61,9 +61,7 @@ function periodicityToRruleSet(options: PeriodicityToRruleSetOptions) {
       rrule.setUntil(until.getTime());
     }
 
-    const set = new RRuleSet(dtstart.getTime(), options.timeZone).addRrule(
-      rrule,
-    );
+    const set = new RRuleSet(dtstart.getTime(), 'UTC').addRrule(rrule);
 
     return [set];
   } else if (options.recurence.type === 'weekly') {
@@ -75,9 +73,7 @@ function periodicityToRruleSet(options: PeriodicityToRruleSetOptions) {
       rrule.setUntil(until.getTime());
     }
 
-    const set = new RRuleSet(dtstart.getTime(), options.timeZone).addRrule(
-      rrule,
-    );
+    const set = new RRuleSet(dtstart.getTime(), 'UTC').addRrule(rrule);
 
     return [set];
   } else if (options.recurence.type === 'biweekly') {
@@ -89,9 +85,7 @@ function periodicityToRruleSet(options: PeriodicityToRruleSetOptions) {
       rrule1.setUntil(until.getTime());
     }
 
-    const set1 = new RRuleSet(dtstart.getTime(), options.timeZone).addRrule(
-      rrule1,
-    );
+    const set1 = new RRuleSet(dtstart.getTime(), 'UTC').addRrule(rrule1);
 
     const dtstart2 = new Date(dtstart);
     dtstart2.setDate(dtstart2.getDate() + 7);
@@ -104,9 +98,7 @@ function periodicityToRruleSet(options: PeriodicityToRruleSetOptions) {
       rrule2.setUntil(until.getTime());
     }
 
-    const set2 = new RRuleSet(dtstart2.getTime(), options.timeZone).addRrule(
-      rrule2,
-    );
+    const set2 = new RRuleSet(dtstart2.getTime(), 'UTC').addRrule(rrule2);
 
     return [set1, set2];
   } else if (options.recurence.type === 'monthly') {
@@ -118,9 +110,7 @@ function periodicityToRruleSet(options: PeriodicityToRruleSetOptions) {
       rrule.setUntil(until.getTime());
     }
 
-    const set = new RRuleSet(dtstart.getTime(), options.timeZone).addRrule(
-      rrule,
-    );
+    const set = new RRuleSet(dtstart.getTime(), 'UTC').addRrule(rrule);
 
     return [set];
   } else {
@@ -128,14 +118,20 @@ function periodicityToRruleSet(options: PeriodicityToRruleSetOptions) {
   }
 }
 
-function* rruleBetween(rruleSets: RRuleSet[], from: DateTime, to: DateTime) {
+function* rruleBetween(
+  rruleSets: RRuleSet[],
+  from: DateTime,
+  to: DateTime,
+  timeZone: string,
+) {
   for (const rruleSet of rruleSets) {
-    const timeZone = rruleSet.tzid;
+    const utcFrom = from.setZone('UTC', { keepLocalTime: true }).toMillis();
+    const utcTo = to.setZone('UTC', { keepLocalTime: true }).toMillis();
 
-    const dates = rruleSet.between(from.toMillis(), to.toMillis(), true);
+    const dates = rruleSet.between(utcFrom, utcTo, true);
 
     for (const date of dates) {
-      if (date >= to.toMillis()) {
+      if (date >= utcTo) {
         continue;
       }
 
@@ -158,12 +154,12 @@ export function extractDatesFromPeriodicity(
   to: DateTime,
   options: ExtractDatesFromPeriodicityOptions,
 ) {
-  const rruleSet = periodicityToRruleSet({
+  const rruleSet = periodicityToUtcRruleSets({
     timeZone: options.timeZone,
     start: options.calculateSince,
     until: options.calculateTill,
     recurence: options.recurence,
   });
 
-  return rruleBetween(rruleSet, from, to);
+  return rruleBetween(rruleSet, from, to, options.timeZone);
 }
