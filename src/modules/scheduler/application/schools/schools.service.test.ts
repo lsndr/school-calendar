@@ -1,6 +1,6 @@
 import { SchoolsService } from './schools.service';
 import { Test } from '@nestjs/testing';
-import { testMikroormProvider } from '../../../../../test-utils';
+import { testMikroormProvider } from '../../../shared/tests';
 import { MikroORM } from '@mikro-orm/postgresql';
 import { CreateSchoolDto } from './create-school.dto';
 import { School, SchoolId, TimeZone } from '../../domain';

@@ -3,7 +3,7 @@ import { Test } from '@nestjs/testing';
 import { School, SchoolId, TimeZone } from '../../domain';
 import { DateTime } from 'luxon';
 import { MikroORM } from '@mikro-orm/postgresql';
-import { testMikroormProvider } from '../../../../../test-utils';
+import { testMikroormProvider } from '../../../shared/tests';
 import { CreateTeacherDto } from './create-teacher.dto';
 
 describe('Teachers Service', () => {

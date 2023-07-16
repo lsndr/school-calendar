@@ -5,7 +5,7 @@ import { Group, GroupId, School, SchoolId, TimeZone } from '../../domain';
 import { DateTime } from 'luxon';
 import { MikroORM } from '@mikro-orm/postgresql';
 import { WeeklyRecurrenceDto } from './weekly-recurrence.dto';
-import { testMikroormProvider } from '../../../../../test-utils';
+import { testMikroormProvider } from '../../../shared/tests';
 import { CreateSubjectDto } from './create-subject.dto';
 import { DailyRecurrenceDto } from './daily-recurrence.dto';
 import { MonthlyRecurrenceDto } from './monthly-recurrence.dto';
