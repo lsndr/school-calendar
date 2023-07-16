@@ -1,6 +1,6 @@
 import { MikroORM } from '@mikro-orm/postgresql';
 import { Provider } from '@nestjs/common';
-import { mikroormProvider } from '../src/modules/shared/database';
+import { mikroormProvider } from '../database';
 
 export const testMikroormProvider = {
   provide: MikroORM,

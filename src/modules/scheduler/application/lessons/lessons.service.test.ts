@@ -19,7 +19,7 @@ import {
 } from '../../domain';
 import { DateTime } from 'luxon';
 import { MikroORM } from '@mikro-orm/postgresql';
-import { testMikroormProvider } from '../../../../../test-utils';
+import { testMikroormProvider } from '../../../shared/tests';
 import { CreateLessonDto } from './create-lesson.dto';
 import { AssignTeachersDto } from './assign-teachers.dto';
 

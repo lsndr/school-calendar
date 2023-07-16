@@ -1,7 +1,7 @@
 import { MikroORM } from '@mikro-orm/postgresql';
 import { Test } from '@nestjs/testing';
 import { DateTime } from 'luxon';
-import { testMikroormProvider } from '../../../../../test-utils';
+import { testMikroormProvider } from '../../../shared/tests';
 import {
   Group,
   GroupId,
