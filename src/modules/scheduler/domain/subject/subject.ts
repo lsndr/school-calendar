@@ -7,7 +7,7 @@ import { School } from './../school';
 import { RequiredTeachers } from './required-teachers';
 import { SubjectId } from './subject-id';
 import { SubjectState } from './subject.state';
-import { extractDatesFromPeriodicity } from './helpers';
+import { extractDatesFromRecurrence } from './helpers';
 
 export type CreateSubject = {
   id: SubjectId;
@@ -104,7 +104,7 @@ export class Subject extends SubjectState {
 
     const dateTime = date.toDateTime(school.timeZone);
 
-    const dates = extractDatesFromPeriodicity(
+    const dates = extractDatesFromRecurrence(
       dateTime,
       dateTime.plus({ day: 1 }),
       {

@@ -20,14 +20,14 @@ type Recurrence =
       days: ReadonlyArray<(typeof MonthDays)[number]>;
     };
 
-type PeriodicityToRruleSetOptions = {
+type RecurrenceToRruleSetOptions = {
   recurrence: Recurrence;
   timeZone: string;
   start: DateTime;
   until?: DateTime;
 };
 
-function periodicityToRruleSet(options: PeriodicityToRruleSetOptions) {
+function recurrenceToRruleSet(options: RecurrenceToRruleSetOptions) {
   const rruleSet = new RRuleSet();
 
   const localStart = options.start.setZone(options.timeZone);
@@ -157,19 +157,19 @@ function* rruleBetween(
   }
 }
 
-type ExtractDatesFromPeriodicityOptions = {
+type ExtractDatesFromRecurrenceOptions = {
   recurrence: Recurrence;
   calculateSince: DateTime;
   calculateTill?: DateTime;
   timeZone: string;
 };
 
-export function extractDatesFromPeriodicity(
+export function extractDatesFromRecurrence(
   from: DateTime,
   to: DateTime,
-  options: ExtractDatesFromPeriodicityOptions,
+  options: ExtractDatesFromRecurrenceOptions,
 ) {
-  const rruleSet = periodicityToRruleSet({
+  const rruleSet = recurrenceToRruleSet({
     timeZone: options.timeZone,
     start: options.calculateSince,
     until: options.calculateTill,

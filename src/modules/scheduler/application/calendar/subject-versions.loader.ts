@@ -1,7 +1,7 @@
 import { MikroORM } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { DateTime } from 'luxon';
-import { extractDatesFromPeriodicity } from '../../domain';
+import { extractDatesFromRecurrence } from '../../domain';
 
 export type SubjectVersionsLoaderOptions = {
   schoolId: string;
@@ -101,7 +101,7 @@ export class SubjectVersionsLoader {
           .startOf('day');
         const datesTo = options.to;
 
-        const dates = extractDatesFromPeriodicity(datesFrom, datesTo, {
+        const dates = extractDatesFromRecurrence(datesFrom, datesTo, {
           timeZone: options.timeZone,
           calculateSince,
           calculateTill,
