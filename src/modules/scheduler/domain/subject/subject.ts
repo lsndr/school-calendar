@@ -110,7 +110,7 @@ export class Subject extends SubjectState {
       {
         timeZone: school.timeZone.value,
         calculateSince: this._createdAt,
-        recurence: this.recurrence,
+        recurrence: this.recurrence,
       },
     );
 
