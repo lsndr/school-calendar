@@ -56,7 +56,7 @@ export function mapRecurrenceToDto(
       days: Array.from(recurrence.days),
     });
   } else {
-    throw new Error('Unknown periodicity type');
+    throw new Error('Unknown recurrence type');
   }
 }
 
@@ -94,7 +94,7 @@ export function mapDtoToRecurrence(
   } else if (dto.type === 'monthly') {
     return MonthlyRecurrence.create(dto.days);
   } else {
-    throw new Error('Unknown periodicity type');
+    throw new Error('Unknown recurrence type');
   }
 }
 
@@ -108,6 +108,6 @@ export function mapRawRecurrenceToDto(type: any, data: any) {
   } else if (type === 'monthly') {
     return new MonthlyRecurrenceDto(data);
   } else {
-    throw new Error('Unknown periodicity type');
+    throw new Error('Unknown recurrence type');
   }
 }

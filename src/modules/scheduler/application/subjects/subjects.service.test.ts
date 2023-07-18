@@ -23,7 +23,7 @@ describe('Subjects Service', () => {
     orm = moduleRef.get(MikroORM);
   });
 
-  it('should create a subject with weekly periodicity', async () => {
+  it('should create a subject with weekly recurrence', async () => {
     jest.useFakeTimers();
     jest.setSystemTime(new Date('2023-01-22T12:48:38.529Z'));
 

@@ -1,9 +1,9 @@
 import { DateTime } from 'luxon';
-import { extractDatesFromPeriodicity } from './helpers';
+import { extractDatesFromRecurrence } from './helpers';
 
-describe('extractDatesFromPeriodicity', () => {
-  it('should properly extract dates from daily periodicity', () => {
-    const dates = extractDatesFromPeriodicity(
+describe('extractDatesFromRecurrence', () => {
+  it('should properly extract dates from daily recurrence', () => {
+    const dates = extractDatesFromRecurrence(
       DateTime.fromISO('2023-01-25T00:00:00', {
         zone: 'Europe/Moscow',
       }),
