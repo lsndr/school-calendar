@@ -78,7 +78,7 @@ export class SubjectVersionsLoader {
 
     return (function* () {
       for (const subject of subjects) {
-        const recurence = {
+        const recurrence = {
           type: subject.recurrence_type,
           days: subject.recurrence_days,
           week1: subject.recurrence_week1,
@@ -105,7 +105,7 @@ export class SubjectVersionsLoader {
           timeZone: options.timeZone,
           calculateSince,
           calculateTill,
-          recurence,
+          recurrence,
         });
 
         for (const date of dates) {
