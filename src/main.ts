@@ -12,7 +12,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   const config = new DocumentBuilder()
-    .setTitle('Events PoW')
+    .setTitle('School Calendar')
     .setVersion('1.0')
     .build();
 

@@ -1,5 +1,5 @@
 {
-  "name": "Events PoW",
+  "name": "School Calendar",
   "dockerComposeFile": "docker-compose.yml",
   "workspaceFolder": "/workspace",
   "service": "app",
