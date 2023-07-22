@@ -6,7 +6,7 @@
   "remoteUser": "node",
   "forwardPorts": [8080],
   "waitFor": "postCreateCommand",
-  "postCreateCommand": "sudo chown node node_modules && npm install && cp .env.example .env && cp .env.test.example .env.test",
+  "postCreateCommand": "sudo chown node node_modules && npm install && chmod +x ./node_modules/husky/lib/bin.js && cp .env.example .env && cp .env.test.example .env.test",
   "postStartCommand": "nohup bash -c 'socat TCP4-LISTEN:8080,reuseaddr,fork TCP:pgadmin4:8080 &'",
   "postAttachCommand": "git config --global --add safe.directory ${containerWorkspaceFolder}",
   "customizations": {
