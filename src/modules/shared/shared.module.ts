@@ -6,7 +6,7 @@ import { CqrsModule } from './cqrs';
 @Module({
   imports: [CqrsModule],
   providers: [mikroormProvider],
-  exports: [mikroormProvider],
+  exports: [mikroormProvider, CqrsModule],
 })
 export class SharedModule {
   constructor(private readonly orm: MikroORM) {}
