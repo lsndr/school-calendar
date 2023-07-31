@@ -2,24 +2,25 @@ import { Controller, Get, Param, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiOkResponse } from '@nestjs/swagger';
 import {
   TeachersCalendarDto,
-  TeachersCalendarQueryDto,
-  TeachersCalendarService,
+  TeachersCalendarFiltersDto,
+  GetTeachersCalendarQuery,
 } from '../application/calendar';
+import { QueryBus } from '../../shared/cqrs';
 
 @ApiTags('Calendar')
 @Controller('schools/:schoolId/calendar')
 export class CalendarController {
-  constructor(
-    private readonly teachersCalendarService: TeachersCalendarService,
-  ) {}
+  constructor(private readonly queryBus: QueryBus) {}
 
   @ApiOperation({ operationId: 'getTeachersCalendar' })
   @ApiOkResponse({ type: TeachersCalendarDto })
   @Get('/teachers')
   findMany(
     @Param('schoolId') schoolId: string,
-    @Query() query: TeachersCalendarQueryDto,
+    @Query() filters: TeachersCalendarFiltersDto,
   ): Promise<TeachersCalendarDto> {
-    return this.teachersCalendarService.getForPeriod(schoolId, query);
+    return this.queryBus.execute(
+      new GetTeachersCalendarQuery({ schoolId, filters }),
+    );
   }
 }

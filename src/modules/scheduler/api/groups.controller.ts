@@ -12,18 +12,28 @@ import {
   ApiOkResponse,
   ApiNotFoundResponse,
 } from '@nestjs/swagger';
-import { GroupDto, GroupsService, CreateGroupDto } from '../application';
+import {
+  GroupDto,
+  CreateGroupDto,
+  CreateGroupCommand,
+  FindGroupQuery,
+} from '../application';
+import { CommandBus, QueryBus } from '../../shared/cqrs';
+import { FindGroupsQuery } from '../application/groups/queries/find-groups.query';
 
 @ApiTags('Groups')
 @Controller('schools/:schoolId/groups')
 export class GroupsController {
-  constructor(private readonly groupsService: GroupsService) {}
+  constructor(
+    private readonly commandBus: CommandBus,
+    private readonly queryBus: QueryBus,
+  ) {}
 
   @ApiOperation({ operationId: 'findMany' })
   @ApiOkResponse({ type: [GroupDto] })
   @Get()
   findMany(@Param('schoolId') schoolId: string): Promise<GroupDto[]> {
-    return this.groupsService.findMany(schoolId);
+    return this.queryBus.execute(new FindGroupsQuery({ schoolId }));
   }
 
   @ApiOperation({ operationId: 'create' })
@@ -31,9 +41,11 @@ export class GroupsController {
   @Post()
   create(
     @Param('schoolId') schoolId: string,
-    @Body() dto: CreateGroupDto,
+    @Body() payload: CreateGroupDto,
   ): Promise<GroupDto> {
-    return this.groupsService.create(schoolId, dto);
+    return this.commandBus.execute(
+      new CreateGroupCommand({ schoolId, payload }),
+    );
   }
 
   @ApiOperation({ operationId: 'findById' })
@@ -44,7 +56,9 @@ export class GroupsController {
     @Param('schoolId') schoolId: string,
     @Param('id') id: string,
   ): Promise<GroupDto> {
-    const group = await this.groupsService.findOne(schoolId, id);
+    const group = await this.queryBus.execute(
+      new FindGroupQuery({ schoolId, id }),
+    );
 
     if (!group) {
       throw new NotFoundException();

@@ -17,15 +17,22 @@ import {
   AssignedTeacherDto,
   AssignTeachersDto,
   LessonDto,
-  LessonsService,
   CreateLessonDto,
   UnassignTeachersDto,
+  CreateLessonCommand,
+  FindLessonQuery,
+  AssignTeachersCommand,
+  UnassignTeachersCommand,
 } from '../application';
+import { CommandBus, QueryBus } from '../../shared/cqrs';
 
 @ApiTags('Lessons')
 @Controller('schools/:schoolId/subjects/:subjectId/lessons')
 export class LessonsController {
-  constructor(private readonly lessonsService: LessonsService) {}
+  constructor(
+    private readonly commandBus: CommandBus,
+    private readonly queryBus: QueryBus,
+  ) {}
 
   @ApiOperation({ operationId: 'create' })
   @ApiOkResponse({ type: LessonDto })
@@ -35,7 +42,9 @@ export class LessonsController {
     @Param('subjectId') subjectId: string,
     @Body() dto: CreateLessonDto,
   ): Promise<LessonDto> {
-    return this.lessonsService.create(schoolId, subjectId, dto);
+    return this.commandBus.execute(
+      new CreateLessonCommand(schoolId, subjectId, dto),
+    );
   }
 
   @ApiOperation({ operationId: 'findByDate' })
@@ -47,7 +56,9 @@ export class LessonsController {
     @Param('subjectId') subjectId: string,
     @Param('date', ParseIsoDatePipe) date: string,
   ): Promise<LessonDto> {
-    const lesson = await this.lessonsService.findOne(schoolId, subjectId, date);
+    const lesson = await this.queryBus.execute(
+      new FindLessonQuery({ schoolId, subjectId, date }),
+    );
 
     if (!lesson) {
       throw new NotFoundException();
@@ -64,9 +75,16 @@ export class LessonsController {
     @Param('schoolId') schoolId: string,
     @Param('subjectId') subjectId: string,
     @Param('date', ParseIsoDatePipe) date: string,
-    @Body() dto: AssignTeachersDto,
+    @Body() payload: AssignTeachersDto,
   ): Promise<AssignedTeacherDto[]> {
-    return this.lessonsService.assignTeachers(schoolId, subjectId, date, dto);
+    return this.commandBus.execute(
+      new AssignTeachersCommand({
+        schoolId,
+        subjectId,
+        date,
+        payload,
+      }),
+    );
   }
 
   @ApiOperation({ operationId: 'unassignTeachers' })
@@ -77,8 +95,10 @@ export class LessonsController {
     @Param('schoolId') schoolId: string,
     @Param('subjectId') subjectId: string,
     @Param('date', ParseIsoDatePipe) date: string,
-    @Body() dto: UnassignTeachersDto,
+    @Body() payload: UnassignTeachersDto,
   ): Promise<AssignedTeacherDto[]> {
-    return this.lessonsService.unassignTeachers(schoolId, subjectId, date, dto);
+    return this.commandBus.execute(
+      new UnassignTeachersCommand({ schoolId, subjectId, date, payload }),
+    );
   }
 }

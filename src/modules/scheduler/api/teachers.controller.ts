@@ -12,28 +12,40 @@ import {
   ApiOkResponse,
   ApiNotFoundResponse,
 } from '@nestjs/swagger';
-import { TeachersService, TeacherDto, CreateTeacherDto } from '../application';
+import {
+  TeacherDto,
+  CreateTeacherDto,
+  CreateTeacherCommand,
+  FindTeachersQuery,
+  FindTeacherQuery,
+} from '../application';
+import { CommandBus, QueryBus } from '../../shared/cqrs';
 
 @ApiTags('Teachers')
 @Controller('schools/:schoolId/teachers')
 export class TeachersController {
-  constructor(private readonly teachersService: TeachersService) {}
+  constructor(
+    private readonly commandBus: CommandBus,
+    private readonly queryBus: QueryBus,
+  ) {}
 
   @ApiOperation({ operationId: 'create' })
   @ApiOkResponse({ type: TeacherDto })
   @Post()
   create(
     @Param('schoolId') schoolId: string,
-    @Body() dto: CreateTeacherDto,
+    @Body() payload: CreateTeacherDto,
   ): Promise<TeacherDto> {
-    return this.teachersService.create(schoolId, dto);
+    return this.commandBus.execute(
+      new CreateTeacherCommand({ schoolId, payload }),
+    );
   }
 
   @ApiOperation({ operationId: 'findMany' })
   @ApiOkResponse({ type: [TeacherDto] })
   @Get()
   findMany(@Param('schoolId') schoolId: string): Promise<TeacherDto[]> {
-    return this.teachersService.findMany(schoolId);
+    return this.queryBus.execute(new FindTeachersQuery({ schoolId }));
   }
 
   @ApiOperation({ operationId: 'findById' })
@@ -44,7 +56,9 @@ export class TeachersController {
     @Param('schoolId') schoolId: string,
     @Param('id') id: string,
   ): Promise<TeacherDto> {
-    const teacher = await this.teachersService.findOne(schoolId, id);
+    const teacher = await this.queryBus.execute(
+      new FindTeacherQuery({ schoolId, id }),
+    );
 
     if (!teacher) {
       throw new NotFoundException();
