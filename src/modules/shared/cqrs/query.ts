@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-restricted-imports -- Allowed only here
 import {
   QueryHandler as BaseQueryHandler,
   QueryBus as BaseQueryBus,
