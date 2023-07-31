@@ -12,25 +12,35 @@ import {
   ApiOkResponse,
   ApiNotFoundResponse,
 } from '@nestjs/swagger';
-import { CreateSchoolDto, SchoolDto, SchoolsService } from '../application';
+import {
+  CreateSchoolCommand,
+  CreateSchoolDto,
+  FindSchoolQuery,
+  FindSchoolsQuery,
+  SchoolDto,
+} from '../application';
+import { CommandBus, QueryBus } from '../../shared/cqrs';
 
 @ApiTags('Schools')
 @Controller('schools')
 export class SchoolsController {
-  constructor(private readonly schoolsService: SchoolsService) {}
+  constructor(
+    private readonly commandBus: CommandBus,
+    private readonly queryBus: QueryBus,
+  ) {}
 
   @ApiOperation({ operationId: 'findMany' })
   @ApiOkResponse({ type: [SchoolDto] })
   @Get()
   async findMany(): Promise<SchoolDto[]> {
-    return await this.schoolsService.findMany();
+    return await this.queryBus.execute(new FindSchoolsQuery());
   }
 
   @ApiOperation({ operationId: 'create' })
   @ApiOkResponse({ type: SchoolDto })
   @Post()
-  async create(@Body() dto: CreateSchoolDto): Promise<SchoolDto> {
-    return await this.schoolsService.create(dto);
+  async create(@Body() payload: CreateSchoolDto): Promise<SchoolDto> {
+    return await this.commandBus.execute(new CreateSchoolCommand({ payload }));
   }
 
   @ApiOperation({ operationId: 'findById' })
@@ -38,7 +48,7 @@ export class SchoolsController {
   @ApiNotFoundResponse()
   @Get('/:id')
   async findById(@Param('id') id: string): Promise<SchoolDto> {
-    const school = await this.schoolsService.findOne(id);
+    const school = await this.queryBus.execute(new FindSchoolQuery({ id }));
 
     if (!school) {
       throw new NotFoundException();

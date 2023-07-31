@@ -52,6 +52,7 @@ module.exports = {
         'eslint-comments/require-description': 'error',
         'eslint-comments/disable-enable-pair': 'off',
         'eslint-comments/no-unlimited-disable': 'off',
+        'no-restricted-imports': ['error', '@nestjs/cqrs'],
       },
       settings: {
         'import/parsers': {

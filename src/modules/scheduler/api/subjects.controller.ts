@@ -13,29 +13,41 @@ import {
   CreateSubjectDto,
   UpdateSubjectDto,
   SubjectDto,
-  SubjectsService,
+  CreateSubjectCommand,
+  FindSubjectsQuery,
+  FindSubjectQuery,
+  UpdateSubjectCommand,
 } from '../application';
+import { CommandBus, QueryBus } from '../../shared/cqrs';
 
 @ApiTags('Subject')
 @Controller('subjects/:schoolId/subjects')
 export class SubjectsController {
-  constructor(private readonly subjectsService: SubjectsService) {}
+  constructor(
+    private readonly commandBus: CommandBus,
+    private readonly queryBus: QueryBus,
+  ) {}
 
   @ApiOperation({ operationId: 'create' })
   @ApiOkResponse({ type: SubjectDto })
   @Post()
   create(
     @Param('schoolId') schoolId: string,
-    @Body() dto: CreateSubjectDto,
+    @Body() payload: CreateSubjectDto,
   ): Promise<GroupDto> {
-    return this.subjectsService.create(schoolId, dto);
+    return this.commandBus.execute(
+      new CreateSubjectCommand({
+        schoolId,
+        payload,
+      }),
+    );
   }
 
   @ApiOperation({ operationId: 'findMany' })
   @ApiOkResponse({ type: [SubjectDto] })
   @Get()
   findMany(@Param('schoolId') schoolId: string): Promise<SubjectDto[]> {
-    return this.subjectsService.findMany(schoolId);
+    return this.queryBus.execute(new FindSubjectsQuery({ schoolId }));
   }
 
   @ApiOperation({ operationId: 'findOneById' })
@@ -45,7 +57,9 @@ export class SubjectsController {
     @Param('schoolId') schoolId: string,
     @Param('id') id: string,
   ): Promise<SubjectDto> {
-    const subject = await this.subjectsService.findOne(schoolId, id);
+    const subject = await this.queryBus.execute(
+      new FindSubjectQuery({ schoolId, id }),
+    );
 
     if (!subject) {
       throw new NotFoundException();
@@ -60,9 +74,15 @@ export class SubjectsController {
   async update(
     @Param('schoolId') schoolId: string,
     @Param('id') id: string,
-    @Body() dto: UpdateSubjectDto,
+    @Body() payload: UpdateSubjectDto,
   ): Promise<SubjectDto> {
-    const subject = await this.subjectsService.update(schoolId, id, dto);
+    const subject = await this.commandBus.execute(
+      new UpdateSubjectCommand({
+        schoolId,
+        id,
+        payload,
+      }),
+    );
 
     if (!subject) {
       throw new NotFoundException();
