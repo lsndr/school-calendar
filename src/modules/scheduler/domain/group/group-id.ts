@@ -1,5 +1,5 @@
 import { randomUUID } from 'crypto';
-import { ValueObject } from '../../../shared/domain';
+import { ValueObject } from '@shared/domain';
 
 export class GroupId extends ValueObject<'GroupId'> {
   public readonly value: string;

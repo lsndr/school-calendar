@@ -1,5 +1,5 @@
 import { MikroORM } from '@mikro-orm/postgresql';
-import { Query, QueryHandler, QueryProps } from '../../../../shared/cqrs';
+import { Query, QueryHandler, QueryProps } from '@shared/cqrs';
 import { LessonDto } from '../dtos/lesson.dto';
 import { DateTime } from 'luxon';
 import { AssignedTeacherDto } from '../dtos/assigned-teacher.dto';

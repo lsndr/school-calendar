@@ -2,13 +2,11 @@ module.exports = {
   root: true,
   extends: [
     'eslint:recommended',
-    'plugin:@typescript-eslint/recommended',
     'plugin:prettier/recommended',
     'plugin:import/recommended',
-    'plugin:import/typescript',
     'plugin:eslint-comments/recommended',
+    'plugin:json/recommended',
   ],
-  plugins: ['@typescript-eslint'],
   ignorePatterns: [
     '**/dist/*',
     '/coverage',
@@ -21,12 +19,10 @@ module.exports = {
   },
   overrides: [
     {
-      files: ['*.ts', '*.tsx'],
+      files: ['*.ts'],
+      plugins: ['@typescript-eslint'],
       extends: [
-        'eslint:recommended',
         'plugin:@typescript-eslint/recommended',
-        'plugin:prettier/recommended',
-        'plugin:import/recommended',
         'plugin:import/typescript',
       ],
       parserOptions: {
@@ -58,9 +54,11 @@ module.exports = {
         'import/parsers': {
           '@typescript-eslint/parser': ['.ts'],
         },
-        // 'import/resolver': {
-        //  typescript: {},
-        //},
+        'import/resolver': {
+          typescript: {
+            project: './tsconfig.eslint.json',
+          },
+        },
       },
       reportUnusedDisableDirectives: true,
     },

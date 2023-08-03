@@ -12,7 +12,7 @@ import {
   ApiOkResponse,
   ApiNotFoundResponse,
 } from '@nestjs/swagger';
-import { ParseIsoDatePipe } from '../../shared/api';
+import { ParseIsoDatePipe } from '@shared/api';
 import {
   AssignedTeacherDto,
   AssignTeachersDto,
@@ -24,7 +24,7 @@ import {
   AssignTeachersCommand,
   UnassignTeachersCommand,
 } from '../application';
-import { CommandBus, QueryBus } from '../../shared/cqrs';
+import { CommandBus, QueryBus } from '@shared/cqrs';
 
 @ApiTags('Lessons')
 @Controller('schools/:schoolId/subjects/:subjectId/lessons')

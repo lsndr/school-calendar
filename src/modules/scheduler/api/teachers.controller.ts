@@ -19,7 +19,7 @@ import {
   FindTeachersQuery,
   FindTeacherQuery,
 } from '../application';
-import { CommandBus, QueryBus } from '../../shared/cqrs';
+import { CommandBus, QueryBus } from '@shared/cqrs';
 
 @ApiTags('Teachers')
 @Controller('schools/:schoolId/teachers')

@@ -1,5 +1,5 @@
 import { IANAZone } from 'luxon';
-import { ValueObject } from '../../../shared/domain';
+import { ValueObject } from '@shared/domain';
 
 export class TimeZone extends ValueObject<'TimeZone'> {
   public readonly value: string;

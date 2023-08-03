@@ -5,7 +5,7 @@ import {
   TeachersCalendarFiltersDto,
   GetTeachersCalendarQuery,
 } from '../application/calendar';
-import { QueryBus } from '../../shared/cqrs';
+import { QueryBus } from '@shared/cqrs';
 
 @ApiTags('Calendar')
 @Controller('schools/:schoolId/calendar')

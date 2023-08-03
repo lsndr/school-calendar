@@ -1,4 +1,4 @@
-import { Query, QueryHandler, QueryProps } from '../../../../shared/cqrs';
+import { Query, QueryHandler, QueryProps } from '@shared/cqrs';
 import { TeachersCalendarDto } from './../dtos/teachers-calendar.dto';
 import { TeachersCalendarFiltersDto } from '../dtos/teachers-calendar-filters.dto';
 import { TeachersCalendarLoader } from '../services/teachers-calendar.loader';

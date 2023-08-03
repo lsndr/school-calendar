@@ -1,5 +1,5 @@
 import { MikroORM } from '@mikro-orm/postgresql';
-import { Command, CommandHandler, CommandProps } from '../../../../shared/cqrs';
+import { Command, CommandHandler, CommandProps } from '@shared/cqrs';
 import { GroupDto } from '../dtos/group.dto';
 import { CreateGroupDto } from '../dtos/create-group.dto';
 import { Group, GroupId, School } from '../../../domain';

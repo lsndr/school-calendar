@@ -18,7 +18,7 @@ import {
   CreateGroupCommand,
   FindGroupQuery,
 } from '../application';
-import { CommandBus, QueryBus } from '../../shared/cqrs';
+import { CommandBus, QueryBus } from '@shared/cqrs';
 import { FindGroupsQuery } from '../application/groups/queries/find-groups.query';
 
 @ApiTags('Groups')

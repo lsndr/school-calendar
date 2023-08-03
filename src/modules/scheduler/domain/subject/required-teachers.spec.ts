@@ -1,4 +1,4 @@
-import { DomainError } from '../../../shared/domain';
+import { DomainError } from '@shared/domain';
 import { RequiredTeachers } from './required-teachers';
 
 describe('RequiredTeachers', () => {

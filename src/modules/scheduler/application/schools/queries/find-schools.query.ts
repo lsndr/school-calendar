@@ -1,5 +1,5 @@
 import { MikroORM } from '@mikro-orm/postgresql';
-import { Query, QueryHandler } from '../../../../shared/cqrs';
+import { Query, QueryHandler } from '@shared/cqrs';
 import { SchoolDto } from '../dtos/school.dto';
 
 export class FindSchoolsQuery extends Query<SchoolDto[]> {}

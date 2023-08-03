@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { SharedModule } from '../shared/shared.module';
+import { SharedModule } from '@shared/core';
 import { GroupsController } from './api/groups.controller';
 import { TeachersController } from './api/teachers.controller';
 import { SchoolsController } from './api/schools.controller';

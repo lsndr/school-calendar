@@ -18,7 +18,7 @@ import {
   FindSubjectQuery,
   UpdateSubjectCommand,
 } from '../application';
-import { CommandBus, QueryBus } from '../../shared/cqrs';
+import { CommandBus, QueryBus } from '@shared/cqrs';
 
 @ApiTags('Subject')
 @Controller('subjects/:schoolId/subjects')

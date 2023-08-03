@@ -1,4 +1,4 @@
-import { DomainError } from '../../../shared/domain';
+import { DomainError } from '@shared/domain';
 import { TimeZone } from './time-zone';
 
 describe('Time Zone', () => {

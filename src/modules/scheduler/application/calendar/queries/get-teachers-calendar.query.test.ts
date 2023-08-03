@@ -1,7 +1,7 @@
 import { MikroORM } from '@mikro-orm/postgresql';
 import { Test } from '@nestjs/testing';
 import { DateTime } from 'luxon';
-import { testMikroormProvider } from '../../../../shared/tests';
+import { testMikroormProvider } from '@shared/tests';
 import {
   Group,
   GroupId,
@@ -20,7 +20,7 @@ import {
 import { LessonsLoader } from './../services/lessons.loader';
 import { TeachersCalendarLoader } from './../services/teachers-calendar.loader';
 import { TeachersCalendarFiltersDto } from '../dtos/teachers-calendar-filters.dto';
-import { QueryBus, CqrsModule } from '../../../../shared/cqrs';
+import { QueryBus, CqrsModule } from '@shared/cqrs';
 import {
   GetTeachersCalendarQuery,
   GetTeachersCalendarQueryHandler,

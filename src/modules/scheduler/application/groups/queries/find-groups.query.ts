@@ -1,5 +1,5 @@
 import { MikroORM } from '@mikro-orm/postgresql';
-import { Query, QueryHandler, QueryProps } from '../../../../shared/cqrs';
+import { Query, QueryHandler, QueryProps } from '@shared/cqrs';
 import { GroupDto } from '../dtos/group.dto';
 
 export class FindGroupsQuery extends Query<GroupDto[]> {

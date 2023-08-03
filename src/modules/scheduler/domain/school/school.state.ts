@@ -1,10 +1,10 @@
 import { PrimaryKey, Property } from '@mikro-orm/core';
 import { DateTime } from 'luxon';
-import { AggregateRoot } from '../../../shared/domain';
+import { AggregateRoot } from '@shared/domain';
 import { SchoolIdType, TimeZoneType } from '../../database';
 import { SchoolId } from './school-id';
 import { TimeZone } from './../shared';
-import { DateTimeType } from '../../../shared/database/types';
+import { DateTimeType } from '@shared/database/types';
 
 type CreateSchoolState = {
   id: SchoolId;

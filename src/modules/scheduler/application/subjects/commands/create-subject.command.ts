@@ -1,5 +1,5 @@
 import { MikroORM } from '@mikro-orm/postgresql';
-import { Command, CommandHandler, CommandProps } from '../../../../shared/cqrs';
+import { Command, CommandHandler, CommandProps } from '@shared/cqrs';
 import {
   Group,
   RequiredTeachers,

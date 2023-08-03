@@ -7,7 +7,7 @@ import {
 import { Knex } from '@mikro-orm/postgresql';
 import { randomUUID } from 'crypto';
 import { DateTime } from 'luxon';
-import { AggregateRoot } from '../../../shared/domain';
+import { AggregateRoot } from '@shared/domain';
 import { Lesson } from '../../domain';
 
 @Subscriber()

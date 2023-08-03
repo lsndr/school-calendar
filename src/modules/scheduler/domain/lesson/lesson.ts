@@ -1,6 +1,6 @@
 import { Entity } from '@mikro-orm/core';
 import { DateTime } from 'luxon';
-import { AggregateEvents } from '../../../shared/domain';
+import { AggregateEvents } from '@shared/domain';
 import { Teacher } from '../teacher';
 import { School } from '../school';
 import { ExactDate, TimeInterval } from '../shared';

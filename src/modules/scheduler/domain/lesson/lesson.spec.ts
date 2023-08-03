@@ -1,6 +1,6 @@
 import { MikroORM } from '@mikro-orm/postgresql';
 import { DateTime } from 'luxon';
-import { DomainError } from '../../../shared/domain';
+import { DomainError } from '@shared/domain';
 import { Group, GroupId } from '../group';
 import { Teacher, TeacherId } from '../teacher';
 import { School, SchoolId } from '../school';

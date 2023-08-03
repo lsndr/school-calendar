@@ -1,5 +1,5 @@
 import { DateTime } from 'luxon';
-import { ValueObject } from '../../../shared/domain';
+import { ValueObject } from '@shared/domain';
 import { TimeZone } from './time-zone';
 
 export type ExactDateState = {

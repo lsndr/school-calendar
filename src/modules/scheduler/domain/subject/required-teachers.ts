@@ -1,4 +1,4 @@
-import { ValueObject } from '../../../shared/domain';
+import { ValueObject } from '@shared/domain';
 
 export class RequiredTeachers extends ValueObject<'RequiredTeachers'> {
   readonly value: number;
