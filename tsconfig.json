@@ -5,10 +5,11 @@
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
     "target": "es2017",
     "sourceMap": true,
     "outDir": "./dist",
-    "baseUrl": "./",
+    "baseUrl": ".",
     "incremental": true,
     "removeComments": true,
     "allowUnreachableCode": false,
@@ -19,6 +20,12 @@
     "noImplicitOverride": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "strict": true
+    "strict": true,
+    "paths": {
+      "@scheduler/core": ["./src/modules/scheduler/scheduler.module"],
+      "@scheduler/*": ["./src/modules/scheduler/*"],
+      "@shared/core": ["./src/modules/shared/shared.module"],
+      "@shared/*": ["./src/modules/shared/*"]
+    }
   }
 }

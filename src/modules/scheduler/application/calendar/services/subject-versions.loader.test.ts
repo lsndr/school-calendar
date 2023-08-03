@@ -15,7 +15,7 @@ import {
 import { DateTime } from 'luxon';
 import { SubjectVersionsLoader } from './subject-versions.loader';
 import { MikroORM } from '@mikro-orm/postgresql';
-import { testMikroormProvider } from '../../../../shared/tests';
+import { testMikroormProvider } from '@shared/tests';
 
 describe('SubjectVersionsLoader', () => {
   let loader: SubjectVersionsLoader;

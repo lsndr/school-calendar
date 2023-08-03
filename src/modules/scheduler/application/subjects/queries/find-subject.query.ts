@@ -1,5 +1,5 @@
 import { MikroORM } from '@mikro-orm/postgresql';
-import { Query, QueryHandler, QueryProps } from '../../../../shared/cqrs';
+import { Query, QueryHandler, QueryProps } from '@shared/cqrs';
 import { SubjectDto } from '../dtos/subject.dto';
 import { mapRawRecurrenceToDto } from '../helpers/mappers';
 import { TimeIntervalDto } from '../../shared';

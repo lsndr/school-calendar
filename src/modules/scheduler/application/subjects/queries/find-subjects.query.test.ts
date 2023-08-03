@@ -2,8 +2,8 @@ import { Test } from '@nestjs/testing';
 import { Group, GroupId, School, SchoolId, TimeZone } from '../../../domain';
 import { DateTime } from 'luxon';
 import { MikroORM } from '@mikro-orm/postgresql';
-import { testMikroormProvider } from '../../../../shared/tests';
-import { CommandBus, CqrsModule, QueryBus } from '../../../../shared/cqrs';
+import { testMikroormProvider } from '@shared/tests';
+import { CommandBus, CqrsModule, QueryBus } from '@shared/cqrs';
 import {
   FindSubjectsQuery,
   FindSubjectsQueryHandler,

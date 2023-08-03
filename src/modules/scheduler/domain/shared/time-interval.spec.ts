@@ -1,4 +1,4 @@
-import { DomainError } from '../../../shared/domain';
+import { DomainError } from '@shared/domain';
 import { TimeInterval } from './time-interval';
 
 describe('TimeInterval', () => {

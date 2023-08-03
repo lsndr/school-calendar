@@ -1,5 +1,7 @@
 /* eslint-disable import/no-default-export -- Required by jest */
 import { Config } from 'jest';
+import { pathsToModuleNameMapper } from 'ts-jest';
+import { compilerOptions } from './tsconfig.json';
 
 export default {
   testEnvironment: 'node',
@@ -12,22 +14,18 @@ export default {
   ],
   coverageDirectory: './coverage',
   globalSetup: './jest.setup.ts',
+  preset: 'ts-jest',
   transform: {
-    '^.+\\.(t|j)s$': [
-      '@swc/jest',
+    '^.+\\.[tj]s?$': [
+      'ts-jest',
       {
-        jsc: {
-          parser: {
-            syntax: 'typescript',
-            decorators: true,
-          },
-          keepClassNames: true,
-          transform: {
-            legacyDecorator: true,
-            decoratorMetadata: true,
-          },
-        },
+        tsconfig: '<rootDir>/tsconfig.json',
+        diagnostics: false,
+        isolatedModules: true,
       },
     ],
   },
+  moduleNameMapper: pathsToModuleNameMapper(compilerOptions.paths, {
+    prefix: '<rootDir>',
+  }),
 } satisfies Config;

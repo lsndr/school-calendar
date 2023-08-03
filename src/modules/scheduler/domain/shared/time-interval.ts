@@ -1,5 +1,5 @@
 import { Embeddable, Property } from '@mikro-orm/core';
-import { ValueObject } from '../../../shared/domain';
+import { ValueObject } from '@shared/domain';
 
 export type TimeIntervalState = {
   startsAt: number;

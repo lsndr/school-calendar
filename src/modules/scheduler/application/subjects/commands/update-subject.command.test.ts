@@ -1,7 +1,7 @@
 import { Test } from '@nestjs/testing';
 import { MikroORM } from '@mikro-orm/postgresql';
-import { testMikroormProvider } from '../../../../shared/tests';
-import { CommandBus, QueryBus, CqrsModule } from '../../../../shared/cqrs';
+import { testMikroormProvider } from '@shared/tests';
+import { CommandBus, QueryBus, CqrsModule } from '@shared/cqrs';
 import {
   UpdateSubjectCommand,
   UpdateSubjectCommandHandler,

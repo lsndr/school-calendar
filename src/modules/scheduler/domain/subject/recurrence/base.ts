@@ -1,5 +1,5 @@
 import { Embeddable, Property } from '@mikro-orm/core';
-import { ValueObject } from '../../../../shared/domain';
+import { ValueObject } from '@shared/domain';
 import { RecurrenceType } from './types';
 
 @Embeddable({ abstract: true, discriminatorColumn: 'type' })

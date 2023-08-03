@@ -15,8 +15,8 @@ import {
 } from '../../../domain';
 import { DateTime } from 'luxon';
 import { MikroORM } from '@mikro-orm/postgresql';
-import { testMikroormProvider } from '../../../../shared/tests';
-import { CqrsModule, CommandBus, QueryBus } from '../../../../shared/cqrs';
+import { testMikroormProvider } from '@shared/tests';
+import { CqrsModule, CommandBus, QueryBus } from '@shared/cqrs';
 import {
   CreateLessonCommand,
   CreateLessonCommandHandler,

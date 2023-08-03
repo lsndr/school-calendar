@@ -3,7 +3,7 @@
 import { Options } from '@mikro-orm/core';
 import * as dotenv from 'dotenv';
 
-import { ENTITIES } from './src/modules/shared/database';
+import { ENTITIES } from '@shared/database';
 
 dotenv.config();
 

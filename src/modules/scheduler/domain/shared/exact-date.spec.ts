@@ -1,4 +1,4 @@
-import { DomainError } from '../../../shared/domain';
+import { DomainError } from '@shared/domain';
 import { ExactDate } from './exact-date';
 import { TimeZone } from './time-zone';
 

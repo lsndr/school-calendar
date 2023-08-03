@@ -10,8 +10,8 @@ import {
   Teacher,
   School,
   Subject,
-} from '../../../scheduler/domain';
-import '../../../scheduler/database/subscribers';
+} from '@scheduler/domain';
+import '@scheduler/database/subscribers';
 
 export const ENTITIES = [
   School,

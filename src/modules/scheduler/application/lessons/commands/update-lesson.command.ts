@@ -1,5 +1,5 @@
 import { MikroORM } from '@mikro-orm/postgresql';
-import { Command, CommandHandler } from '../../../../shared/cqrs';
+import { Command, CommandHandler } from '@shared/cqrs';
 import { LessonDto } from '../dtos/lesson.dto';
 import {
   Lesson,

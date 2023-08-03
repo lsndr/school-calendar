@@ -6,8 +6,8 @@ import {
   Property,
 } from '@mikro-orm/core';
 import { DateTime } from 'luxon';
-import { DateTimeType } from '../../../shared/database/types';
-import { AggregateRoot } from '../../../shared/domain';
+import { DateTimeType } from '@shared/database/types';
+import { AggregateRoot } from '@shared/domain';
 import {
   SchoolIdType,
   SubjectIdType,

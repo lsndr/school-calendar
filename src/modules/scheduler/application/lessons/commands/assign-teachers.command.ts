@@ -1,5 +1,5 @@
 import { MikroORM } from '@mikro-orm/postgresql';
-import { Command, CommandProps, CommandHandler } from '../../../../shared/cqrs';
+import { Command, CommandProps, CommandHandler } from '@shared/cqrs';
 import { Lesson, School, Subject, Teacher } from '../../../domain';
 import { DateTime } from 'luxon';
 import { AssignTeachersDto } from '../dtos/assign-teachers.dto';

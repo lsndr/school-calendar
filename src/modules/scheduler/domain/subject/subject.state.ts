@@ -1,6 +1,6 @@
 import { Embedded, PrimaryKey, Property } from '@mikro-orm/core';
 import { DateTime } from 'luxon';
-import { AggregateRoot } from '../../../shared/domain';
+import { AggregateRoot } from '@shared/domain';
 import {
   GroupIdType,
   SchoolIdType,
@@ -19,7 +19,7 @@ import { GroupId } from './../group';
 import { SchoolId } from './../school';
 import { RequiredTeachers } from './required-teachers';
 import { SubjectId } from './subject-id';
-import { DateTimeType } from '../../../shared/database/types';
+import { DateTimeType } from '@shared/database/types';
 
 type CreateSubjectState = {
   id: SubjectId;

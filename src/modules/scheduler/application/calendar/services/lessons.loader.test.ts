@@ -18,7 +18,7 @@ import {
 import { DateTime } from 'luxon';
 import { LessonsLoader } from './lessons.loader';
 import { MikroORM } from '@mikro-orm/postgresql';
-import { testMikroormProvider } from '../../../../shared/tests';
+import { testMikroormProvider } from '@shared/tests';
 
 describe('LessonsLoader', () => {
   let loader: LessonsLoader;
