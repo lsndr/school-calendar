@@ -13,6 +13,7 @@ import {
 } from '../../../domain';
 import { DateTime } from 'luxon';
 import { TimeIntervalDto } from '../../shared';
+import { Transactional } from '@shared/database';
 
 export class CreateLessonCommand extends Command<LessonDto> {
   constructor(
@@ -30,25 +31,18 @@ export class CreateLessonCommandHandler
 {
   constructor(private readonly orm: MikroORM) {}
 
+  @Transactional()
   async execute({ schoolId, subjectId, payload }: CreateLessonCommand) {
-    const em = this.orm.em.fork();
-
-    const schoolRepository = em.getRepository(School);
-    const subjectRepository = em.getRepository(Subject);
-    const teacherRepository = em.getRepository(Teacher);
-    const lessonRepository = em.getRepository(Lesson);
+    const em = this.orm.em;
 
     const [school, subject, teachers] = await Promise.all([
-      schoolRepository
-        .createQueryBuilder()
-        .where({ id: schoolId })
-        .getSingleResult(),
-      subjectRepository
-        .createQueryBuilder()
+      em.createQueryBuilder(School).where({ id: schoolId }).getSingleResult(),
+      em
+        .createQueryBuilder(Subject)
         .where({ id: subjectId, school_id: schoolId })
         .getSingleResult(),
-      teacherRepository
-        .createQueryBuilder()
+      em
+        .createQueryBuilder(Teacher)
         .where({ id: { $in: payload.teacherIds }, school_id: schoolId })
         .getResult(),
     ]);
@@ -79,7 +73,7 @@ export class CreateLessonCommandHandler
       lesson.assignTeacher(teacher, subject, school, now);
     }
 
-    await lessonRepository.persistAndFlush(lesson);
+    em.persist(lesson);
 
     const assignedTeachers = lesson.assignedTeachers.map((teacher) => ({
       teacherId: teacher.teacherId.value,

@@ -4,6 +4,7 @@ import { School, SchoolId, TimeZone } from '../../../domain';
 import { DateTime } from 'luxon';
 import { SchoolDto } from '../dtos/school.dto';
 import { CreateSchoolDto } from '../dtos/create-school.dto';
+import { Transactional } from '@shared/database';
 
 export class CreateSchoolCommand extends Command<SchoolDto> {
   public readonly payload: CreateSchoolDto;
@@ -21,9 +22,9 @@ export class CreateSchoolCommandHandler
 {
   constructor(private readonly orm: MikroORM) {}
 
-  async execute({ payload }: CreateSchoolCommand) {
-    const em = this.orm.em.fork();
-    const schoolRepository = em.getRepository(School);
+  @Transactional()
+  execute({ payload }: CreateSchoolCommand) {
+    const em = this.orm.em;
 
     const id = SchoolId.create();
     const name = payload.name;
@@ -37,7 +38,7 @@ export class CreateSchoolCommandHandler
       now,
     });
 
-    await schoolRepository.persistAndFlush(school);
+    em.persist(school);
 
     return new SchoolDto({
       id: school.id.value,

@@ -13,6 +13,7 @@ import { CreateSubjectDto } from '../dtos/create-subject.dto';
 import { SubjectDto } from '../dtos/subject.dto';
 import { mapDtoToRecurrence, mapRecurrenceToDto } from '../helpers/mappers';
 import { TimeIntervalDto } from '../../shared';
+import { Transactional } from '@shared/database';
 
 export class CreateSubjectCommand extends Command<SubjectDto> {
   public readonly schoolId: string;
@@ -32,22 +33,19 @@ export class CreateSubjectCommandHandler
 {
   constructor(private readonly orm: MikroORM) {}
 
+  @Transactional()
   async execute({ schoolId, payload }: CreateSubjectCommand) {
-    const em = this.orm.em.fork();
-    const groupRepository = em.getRepository(Group);
-    const schoolRepository = em.getRepository(School);
-    const subjectRepository = em.getRepository(Subject);
+    const em = this.orm.em;
 
     const [school, group] = await Promise.all([
-      schoolRepository
-        .createQueryBuilder()
+      em
+        .createQueryBuilder(School)
         .where({
           id: schoolId,
         })
         .getSingleResult(),
-
-      groupRepository
-        .createQueryBuilder()
+      em
+        .createQueryBuilder(Group)
         .where({
           id: payload.groupId,
         })
@@ -80,7 +78,7 @@ export class CreateSubjectCommandHandler
       now,
     });
 
-    await subjectRepository.persistAndFlush(subject);
+    em.persist(subject);
 
     return new SubjectDto({
       id: subject.id.value,

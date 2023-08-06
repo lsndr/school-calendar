@@ -4,6 +4,7 @@ import { Lesson, School, Subject, Teacher } from '../../../domain';
 import { DateTime } from 'luxon';
 import { AssignTeachersDto } from '../dtos/assign-teachers.dto';
 import { AssignedTeacherDto } from '../dtos/assigned-teacher.dto';
+import { Transactional } from '@shared/database';
 
 export class AssignTeachersCommand extends Command<AssignedTeacherDto[]> {
   public readonly schoolId: string;
@@ -27,17 +28,13 @@ export class AssignTeachersCommandHandler
 {
   constructor(private readonly orm: MikroORM) {}
 
+  @Transactional()
   async execute({ schoolId, subjectId, date, payload }: AssignTeachersCommand) {
-    const em = this.orm.em.fork();
-
-    const schoolRepository = em.getRepository(School);
-    const subjectRepository = em.getRepository(Subject);
-    const teacherRepository = em.getRepository(Teacher);
-    const lessonRepository = em.getRepository(Lesson);
+    const em = this.orm.em;
 
     const [lesson, school, subject, teachers] = await Promise.all([
-      lessonRepository
-        .createQueryBuilder('a')
+      em
+        .createQueryBuilder(Lesson, 'a')
         .leftJoinAndSelect('a._assignedTeachers', 'ae')
         .where({
           subject_id: subjectId,
@@ -45,16 +42,13 @@ export class AssignTeachersCommandHandler
           school_id: schoolId,
         })
         .getSingleResult(),
-      schoolRepository
-        .createQueryBuilder()
-        .where({ id: schoolId })
-        .getSingleResult(),
-      subjectRepository
-        .createQueryBuilder()
+      em.createQueryBuilder(School).where({ id: schoolId }).getSingleResult(),
+      em
+        .createQueryBuilder(Subject)
         .where({ id: subjectId, school_id: schoolId })
         .getSingleResult(),
-      teacherRepository
-        .createQueryBuilder()
+      em
+        .createQueryBuilder(Teacher)
         .where({ id: { $in: payload.teacherIds }, school_id: schoolId })
         .getResult(),
     ]);
@@ -76,8 +70,6 @@ export class AssignTeachersCommandHandler
     for (const teacher of teachers) {
       lesson.assignTeacher(teacher, subject, school, now);
     }
-
-    await em.flush();
 
     return lesson.assignedTeachers.map(
       (at) =>

@@ -4,6 +4,7 @@ import { Lesson, School } from '../../../domain';
 import { DateTime } from 'luxon';
 import { AssignedTeacherDto } from '../dtos/assigned-teacher.dto';
 import { UnassignTeachersDto } from '../dtos/unassign-teachers.dto';
+import { Transactional } from '@shared/database';
 
 export class UnassignTeachersCommand extends Command<AssignedTeacherDto[]> {
   public readonly schoolId: string;
@@ -27,20 +28,18 @@ export class UnassignTeachersCommandHandler
 {
   constructor(private readonly orm: MikroORM) {}
 
+  @Transactional()
   async execute({
     schoolId,
     subjectId,
     date,
     payload,
   }: UnassignTeachersCommand) {
-    const em = this.orm.em.fork();
-
-    const schoolRepository = em.getRepository(School);
-    const lessonRepository = em.getRepository(Lesson);
+    const em = this.orm.em;
 
     const [lesson, school] = await Promise.all([
-      lessonRepository
-        .createQueryBuilder('a')
+      em
+        .createQueryBuilder(Lesson, 'a')
         .leftJoinAndSelect('a._assignedTeachers', 'ae')
         .where({
           subject_id: subjectId,
@@ -48,10 +47,7 @@ export class UnassignTeachersCommandHandler
           school_id: schoolId,
         })
         .getSingleResult(),
-      schoolRepository
-        .createQueryBuilder()
-        .where({ id: schoolId })
-        .getSingleResult(),
+      em.createQueryBuilder(School).where({ id: schoolId }).getSingleResult(),
     ]);
 
     if (!lesson) {
@@ -67,8 +63,6 @@ export class UnassignTeachersCommandHandler
     for (const id of payload.teacherIds) {
       lesson.unassignTeacher(id, school, now);
     }
-
-    await em.flush();
 
     return lesson.assignedTeachers.map((teacher) => ({
       teacherId: teacher.teacherId.value,

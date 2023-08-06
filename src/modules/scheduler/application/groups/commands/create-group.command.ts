@@ -4,6 +4,7 @@ import { GroupDto } from '../dtos/group.dto';
 import { CreateGroupDto } from '../dtos/create-group.dto';
 import { Group, GroupId, School } from '../../../domain';
 import { DateTime } from 'luxon';
+import { Transactional } from '@shared/database';
 
 export class CreateGroupCommand extends Command<GroupDto> {
   public readonly schoolId: string;
@@ -23,13 +24,12 @@ export class CreateGroupCommandHandler
 {
   constructor(private readonly orm: MikroORM) {}
 
+  @Transactional()
   async execute({ schoolId, payload }: CreateGroupCommand) {
-    const em = this.orm.em.fork();
-    const schoolRepository = em.getRepository(School);
-    const groupRepository = em.getRepository(Group);
+    const em = this.orm.em;
 
-    const school = await schoolRepository
-      .createQueryBuilder()
+    const school = await em
+      .createQueryBuilder(School)
       .where({
         id: schoolId,
       })
@@ -50,7 +50,7 @@ export class CreateGroupCommandHandler
       now,
     });
 
-    await groupRepository.persistAndFlush(group);
+    await em.persist(group);
 
     return new GroupDto({
       id: group.id.value,

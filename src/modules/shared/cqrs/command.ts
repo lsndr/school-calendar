@@ -22,7 +22,7 @@ export type CommandResult<Q extends Command<unknown>> = Q extends Command<
   : never;
 
 export interface CommandHandler<Q extends Command<unknown>> {
-  execute(query: Q): Promise<CommandResult<Q>>;
+  execute(query: Q): CommandResult<Q> | Promise<CommandResult<Q>>;
 }
 
 export const CommandHandler = BaseCommandHandler;
