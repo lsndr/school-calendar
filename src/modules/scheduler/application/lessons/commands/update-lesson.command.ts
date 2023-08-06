@@ -30,32 +30,24 @@ export class UpdateLessonCommandHandler
   constructor(private readonly orm: MikroORM) {}
 
   async execute({ schoolId, subjectId, date, payload }: UpdateLessonCommand) {
-    const em = this.orm.em.fork();
-
-    const schoolRepository = em.getRepository(School);
-    const subjectRepository = em.getRepository(Subject);
-    const teacherRepository = em.getRepository(Teacher);
-    const lessonRepository = em.getRepository(Lesson);
+    const em = this.orm.em;
 
     const [lesson, school, subject, teachers] = await Promise.all([
-      lessonRepository
-        .createQueryBuilder()
+      em
+        .createQueryBuilder(Lesson)
         .where({
           subjectId,
           date,
           schoolId,
         })
         .getSingleResult(),
-      schoolRepository
-        .createQueryBuilder()
-        .where({ id: schoolId })
-        .getSingleResult(),
-      subjectRepository
-        .createQueryBuilder()
+      em.createQueryBuilder(School).where({ id: schoolId }).getSingleResult(),
+      em
+        .createQueryBuilder(Subject)
         .where({ id: subjectId, schoolId: schoolId })
         .getSingleResult(),
-      teacherRepository
-        .createQueryBuilder()
+      em
+        .createQueryBuilder(Teacher)
         .where({ id: { $in: payload.teacherIds }, schoolId: schoolId })
         .getResult(),
     ]);

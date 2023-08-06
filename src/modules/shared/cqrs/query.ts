@@ -18,7 +18,7 @@ export type QueryResult<Q extends Query<unknown>> = Q extends Query<infer R>
   : never;
 
 export interface QueryHandler<Q extends Query<unknown>> {
-  execute(query: Q): Promise<QueryResult<Q>>;
+  execute(query: Q): QueryResult<Q> | Promise<QueryResult<Q>>;
 }
 
 export const QueryHandler = BaseQueryHandler;

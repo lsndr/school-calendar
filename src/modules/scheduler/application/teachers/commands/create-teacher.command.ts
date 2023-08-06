@@ -4,6 +4,7 @@ import { School, Teacher, TeacherId } from '../../../domain';
 import { DateTime } from 'luxon';
 import { TeacherDto } from '../dtos/teacher.dto';
 import { CreateTeacherDto } from '../dtos/create-teacher.dto';
+import { Transactional } from '@shared/database';
 
 export class CreateTeacherCommand extends Command<TeacherDto> {
   public readonly schoolId: string;
@@ -23,13 +24,12 @@ export class CreateTeacherCommandHandler
 {
   constructor(private readonly orm: MikroORM) {}
 
+  @Transactional()
   async execute({ schoolId, payload }: CreateTeacherCommand) {
-    const em = this.orm.em.fork();
-    const schoolRepository = em.getRepository(School);
-    const teacherRepository = em.getRepository(Teacher);
+    const em = this.orm.em;
 
-    const school = await schoolRepository
-      .createQueryBuilder()
+    const school = await em
+      .createQueryBuilder(School)
       .where({
         id: schoolId,
       })
@@ -49,7 +49,7 @@ export class CreateTeacherCommandHandler
       now: DateTime.now(),
     });
 
-    await teacherRepository.persistAndFlush(teacher);
+    em.persist(teacher);
 
     return new TeacherDto({
       id: teacher.id.value,

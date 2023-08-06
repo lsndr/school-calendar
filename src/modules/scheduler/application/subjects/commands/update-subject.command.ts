@@ -6,6 +6,7 @@ import { SubjectDto } from '../dtos/subject.dto';
 import { mapDtoToRecurrence, mapRecurrenceToDto } from '../helpers/mappers';
 import { UpdateSubjectDto } from '../dtos/update-subject.dto';
 import { TimeIntervalDto } from '../../shared';
+import { Transactional } from '@shared/database';
 
 export class UpdateSubjectCommand extends Command<SubjectDto | undefined> {
   public readonly id: string;
@@ -27,13 +28,13 @@ export class UpdateSubjectCommandHandler
 {
   constructor(private readonly orm: MikroORM) {}
 
+  @Transactional()
   async execute({ id, schoolId, payload }: UpdateSubjectCommand) {
-    const em = this.orm.em.fork();
-    const subjectRepository = em.getRepository(Subject);
+    const em = this.orm.em;
     const now = DateTime.now();
 
-    const subject = await subjectRepository
-      .createQueryBuilder()
+    const subject = await em
+      .createQueryBuilder(Subject)
       .where({
         id,
         school_id: schoolId,
@@ -62,8 +63,6 @@ export class UpdateSubjectCommandHandler
     if (typeof payload.time !== 'undefined') {
       subject.setTime(TimeInterval.create(payload.time), now);
     }
-
-    await em.flush();
 
     return new SubjectDto({
       id: subject.id.value,
