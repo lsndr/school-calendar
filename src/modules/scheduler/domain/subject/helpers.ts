@@ -1,5 +1,5 @@
 import { DateTime } from 'luxon';
-import { RRule, RRuleSet, Frequency } from 'rrule';
+import * as RRule from 'rrule-rust';
 import { MonthDays, WeekDays } from './recurrence';
 
 type Recurrence =
@@ -28,95 +28,90 @@ type RecurrenceToRruleSetOptions = {
 };
 
 function recurrenceToRruleSet(options: RecurrenceToRruleSetOptions) {
-  const rruleSet = new RRuleSet();
-
-  const localStart = options.start.setZone(options.timeZone);
-  const dtstart = new Date(
-    Date.UTC(
-      localStart.year,
-      localStart.month - 1,
-      localStart.day,
-      localStart.hour,
-      localStart.minute,
-      localStart.second,
-    ),
+  const dtstart = RRule.DateTime.fromObject(
+    options.start.setZone(options.timeZone),
   );
-
-  const localUntill = options.until?.setZone(options.timeZone);
   const until =
-    localUntill &&
-    new Date(
-      Date.UTC(
-        localUntill.year,
-        localUntill.month - 1,
-        localUntill.day,
-        localUntill.hour,
-        localUntill.minute,
-        localUntill.second,
-      ),
-    );
+    options.until &&
+    RRule.DateTime.fromObject(options.until.setZone(options.timeZone));
 
   if (options.recurrence.type === 'daily') {
-    rruleSet.rrule(
-      new RRule({
-        freq: Frequency.DAILY,
+    return [
+      new RRule.RRuleSet({
         dtstart,
-        until,
-        tzid: 'UTC',
+        tzid: options.timeZone,
+        rrules: [
+          new RRule.RRule({
+            frequency: RRule.Frequency.Daily,
+            until,
+          }),
+        ],
       }),
-    );
+    ];
   } else if (options.recurrence.type === 'weekly') {
-    rruleSet.rrule(
-      new RRule({
-        freq: Frequency.WEEKLY,
+    return [
+      new RRule.RRuleSet({
         dtstart,
-        until,
-        tzid: 'UTC',
-        byweekday: [...options.recurrence.days],
+        tzid: options.timeZone,
+        rrules: [
+          new RRule.RRule({
+            frequency: RRule.Frequency.Weekly,
+            until,
+            byWeekday: [...options.recurrence.days],
+          }),
+        ],
       }),
-    );
+    ];
   } else if (options.recurrence.type === 'biweekly') {
-    rruleSet.rrule(
-      new RRule({
-        freq: Frequency.WEEKLY,
-        interval: 2,
+    return [
+      new RRule.RRuleSet({
         dtstart,
-        until,
-        tzid: 'UTC',
-        byweekday: [...options.recurrence.week1],
+        tzid: options.timeZone,
+        rrules: [
+          new RRule.RRule({
+            frequency: RRule.Frequency.Weekly,
+            interval: 2,
+            until,
+            byWeekday: [...options.recurrence.week1],
+          }),
+        ],
       }),
-    );
-
-    const dtstart2 = new Date(dtstart);
-    dtstart2.setDate(dtstart2.getDate() + 7);
-
-    rruleSet.rrule(
-      new RRule({
-        freq: Frequency.WEEKLY,
-        interval: 2,
-        dtstart: dtstart2,
-        until,
-        tzid: 'UTC',
-        byweekday: [...options.recurrence.week1],
+      new RRule.RRuleSet({
+        dtstart: RRule.DateTime.fromObject(
+          DateTime.fromObject(dtstart, { zone: options.timeZone }).plus({
+            weeks: 1,
+          }),
+        ),
+        tzid: options.timeZone,
+        rrules: [
+          new RRule.RRule({
+            frequency: RRule.Frequency.Weekly,
+            interval: 2,
+            until,
+            byWeekday: [...options.recurrence.week2],
+          }),
+        ],
       }),
-    );
-  } else if (options.recurrence.type === 'monthly') {
-    rruleSet.rrule(
-      new RRule({
-        freq: Frequency.MONTHLY,
+    ];
+  } else {
+    return [
+      new RRule.RRuleSet({
         dtstart,
-        until,
-        tzid: 'UTC',
-        bymonthday: [...options.recurrence.days],
+        tzid: options.timeZone,
+        rrules: [
+          new RRule.RRule({
+            frequency: RRule.Frequency.Monthly,
+            until,
+            byMonthday: [...options.recurrence.days],
+          }),
+        ],
       }),
-    );
+    ];
   }
-
-  return rruleSet;
 }
 
 function* rruleBetween(
-  rruleSet: RRuleSet,
+  rruleSets: RRule.RRuleSet[],
   from: DateTime,
   to: DateTime,
   timeZone: string,
@@ -124,36 +119,24 @@ function* rruleBetween(
   const localFrom = from.setZone(timeZone);
   const localTo = to.setZone(timeZone);
 
-  const dateFrom = new Date(
-    Date.UTC(
-      localFrom.year,
-      localFrom.month - 1,
-      localFrom.day,
-      localFrom.hour,
-      localFrom.minute,
-      localFrom.second,
-    ),
-  );
+  for (const rruleSet of rruleSets) {
+    const dates = rruleSet.between(
+      RRule.DateTime.fromObject(localFrom),
+      RRule.DateTime.fromObject(localTo),
+      true,
+    );
 
-  const dateTo = new Date(
-    Date.UTC(
-      localTo.year,
-      localTo.month - 1,
-      localTo.day,
-      localTo.hour,
-      localTo.minute,
-      localTo.second,
-    ),
-  );
+    for (const date of dates) {
+      const localDate = DateTime.fromObject(date.toObject(), {
+        zone: timeZone,
+      });
 
-  const dates = rruleSet.between(dateFrom, dateTo, true);
+      if (localDate.toMillis() >= localTo.toMillis()) {
+        continue;
+      }
 
-  for (const date of dates) {
-    if (date.getTime() >= localTo.toMillis()) {
-      continue;
+      yield DateTime.fromObject(date.toObject(), { zone: timeZone });
     }
-
-    yield DateTime.fromJSDate(date).setZone(timeZone, { keepLocalTime: true });
   }
 }
 
@@ -169,12 +152,12 @@ export function extractDatesFromRecurrence(
   to: DateTime,
   options: ExtractDatesFromRecurrenceOptions,
 ) {
-  const rruleSet = recurrenceToRruleSet({
+  const rruleSets = recurrenceToRruleSet({
     timeZone: options.timeZone,
     start: options.calculateSince,
     until: options.calculateTill,
     recurrence: options.recurrence,
   });
 
-  return rruleBetween(rruleSet, from, to, options.timeZone);
+  return rruleBetween(rruleSets, from, to, options.timeZone);
 }
