@@ -1,5 +1,5 @@
 import { MikroORM, OptimisticLockError, RequestContext } from '@mikro-orm/core';
-import * as retry from 'async-retry';
+import retry from 'async-retry';
 export interface TransactionalOptions {
   /**
    * @default 2
