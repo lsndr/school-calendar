@@ -23,7 +23,6 @@ export interface QueryHandler<Q extends Query<unknown>> {
 
 export const QueryHandler = BaseQueryHandler;
 
-// @ts-expect-error: Needed to infer result type
 export interface QueryBus extends BaseQueryBus {
   execute<Q extends Query<unknown>>(query: Q): Promise<QueryResult<Q>>;
 }
