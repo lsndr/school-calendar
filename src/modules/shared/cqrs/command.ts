@@ -27,7 +27,6 @@ export interface CommandHandler<Q extends Command<unknown>> {
 
 export const CommandHandler = BaseCommandHandler;
 
-// @ts-expect-error: Needed to infer result type
 export interface CommandBus extends BaseCommandBus {
   execute<Q extends Command<unknown>>(query: Q): Promise<CommandResult<Q>>;
 }
