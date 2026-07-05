@@ -21,7 +21,6 @@ export default {
       {
         tsconfig: '<rootDir>/tsconfig.json',
         diagnostics: false,
-        isolatedModules: true,
       },
     ],
   },

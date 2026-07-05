@@ -1,4 +1,4 @@
-FROM node:18.14.0-bullseye
+FROM node:24-bullseye
 
 RUN apt-get update && \
       apt-get -y install sudo socat
