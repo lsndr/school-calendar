@@ -45,7 +45,7 @@
     "pg": "^8.8.0",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
-    "rrule-rust": "^3.0.0-alpha.17",
+    "rrule-rust": "^3.0.0",
     "rxjs": "^7.8.0"
   },
   "engines": {
