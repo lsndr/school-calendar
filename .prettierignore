@@ -1,0 +1,7 @@
+.prettierignore
+.husky
+.gitignore
+.npmignore
+node_modules
+/coverage
+/dist

@@ -1,0 +1,32 @@
+{
+  "$schema": "./node_modules/nx/schemas/nx-schema.json",
+  "sync": {
+    "globalGenerators": ["@nx/js:typescript-sync"],
+    "applyChanges": true
+  },
+  "targetDefaults": {
+    "test": {
+      "dependsOn": ["^build"]
+    },
+    "@nx/js:node": {
+      "continuous": true,
+      "cache": false,
+      "options": {
+        "buildTarget": "build",
+        "watch": true,
+        "runBuildTargetDependencies": true
+      }
+    },
+    "@nx/js:tsc": {
+      "dependsOn": ["^build"],
+      "cache": true,
+      "options": {
+        "outputPath": "{projectRoot}/dist",
+        "rootDir": "{projectRoot}/src",
+        "tsConfig": "{projectRoot}/tsconfig.lib.json",
+        "generatePackageJson": false
+      }
+    }
+  },
+  "analytics": false
+}

@@ -1,0 +1,15 @@
+{
+  "name": "school-calendar",
+  "implicitDependencies": ["*"],
+  "targets": {
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "cache": true,
+      "dependsOn": ["^build"],
+      "options": {
+        "lintFilePatterns": ["."],
+        "maxWarnings": 0
+      }
+    }
+  }
+}
