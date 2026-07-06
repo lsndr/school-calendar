@@ -1,0 +1,68 @@
+{
+  "name": "api",
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "outputs": ["{projectRoot}/dist"],
+      "options": {
+        "command": "tsc -p apps/api/tsconfig.lib.json"
+      }
+    },
+    "serve": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["build"],
+      "options": {
+        "command": "node apps/api/dist/main.js"
+      }
+    },
+    "start:prod": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node apps/api/dist/main.js"
+      }
+    },
+    "dev": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "tsc -p apps/api/tsconfig.lib.json --watch --preserveWatchOutput",
+          "node --watch apps/api/dist/main.js"
+        ],
+        "parallel": true
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "vitest run --config vitest.config.ts",
+        "cwd": "{projectRoot}"
+      }
+    },
+    "test:integration": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "vitest run --config vitest.integration.config.ts",
+        "cwd": "{projectRoot}"
+      }
+    },
+    "migration:create": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "mikro-orm migration:create --blank"
+      }
+    },
+    "migration:up": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "mikro-orm migration:up"
+      }
+    },
+    "migration:down": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "mikro-orm migration:down"
+      }
+    }
+  }
+}

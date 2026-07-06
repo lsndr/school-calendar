@@ -1,34 +1,5 @@
 {
-  "compilerOptions": {
-    "module": "commonjs",
-    "declaration": true,
-    "emitDecoratorMetadata": true,
-    "experimentalDecorators": true,
-    "allowSyntheticDefaultImports": true,
-    "resolveJsonModule": true,
-    "target": "es2017",
-    "sourceMap": true,
-    "outDir": "./dist",
-    "rootDir": "./src",
-    "tsBuildInfoFile": "./dist/.tsbuildinfo",
-    "skipLibCheck": true,
-    "isolatedModules": true,
-    "incremental": true,
-    "removeComments": true,
-    "allowUnreachableCode": false,
-    "allowUnusedLabels": false,
-    "noFallthroughCasesInSwitch": true,
-    "noPropertyAccessFromIndexSignature": true,
-    "noUncheckedIndexedAccess": true,
-    "noImplicitOverride": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "strict": true,
-    "paths": {
-      "@scheduler/core": ["./src/modules/scheduler/scheduler.module"],
-      "@scheduler/*": ["./src/modules/scheduler/*"],
-      "@shared/core": ["./src/modules/shared/shared.module"],
-      "@shared/*": ["./src/modules/shared/*"]
-    }
-  }
+  "extends": "./tsconfig.base.json",
+  "files": [],
+  "references": [{ "path": "./apps/api" }]
 }

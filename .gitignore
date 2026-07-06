@@ -1,6 +1,11 @@
 # compiled output
-/dist
+dist
+*.tsbuildinfo
 /node_modules
+apps/*/node_modules
+
+# nx
+.nx
 
 # Logs
 logs
