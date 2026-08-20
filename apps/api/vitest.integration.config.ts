@@ -6,6 +6,7 @@ export default mergeConfig(baseConfig, {
   test: {
     include: ['src/**/*.test.ts'],
     setupFiles: ['reflect-metadata', './vitest.setup.integration.ts'],
+    globalSetup: ['./vitest.global-setup.integration.ts'],
     fileParallelism: false,
     testTimeout: 30000,
   },

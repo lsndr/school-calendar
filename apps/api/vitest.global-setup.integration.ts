@@ -1,0 +1,35 @@
+import { GenericContainer, Wait } from 'testcontainers';
+
+const POSTGRES_IMAGE = 'postgres:15.1';
+const POSTGRES_USER = 'test';
+const POSTGRES_PASSWORD = 'test';
+const POSTGRES_DB = 'test';
+const POSTGRES_PORT = 5432;
+
+export async function setup(): Promise<(() => Promise<void>) | void> {
+  if (process.env['DB_URL']) {
+    return;
+  }
+
+  const container = await new GenericContainer(POSTGRES_IMAGE)
+    .withEnvironment({
+      POSTGRES_USER,
+      POSTGRES_PASSWORD,
+      POSTGRES_DB,
+    })
+    .withExposedPorts(POSTGRES_PORT)
+    .withWaitStrategy(
+      Wait.forLogMessage('database system is ready to accept connections', 2),
+    )
+    .start();
+
+  const host = container.getHost();
+  const port = container.getMappedPort(POSTGRES_PORT);
+
+  process.env['DB_URL'] =
+    `postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${host}:${port}/${POSTGRES_DB}`;
+
+  return async () => {
+    await container.stop();
+  };
+}

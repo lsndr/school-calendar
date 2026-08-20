@@ -45,20 +45,6 @@ jobs:
     strategy:
       matrix:
         node-version: [24.x]
-    services:
-      postgres:
-        image: postgres:15.1
-        env:
-          POSTGRES_USER: test
-          POSTGRES_PASSWORD: test
-          POSTGRES_DB: test
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
     steps:
       - uses: actions/checkout@v4
       - name: Use Node.js ${{ matrix.node-version }}
@@ -70,5 +56,3 @@ jobs:
         run: npm ci
       - name: Run integration tests
         run: npm run test:integration
-        env:
-          DB_URL: postgres://test:test@localhost/test
