@@ -11,6 +11,7 @@
     "src/**/*.ts",
     "vitest.config.ts",
     "vitest.integration.config.ts",
-    "vitest.setup.integration.ts"
+    "vitest.setup.integration.ts",
+    "vitest.global-setup.integration.ts"
   ]
 }
