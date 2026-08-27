@@ -1,2 +1,2 @@
 export * from './providers';
-export * from './decorators/transactional';
+export * from './interceptors/uow.interceptor';

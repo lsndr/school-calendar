@@ -1,9 +1,9 @@
+import { PrismaClient } from '@prisma/client';
 import { Query, QueryHandler, QueryProps } from '../../../../shared/cqrs';
 import { TeachersCalendarDto } from './../dtos/teachers-calendar.dto';
 import { TeachersCalendarFiltersDto } from '../dtos/teachers-calendar-filters.dto';
 import { TeachersCalendarLoader } from '../services/teachers-calendar.loader';
 import { DateTime } from 'luxon';
-import { MikroORM } from '@mikro-orm/postgresql';
 
 export class GetTeachersCalendarQuery extends Query<TeachersCalendarDto> {
   public readonly schoolId: string;
@@ -21,27 +21,24 @@ export class GetTeachersCalendarQuery extends Query<TeachersCalendarDto> {
 export class GetTeachersCalendarQueryHandler implements QueryHandler<GetTeachersCalendarQuery> {
   public constructor(
     private readonly loader: TeachersCalendarLoader,
-    private readonly orm: MikroORM,
+    private readonly prisma: PrismaClient,
   ) {}
 
   public async execute({
     schoolId,
     filters,
   }: GetTeachersCalendarQuery): Promise<TeachersCalendarDto> {
-    const knex = this.orm.em.getConnection().getKnex();
-
-    const school = await knex
-      .select(['id', 'time_zone'])
-      .from('school')
-      .where('id', schoolId)
-      .first();
+    const school = await this.prisma.school.findUnique({
+      where: { id: schoolId },
+      select: { id: true, timeZone: true },
+    });
 
     if (!school) {
       throw new Error('School not found');
     }
 
     const from = DateTime.fromISO(filters.startDate, {
-      zone: school.time_zone,
+      zone: school.timeZone,
     }).startOf('day');
 
     const to = from.plus({ day: filters.days });
@@ -50,7 +47,7 @@ export class GetTeachersCalendarQueryHandler implements QueryHandler<GetTeachers
       schoolId: school.id,
       from,
       to,
-      timeZone: school.time_zone,
+      timeZone: school.timeZone,
     });
   }
 }

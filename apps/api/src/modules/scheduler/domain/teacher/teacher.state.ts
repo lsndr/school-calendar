@@ -1,12 +1,9 @@
-import { PrimaryKey, Property } from '@mikro-orm/core';
-import { DateTime } from 'luxon';
+import { type DateTime } from 'luxon';
 import { AggregateRoot } from '../../../shared/domain';
-import { TeacherIdType, SchoolIdType } from '../../database';
-import { TeacherId } from './teacher-id';
-import { SchoolId } from './../school';
-import { DateTimeType } from '../../../shared/database/types';
+import { type TeacherId } from './teacher-id';
+import { type SchoolId } from './../school';
 
-interface CreateTeacherState {
+export interface CreateTeacherState {
   id: TeacherId;
   name: string;
   schoolId: SchoolId;
@@ -15,23 +12,11 @@ interface CreateTeacherState {
 }
 
 export abstract class TeacherState extends AggregateRoot {
-  @PrimaryKey({ name: 'id', type: TeacherIdType })
   protected _id: TeacherId;
-
-  @Property({ name: 'name' })
   protected _name: string;
-
-  @Property({ name: 'school_id', type: SchoolIdType })
   protected _schoolId: SchoolId;
-
-  @Property({ name: 'created_at', type: DateTimeType })
   protected _createdAt: DateTime;
-
-  @Property({ name: 'updated_at', type: DateTimeType })
   protected _updatedAt: DateTime;
-
-  @Property({ name: 'version', version: true })
-  protected _version: number;
 
   public constructor(state: CreateTeacherState) {
     super();
@@ -41,6 +26,5 @@ export abstract class TeacherState extends AggregateRoot {
     this._schoolId = state.schoolId;
     this._createdAt = state.createdAt;
     this._updatedAt = state.updatedAt;
-    this._version = 1;
   }
 }

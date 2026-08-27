@@ -1,10 +1,10 @@
-import { MikroORM } from '@mikro-orm/postgresql';
+import { Context, Transactional } from 'yuow/core';
 import { Command, CommandHandler, CommandProps } from '../../../../shared/cqrs';
 import { GroupDto } from '../dtos/group.dto';
 import { CreateGroupDto } from '../dtos/create-group.dto';
-import { Group, GroupId, School } from '../../../domain';
+import { Group, GroupId } from '../../../domain';
 import { DateTime } from 'luxon';
-import { Transactional } from '../../../../shared/database';
+import { GroupRepository, SchoolRepository } from '../../../database';
 
 export class CreateGroupCommand extends Command<GroupDto> {
   public readonly schoolId: string;
@@ -20,21 +20,15 @@ export class CreateGroupCommand extends Command<GroupDto> {
 
 @CommandHandler(CreateGroupCommand)
 export class CreateGroupCommandHandler implements CommandHandler<CreateGroupCommand> {
-  public constructor(private readonly orm: MikroORM) {}
-
   @Transactional()
   public async execute({
     schoolId,
     payload,
   }: CreateGroupCommand): Promise<GroupDto> {
-    const em = this.orm.em;
+    const schoolRepo = Context.getRepository(SchoolRepository);
+    const groupRepo = Context.getRepository(GroupRepository);
 
-    const school = await em
-      .createQueryBuilder(School)
-      .where({
-        id: schoolId,
-      })
-      .getSingleResult();
+    const school = await schoolRepo.find(schoolId);
 
     if (!school) {
       throw new Error('School not found');
@@ -47,11 +41,11 @@ export class CreateGroupCommandHandler implements CommandHandler<CreateGroupComm
     const group = Group.create({
       id,
       name,
-      school: school,
+      school,
       now,
     });
 
-    em.persist(group);
+    groupRepo.add(group);
 
     return new GroupDto({
       id: group.id.value,

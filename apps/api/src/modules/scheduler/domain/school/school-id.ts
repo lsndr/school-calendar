@@ -13,4 +13,8 @@ export class SchoolId extends ValueObject<'SchoolId'> {
   public static create(): SchoolId {
     return new this(randomUUID());
   }
+
+  public static fromValue(value: string): SchoolId {
+    return new this(value);
+  }
 }

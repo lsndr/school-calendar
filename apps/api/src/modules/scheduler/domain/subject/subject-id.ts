@@ -13,4 +13,8 @@ export class SubjectId extends ValueObject<'SubjectId'> {
   public static create(): SubjectId {
     return new this(randomUUID());
   }
+
+  public static fromValue(value: string): SubjectId {
+    return new this(value);
+  }
 }

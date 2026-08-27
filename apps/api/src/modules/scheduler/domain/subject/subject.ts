@@ -1,11 +1,10 @@
-import { Entity } from '@mikro-orm/core';
-import { DateTime } from 'luxon';
-import { Recurrence } from './recurrence';
-import { ExactDate, TimeInterval } from '../shared';
-import { Group, GroupId } from './../group';
-import { School, SchoolId } from './../school';
-import { RequiredTeachers } from './required-teachers';
-import { SubjectId } from './subject-id';
+import { type DateTime } from 'luxon';
+import { type Recurrence } from './recurrence';
+import { type ExactDate, type TimeInterval } from '../shared';
+import { type Group, type GroupId } from './../group';
+import { type School, type SchoolId } from './../school';
+import { type RequiredTeachers } from './required-teachers';
+import { type SubjectId } from './subject-id';
 import { SubjectState } from './subject.state';
 import { extractDatesFromRecurrence } from './helpers';
 
@@ -20,7 +19,6 @@ export interface CreateSubject {
   now: DateTime;
 }
 
-@Entity()
 export class Subject extends SubjectState {
   public get id(): SubjectId {
     return this._id;
@@ -64,7 +62,7 @@ export class Subject extends SubjectState {
       'group_doesnt_belong_to_school',
     );
 
-    const subject = new this({
+    return new this({
       id: data.id,
       groupId: data.group.id,
       schoolId: data.school.id,
@@ -75,8 +73,6 @@ export class Subject extends SubjectState {
       createdAt: data.now,
       updatedAt: data.now,
     });
-
-    return subject;
   }
 
   public setName(name: string, now: DateTime): void {

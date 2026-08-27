@@ -1,7 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Test } from '@nestjs/testing';
-import { MikroORM } from '@mikro-orm/postgresql';
-import { testMikroormProvider } from '../../../../shared/tests';
+import { PrismaClient } from '@prisma/client';
+import { Uow } from 'yuow/core';
+import { DateTime } from 'luxon';
+import {
+  testPrismaProvider,
+  testUowProvider,
+  setupUowContext,
+} from '../../../../shared/tests';
 import { CommandBus, QueryBus, CqrsModule } from '../../../../shared/cqrs';
 import {
   UpdateSubjectCommand,
@@ -11,8 +17,6 @@ import {
   FindSubjectQuery,
   FindSubjectQueryHandler,
 } from '../queries/find-subject.query';
-import { Group, GroupId, School, SchoolId, TimeZone } from '../../../domain';
-import { DateTime } from 'luxon';
 import { WeeklyRecurrenceDto } from '../dtos/weekly-recurrence.dto';
 import { CreateSubjectDto } from '../dtos/create-subject.dto';
 import {
@@ -26,7 +30,7 @@ import { TimeIntervalDto } from '../../shared';
 describe('UpdateSubjectCommand', () => {
   let commandBus: CommandBus;
   let queryBus: QueryBus;
-  let orm: MikroORM;
+  let prisma: PrismaClient;
 
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
@@ -35,15 +39,19 @@ describe('UpdateSubjectCommand', () => {
         CreateSubjectCommandHandler,
         UpdateSubjectCommandHandler,
         FindSubjectQueryHandler,
-        testMikroormProvider,
+        testPrismaProvider,
+        testUowProvider,
       ],
     }).compile();
 
     commandBus = moduleRef.get(CommandBus);
     queryBus = moduleRef.get(QueryBus);
-    orm = moduleRef.get(MikroORM);
+    prisma = moduleRef.get(PrismaClient);
+    const uow = moduleRef.get(Uow);
 
     await moduleRef.createNestApplication().init();
+
+    setupUowContext({ commandBus, queryBus }, uow);
   });
 
   it('should update subject', async () => {
@@ -51,19 +59,17 @@ describe('UpdateSubjectCommand', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2023-01-22T12:48:38.529Z'));
 
-    const knex = orm.em.getConnection().getKnex();
-    const school = await seedSchool(orm);
-    const group = await seedGroup(school, orm);
+    const school = await seedSchool(prisma);
+    const group = await seedGroup(school.id, prisma);
+
     const subject = await commandBus.execute(
       new CreateSubjectCommand({
-        schoolId: group.schoolId.value,
+        schoolId: group.schoolId,
         payload: new CreateSubjectDto({
           name: 'Old Name',
-          recurrence: new WeeklyRecurrenceDto({
-            days: [0, 2, 3],
-          }),
+          recurrence: new WeeklyRecurrenceDto({ days: [0, 2, 3] }),
           time: new TimeIntervalDto({ startsAt: 0, duration: 120 }),
-          groupId: group.id.value,
+          groupId: group.id,
           requiredTeachers: 3,
         }),
       }),
@@ -74,7 +80,7 @@ describe('UpdateSubjectCommand', () => {
     // act
     const result = await commandBus.execute(
       new UpdateSubjectCommand({
-        schoolId: group.schoolId.value,
+        schoolId: group.schoolId,
         id: subject.id,
         payload: new UpdateSubjectDto({
           name: 'New name',
@@ -85,26 +91,23 @@ describe('UpdateSubjectCommand', () => {
       }),
     );
 
-    // assert
     if (!result) {
       throw new Error('Not found');
     }
 
+    // assert
     const result2 = await queryBus.execute(
-      new FindSubjectQuery({ schoolId: school.id.value, id: result.id }),
+      new FindSubjectQuery({ schoolId: school.id, id: result.id }),
     );
-    const logs = await knex.select('*').from('subject_log');
+    const logs = await prisma.subjectLog.findMany({
+      orderBy: { createdAt: 'asc' },
+    });
 
     expect(result).toEqual({
       id: subject.id,
       name: 'New name',
-      recurrence: expect.objectContaining({
-        type: 'daily',
-      }),
-      time: expect.objectContaining({
-        startsAt: 600,
-        duration: 200,
-      }),
+      recurrence: expect.objectContaining({ type: 'daily' }),
+      time: expect.objectContaining({ startsAt: 600, duration: 200 }),
       requiredTeachers: 1,
       groupId: subject.groupId,
       createdAt: '2023-01-22T12:48:38.529+00:00',
@@ -112,67 +115,66 @@ describe('UpdateSubjectCommand', () => {
     });
     expect(result2).toEqual(result);
     expect(logs).toEqual([
-      {
-        subject_id: result.id,
+      expect.objectContaining({
+        subjectId: result.id,
         name: 'Old Name',
-        recurrence_type: 'weekly',
-        recurrence_days: [0, 2, 3],
-        recurrence_week1: null,
-        recurrence_week2: null,
-        time_starts_at: 0,
-        time_duration: 120,
-        required_teachers: 3,
-        created_at: DateTime.fromISO('2023-01-22T12:48:38.529Z'),
-      },
-      {
-        subject_id: result.id,
+        recurrenceType: 'weekly',
+        recurrenceDays: [0, 2, 3],
+        recurrenceWeek1: [],
+        recurrenceWeek2: [],
+        timeStartsAt: 0,
+        timeDuration: 120,
+        requiredTeachers: 3,
+        createdAt: new Date('2023-01-22T12:48:38.529Z'),
+      }),
+      expect.objectContaining({
+        subjectId: result.id,
         name: 'New name',
-        recurrence_type: 'daily',
-        recurrence_days: null,
-        recurrence_week1: null,
-        recurrence_week2: null,
-        time_starts_at: 600,
-        time_duration: 200,
-        required_teachers: 1,
-        created_at: DateTime.fromISO('2023-01-23T15:12:45.529Z'),
-      },
+        recurrenceType: 'daily',
+        recurrenceDays: [],
+        recurrenceWeek1: [],
+        recurrenceWeek2: [],
+        timeStartsAt: 600,
+        timeDuration: 200,
+        requiredTeachers: 1,
+        createdAt: new Date('2023-01-23T15:12:45.529Z'),
+      }),
     ]);
 
     vi.useRealTimers();
   });
 
   afterEach(async () => {
-    await orm.close();
+    await prisma.$disconnect();
   });
 });
 
-async function seedSchool(orm: MikroORM) {
-  const id = SchoolId.create();
+async function seedSchool(prisma: PrismaClient) {
+  const now = DateTime.now().toJSDate();
 
-  const school = School.create({
-    id,
-    name: 'School Name',
-    timeZone: TimeZone.create('Europe/Moscow'),
-    now: DateTime.now(),
+  return prisma.school.create({
+    data: {
+      id: crypto.randomUUID(),
+      name: 'School Name',
+      timeZone: 'Europe/Moscow',
+      version: 1,
+      createdAt: now,
+      updatedAt: now,
+    },
   });
-
-  const schoolRepository = orm.em.fork().getRepository(School);
-  await schoolRepository.persistAndFlush(school);
-
-  return school;
 }
 
-async function seedGroup(school: School, orm: MikroORM) {
-  const id = GroupId.create();
-  const group = Group.create({
-    id,
-    name: 'Group Name',
-    school: school,
-    now: DateTime.now(),
+async function seedGroup(schoolId: string, prisma: PrismaClient) {
+  const now = DateTime.now().toJSDate();
+
+  return prisma.group.create({
+    data: {
+      id: crypto.randomUUID(),
+      name: 'Group Name',
+      schoolId,
+      version: 1,
+      createdAt: now,
+      updatedAt: now,
+    },
   });
-
-  const groupRepository = orm.em.fork().getRepository(Group);
-  await groupRepository.persistAndFlush(group);
-
-  return group;
 }

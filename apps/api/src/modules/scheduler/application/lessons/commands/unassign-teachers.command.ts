@@ -1,10 +1,9 @@
-import { MikroORM } from '@mikro-orm/postgresql';
+import { Context, Transactional } from 'yuow/core';
 import { Command, CommandHandler, CommandProps } from '../../../../shared/cqrs';
-import { Lesson, School } from '../../../domain';
 import { DateTime } from 'luxon';
 import { AssignedTeacherDto } from '../dtos/assigned-teacher.dto';
 import { UnassignTeachersDto } from '../dtos/unassign-teachers.dto';
-import { Transactional } from '../../../../shared/database';
+import { LessonRepository, SchoolRepository } from '../../../database';
 
 export class UnassignTeachersCommand extends Command<AssignedTeacherDto[]> {
   public readonly schoolId: string;
@@ -24,8 +23,6 @@ export class UnassignTeachersCommand extends Command<AssignedTeacherDto[]> {
 
 @CommandHandler(UnassignTeachersCommand)
 export class UnassignTeachersCommandHandler implements CommandHandler<UnassignTeachersCommand> {
-  public constructor(private readonly orm: MikroORM) {}
-
   @Transactional()
   public async execute({
     schoolId,
@@ -33,19 +30,12 @@ export class UnassignTeachersCommandHandler implements CommandHandler<UnassignTe
     date,
     payload,
   }: UnassignTeachersCommand): Promise<AssignedTeacherDto[]> {
-    const em = this.orm.em;
+    const lessonRepo = Context.getRepository(LessonRepository);
+    const schoolRepo = Context.getRepository(SchoolRepository);
 
     const [lesson, school] = await Promise.all([
-      em
-        .createQueryBuilder(Lesson, 'a')
-        .leftJoinAndSelect('a._assignedTeachers', 'ae')
-        .where({
-          subject_id: subjectId,
-          date,
-          school_id: schoolId,
-        })
-        .getSingleResult(),
-      em.createQueryBuilder(School).where({ id: schoolId }).getSingleResult(),
+      lessonRepo.findBySubjectAndDate(subjectId, date, schoolId),
+      schoolRepo.find(schoolId),
     ]);
 
     if (!lesson) {

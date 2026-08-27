@@ -1,4 +1,4 @@
-import { MikroORM } from '@mikro-orm/postgresql';
+import { PrismaClient } from '@prisma/client';
 import { Query, QueryHandler, QueryProps } from '../../../../shared/cqrs';
 import { GroupDto } from '../dtos/group.dto';
 
@@ -14,27 +14,20 @@ export class FindGroupsQuery extends Query<GroupDto[]> {
 
 @QueryHandler(FindGroupsQuery)
 export class FindGroupsQueryHandler implements QueryHandler<FindGroupsQuery> {
-  public constructor(private readonly orm: MikroORM) {}
+  public constructor(private readonly prisma: PrismaClient) {}
 
   public async execute({ schoolId }: FindGroupsQuery): Promise<GroupDto[]> {
-    const knex = this.orm.em.getConnection().getKnex();
+    const records = await this.prisma.group.findMany({
+      where: { schoolId },
+      select: { id: true, name: true },
+    });
 
-    const records = await knex
-      .select(['id', 'name'])
-      .from('group')
-      .where('school_id', schoolId);
-
-    const groups: GroupDto[] = [];
-
-    for (const record of records) {
-      groups.push(
+    return records.map(
+      (r) =>
         new GroupDto({
-          id: record.id,
-          name: record.name,
+          id: r.id,
+          name: r.name,
         }),
-      );
-    }
-
-    return groups;
+    );
   }
 }

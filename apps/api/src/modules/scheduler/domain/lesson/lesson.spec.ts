@@ -1,5 +1,4 @@
-import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { MikroORM } from '@mikro-orm/postgresql';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { DateTime } from 'luxon';
 import { DomainError } from '../../../shared/domain';
 import { Group, GroupId } from '../group';
@@ -13,7 +12,6 @@ import {
   type WeekDays,
   WeeklyRecurrence,
 } from '../subject';
-import { AssignedTeacher } from './assigned-teacher';
 import { Lesson } from './lesson';
 import { LessonId } from './lesson-id';
 
@@ -28,16 +26,6 @@ describe('Lesson', () => {
   let teacher2: Teacher;
   let teacher3: Teacher;
   let teacher4: Teacher;
-
-  beforeAll(async () => {
-    await MikroORM.init(
-      {
-        dbName: ':memory:',
-        entities: [Lesson, AssignedTeacher],
-      },
-      false,
-    );
-  });
 
   beforeEach(() => {
     school = School.create({

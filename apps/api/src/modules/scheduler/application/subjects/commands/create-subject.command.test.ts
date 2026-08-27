@@ -1,7 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Test } from '@nestjs/testing';
-import { MikroORM } from '@mikro-orm/postgresql';
-import { testMikroormProvider } from '../../../../shared/tests';
+import { PrismaClient } from '@prisma/client';
+import { Uow } from 'yuow/core';
+import { DateTime } from 'luxon';
+import {
+  testPrismaProvider,
+  testUowProvider,
+  setupUowContext,
+} from '../../../../shared/tests';
 import { CommandBus, QueryBus, CqrsModule } from '../../../../shared/cqrs';
 import {
   CreateSubjectCommand,
@@ -11,8 +17,6 @@ import {
   FindSubjectQuery,
   FindSubjectQueryHandler,
 } from '../queries/find-subject.query';
-import { Group, GroupId, School, SchoolId, TimeZone } from '../../../domain';
-import { DateTime } from 'luxon';
 import { WeeklyRecurrenceDto } from '../dtos/weekly-recurrence.dto';
 import { CreateSubjectDto } from '../dtos/create-subject.dto';
 import { TimeIntervalDto } from '../../shared';
@@ -20,7 +24,7 @@ import { TimeIntervalDto } from '../../shared';
 describe('CreateSubjectCommand', () => {
   let commandBus: CommandBus;
   let queryBus: QueryBus;
-  let orm: MikroORM;
+  let prisma: PrismaClient;
 
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
@@ -28,15 +32,19 @@ describe('CreateSubjectCommand', () => {
       providers: [
         CreateSubjectCommandHandler,
         FindSubjectQueryHandler,
-        testMikroormProvider,
+        testPrismaProvider,
+        testUowProvider,
       ],
     }).compile();
 
     commandBus = moduleRef.get(CommandBus);
     queryBus = moduleRef.get(QueryBus);
-    orm = moduleRef.get(MikroORM);
+    prisma = moduleRef.get(PrismaClient);
+    const uow = moduleRef.get(Uow);
 
     await moduleRef.createNestApplication().init();
+
+    setupUowContext({ commandBus, queryBus }, uow);
   });
 
   it('should create a subject with weekly recurrence', async () => {
@@ -44,77 +52,62 @@ describe('CreateSubjectCommand', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2023-01-22T12:48:38.529Z'));
 
-    const school = await seedSchool(orm);
-    const group = await seedGroup(school, orm);
-    const knex = orm.em.getConnection().getKnex();
+    const school = await seedSchool(prisma);
+    const group = await seedGroup(school.id, prisma);
 
     // act
     const result = await commandBus.execute(
       new CreateSubjectCommand({
-        schoolId: group.schoolId.value,
+        schoolId: group.schoolId,
         payload: new CreateSubjectDto({
           name: 'Test Subject',
-          recurrence: new WeeklyRecurrenceDto({
-            days: [0, 2, 3],
-          }),
+          recurrence: new WeeklyRecurrenceDto({ days: [0, 2, 3] }),
           time: new TimeIntervalDto({ startsAt: 0, duration: 120 }),
-          groupId: group.id.value,
+          groupId: group.id,
           requiredTeachers: 3,
         }),
       }),
     );
 
     const result2 = await queryBus.execute(
-      new FindSubjectQuery({ schoolId: school.id.value, id: result.id }),
+      new FindSubjectQuery({ schoolId: school.id, id: result.id }),
     );
-    const logs = await knex.select('*').from('subject_log');
+    const logs = await prisma.subjectLog.findMany();
 
     // assert
     expect(result).toEqual({
       id: expect.any(String),
       name: 'Test Subject',
-      recurrence: expect.objectContaining({
-        type: 'weekly',
-        days: [0, 2, 3],
-      }),
-      time: expect.objectContaining({
-        startsAt: 0,
-        duration: 120,
-      }),
+      recurrence: expect.objectContaining({ type: 'weekly', days: [0, 2, 3] }),
+      time: expect.objectContaining({ startsAt: 0, duration: 120 }),
       requiredTeachers: 3,
-      groupId: group.id.value,
+      groupId: group.id,
       createdAt: '2023-01-22T12:48:38.529+00:00',
       updatedAt: '2023-01-22T12:48:38.529+00:00',
     });
     expect(result2).toEqual({
       id: result.id,
       name: 'Test Subject',
-      groupId: group.id.value,
-      recurrence: expect.objectContaining({
-        type: 'weekly',
-        days: [0, 2, 3],
-      }),
-      time: expect.objectContaining({
-        startsAt: 0,
-        duration: 120,
-      }),
+      groupId: group.id,
+      recurrence: expect.objectContaining({ type: 'weekly', days: [0, 2, 3] }),
+      time: expect.objectContaining({ startsAt: 0, duration: 120 }),
       requiredTeachers: 3,
       createdAt: '2023-01-22T12:48:38.529+00:00',
       updatedAt: '2023-01-22T12:48:38.529+00:00',
     });
     expect(logs).toEqual([
-      {
-        subject_id: result.id,
+      expect.objectContaining({
+        subjectId: result.id,
         name: 'Test Subject',
-        recurrence_type: 'weekly',
-        recurrence_days: [0, 2, 3],
-        recurrence_week1: null,
-        recurrence_week2: null,
-        time_starts_at: 0,
-        time_duration: 120,
-        required_teachers: 3,
-        created_at: DateTime.fromISO('2023-01-22T12:48:38.529Z'),
-      },
+        recurrenceType: 'weekly',
+        recurrenceDays: [0, 2, 3],
+        recurrenceWeek1: [],
+        recurrenceWeek2: [],
+        timeStartsAt: 0,
+        timeDuration: 120,
+        requiredTeachers: 3,
+        createdAt: new Date('2023-01-22T12:48:38.529Z'),
+      }),
     ]);
 
     vi.useRealTimers();
@@ -125,8 +118,8 @@ describe('CreateSubjectCommand', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2023-01-22T12:48:38.529Z'));
 
-    const school = await seedSchool(orm);
-    const group = await seedGroup(school, orm);
+    const school = await seedSchool(prisma);
+    const group = await seedGroup(school.id, prisma);
 
     // act
     const act = () =>
@@ -135,11 +128,9 @@ describe('CreateSubjectCommand', () => {
           schoolId: 'wrong school id',
           payload: {
             name: 'Test Subject',
-            recurrence: new WeeklyRecurrenceDto({
-              days: [0, 2, 3],
-            }),
+            recurrence: new WeeklyRecurrenceDto({ days: [0, 2, 3] }),
             time: new TimeIntervalDto({ startsAt: 0, duration: 120 }),
-            groupId: group.id.value,
+            groupId: group.id,
             requiredTeachers: 3,
           },
         }),
@@ -152,37 +143,36 @@ describe('CreateSubjectCommand', () => {
   });
 
   afterEach(async () => {
-    await orm.close();
+    await prisma.$disconnect();
   });
 });
 
-async function seedSchool(orm: MikroORM) {
-  const id = SchoolId.create();
+async function seedSchool(prisma: PrismaClient) {
+  const now = DateTime.now().toJSDate();
 
-  const school = School.create({
-    id,
-    name: 'School Name',
-    timeZone: TimeZone.create('Europe/Moscow'),
-    now: DateTime.now(),
+  return prisma.school.create({
+    data: {
+      id: crypto.randomUUID(),
+      name: 'School Name',
+      timeZone: 'Europe/Moscow',
+      version: 1,
+      createdAt: now,
+      updatedAt: now,
+    },
   });
-
-  const schoolRepository = orm.em.fork().getRepository(School);
-  await schoolRepository.persistAndFlush(school);
-
-  return school;
 }
 
-async function seedGroup(school: School, orm: MikroORM) {
-  const id = GroupId.create();
-  const group = Group.create({
-    id,
-    name: 'Group Name',
-    school: school,
-    now: DateTime.now(),
+async function seedGroup(schoolId: string, prisma: PrismaClient) {
+  const now = DateTime.now().toJSDate();
+
+  return prisma.group.create({
+    data: {
+      id: crypto.randomUUID(),
+      name: 'Group Name',
+      schoolId,
+      version: 1,
+      createdAt: now,
+      updatedAt: now,
+    },
   });
-
-  const groupRepository = orm.em.fork().getRepository(Group);
-  await groupRepository.persistAndFlush(group);
-
-  return group;
 }

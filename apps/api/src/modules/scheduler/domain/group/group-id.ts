@@ -13,4 +13,8 @@ export class GroupId extends ValueObject<'GroupId'> {
   public static create(): GroupId {
     return new this(randomUUID());
   }
+
+  public static fromValue(value: string): GroupId {
+    return new this(value);
+  }
 }

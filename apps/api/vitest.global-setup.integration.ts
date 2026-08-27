@@ -1,3 +1,5 @@
+import { execSync } from 'child_process';
+import path from 'path';
 import { GenericContainer, Wait } from 'testcontainers';
 
 const POSTGRES_IMAGE = 'postgres:15.1';
@@ -6,8 +8,20 @@ const POSTGRES_PASSWORD = 'test';
 const POSTGRES_DB = 'test';
 const POSTGRES_PORT = 5432;
 
+const ROOT = path.resolve(__dirname, '../..');
+
+function runMigrations(): void {
+  execSync('npx prisma db push --config prisma.config.ts', {
+    cwd: ROOT,
+    env: { ...process.env },
+    stdio: 'inherit',
+  });
+}
+
 export async function setup(): Promise<(() => Promise<void>) | void> {
   if (process.env['DB_URL']) {
+    runMigrations();
+
     return;
   }
 
@@ -28,6 +42,8 @@ export async function setup(): Promise<(() => Promise<void>) | void> {
 
   process.env['DB_URL'] =
     `postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${host}:${port}/${POSTGRES_DB}`;
+
+  runMigrations();
 
   return async () => {
     await container.stop();

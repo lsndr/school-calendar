@@ -1,9 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { Test } from '@nestjs/testing';
-import { School, SchoolId, TimeZone } from '../../../domain';
+import { PrismaClient } from '@prisma/client';
+import { Uow } from 'yuow/core';
 import { DateTime } from 'luxon';
-import { MikroORM } from '@mikro-orm/postgresql';
-import { testMikroormProvider } from '../../../../shared/tests';
+import {
+  testPrismaProvider,
+  testUowProvider,
+  setupUowContext,
+} from '../../../../shared/tests';
 import { CommandBus, CqrsModule, QueryBus } from '../../../../shared/cqrs';
 import {
   CreateTeacherCommand,
@@ -18,7 +22,7 @@ import {
 describe('FindTeachersQuery', () => {
   let commandBus: CommandBus;
   let queryBus: QueryBus;
-  let orm: MikroORM;
+  let prisma: PrismaClient;
 
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
@@ -26,83 +30,74 @@ describe('FindTeachersQuery', () => {
       providers: [
         FindTeachersQueryHandler,
         CreateTeacherCommandHandler,
-        testMikroormProvider,
+        testPrismaProvider,
+        testUowProvider,
       ],
     }).compile();
 
     queryBus = moduleRef.get(QueryBus);
     commandBus = moduleRef.get(CommandBus);
-    orm = moduleRef.get(MikroORM);
+    prisma = moduleRef.get(PrismaClient);
+    const uow = moduleRef.get(Uow);
 
     await moduleRef.createNestApplication().init();
+
+    setupUowContext({ commandBus, queryBus }, uow);
   });
 
   it('should find teachers', async () => {
     // arrange
-    const school1 = await seedSchool(orm);
-    const school2 = await seedSchool(orm);
+    const school1 = await seedSchool(prisma);
+    const school2 = await seedSchool(prisma);
 
     await commandBus.execute(
       new CreateTeacherCommand({
-        schoolId: school1.id.value,
-        payload: new CreateTeacherDto({
-          name: 'Teacher 11',
-        }),
+        schoolId: school1.id,
+        payload: new CreateTeacherDto({ name: 'Teacher 11' }),
       }),
     );
 
     await commandBus.execute(
       new CreateTeacherCommand({
-        schoolId: school1.id.value,
-        payload: new CreateTeacherDto({
-          name: 'Teacher 12',
-        }),
+        schoolId: school1.id,
+        payload: new CreateTeacherDto({ name: 'Teacher 12' }),
       }),
     );
 
     await commandBus.execute(
       new CreateTeacherCommand({
-        schoolId: school2.id.value,
-        payload: new CreateTeacherDto({
-          name: 'Teacher 21',
-        }),
+        schoolId: school2.id,
+        payload: new CreateTeacherDto({ name: 'Teacher 21' }),
       }),
     );
 
     // act
     const result = await queryBus.execute(
-      new FindTeachersQuery({ schoolId: school1.id.value }),
+      new FindTeachersQuery({ schoolId: school1.id }),
     );
 
     expect(result).toEqual([
-      {
-        id: expect.any(String),
-        name: 'Teacher 11',
-      },
-      {
-        id: expect.any(String),
-        name: 'Teacher 12',
-      },
+      { id: expect.any(String), name: 'Teacher 11' },
+      { id: expect.any(String), name: 'Teacher 12' },
     ]);
   });
 
   afterEach(async () => {
-    await orm.close();
+    await prisma.$disconnect();
   });
 });
 
-async function seedSchool(orm: MikroORM) {
-  const id = SchoolId.create();
+async function seedSchool(prisma: PrismaClient) {
+  const now = DateTime.now().toJSDate();
 
-  const school = School.create({
-    id,
-    name: 'School Name',
-    timeZone: TimeZone.create('Europe/Moscow'),
-    now: DateTime.now(),
+  return prisma.school.create({
+    data: {
+      id: crypto.randomUUID(),
+      name: 'School Name',
+      timeZone: 'Europe/Moscow',
+      version: 1,
+      createdAt: now,
+      updatedAt: now,
+    },
   });
-
-  const schoolRepository = orm.em.fork().getRepository(School);
-  await schoolRepository.persistAndFlush(school);
-
-  return school;
 }

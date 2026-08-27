@@ -8,7 +8,13 @@ import commentsPluginConfigs from '@eslint-community/eslint-plugin-eslint-commen
 
 export default defineConfig(
   {
-    ignores: ['node_modules', '**/*/dist', '.nx', './coverage'],
+    ignores: [
+      'node_modules',
+      '**/*/dist',
+      '.nx',
+      './coverage',
+      'prisma.config.ts',
+    ],
   },
   {
     languageOptions: {

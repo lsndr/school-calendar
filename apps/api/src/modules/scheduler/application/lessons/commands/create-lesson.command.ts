@@ -1,19 +1,16 @@
-import { MikroORM } from '@mikro-orm/postgresql';
+import { Context, Transactional } from 'yuow/core';
 import { Command, CommandHandler } from '../../../../shared/cqrs';
 import { LessonDto } from '../dtos/lesson.dto';
 import { CreateLessonDto } from '../dtos/create-lesson.dto';
-import {
-  ExactDate,
-  Lesson,
-  LessonId,
-  School,
-  Subject,
-  Teacher,
-  TimeInterval,
-} from '../../../domain';
+import { ExactDate, Lesson, LessonId, TimeInterval } from '../../../domain';
 import { DateTime } from 'luxon';
 import { TimeIntervalDto } from '../../shared';
-import { Transactional } from '../../../../shared/database';
+import {
+  LessonRepository,
+  SchoolRepository,
+  SubjectRepository,
+  TeacherRepository,
+} from '../../../database';
 
 export class CreateLessonCommand extends Command<LessonDto> {
   public constructor(
@@ -27,26 +24,21 @@ export class CreateLessonCommand extends Command<LessonDto> {
 
 @CommandHandler(CreateLessonCommand)
 export class CreateLessonCommandHandler implements CommandHandler<CreateLessonCommand> {
-  public constructor(private readonly orm: MikroORM) {}
-
   @Transactional()
   public async execute({
     schoolId,
     subjectId,
     payload,
   }: CreateLessonCommand): Promise<LessonDto> {
-    const em = this.orm.em;
+    const schoolRepo = Context.getRepository(SchoolRepository);
+    const subjectRepo = Context.getRepository(SubjectRepository);
+    const teacherRepo = Context.getRepository(TeacherRepository);
+    const lessonRepo = Context.getRepository(LessonRepository);
 
     const [school, subject, teachers] = await Promise.all([
-      em.createQueryBuilder(School).where({ id: schoolId }).getSingleResult(),
-      em
-        .createQueryBuilder(Subject)
-        .where({ id: subjectId, school_id: schoolId })
-        .getSingleResult(),
-      em
-        .createQueryBuilder(Teacher)
-        .where({ id: { $in: payload.teacherIds }, school_id: schoolId })
-        .getResult(),
+      schoolRepo.find(schoolId),
+      subjectRepo.findBySchool(subjectId, schoolId),
+      teacherRepo.findMany(payload.teacherIds, schoolId),
     ]);
 
     if (!school) {
@@ -75,7 +67,7 @@ export class CreateLessonCommandHandler implements CommandHandler<CreateLessonCo
       lesson.assignTeacher(teacher, subject, school, now);
     }
 
-    em.persist(lesson);
+    lessonRepo.add(lesson);
 
     const assignedTeachers = lesson.assignedTeachers.map((teacher) => ({
       teacherId: teacher.teacherId.value,

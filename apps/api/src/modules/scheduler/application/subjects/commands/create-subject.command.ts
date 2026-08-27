@@ -1,9 +1,7 @@
-import { MikroORM } from '@mikro-orm/postgresql';
+import { Context, Transactional } from 'yuow/core';
 import { Command, CommandHandler, CommandProps } from '../../../../shared/cqrs';
 import {
-  Group,
   RequiredTeachers,
-  School,
   Subject,
   SubjectId,
   TimeInterval,
@@ -13,7 +11,11 @@ import { CreateSubjectDto } from '../dtos/create-subject.dto';
 import { SubjectDto } from '../dtos/subject.dto';
 import { mapDtoToRecurrence, mapRecurrenceToDto } from '../helpers/mappers';
 import { TimeIntervalDto } from '../../shared';
-import { Transactional } from '../../../../shared/database';
+import {
+  GroupRepository,
+  SchoolRepository,
+  SubjectRepository,
+} from '../../../database';
 
 export class CreateSubjectCommand extends Command<SubjectDto> {
   public readonly schoolId: string;
@@ -29,28 +31,18 @@ export class CreateSubjectCommand extends Command<SubjectDto> {
 
 @CommandHandler(CreateSubjectCommand)
 export class CreateSubjectCommandHandler implements CommandHandler<CreateSubjectCommand> {
-  public constructor(private readonly orm: MikroORM) {}
-
   @Transactional()
   public async execute({
     schoolId,
     payload,
   }: CreateSubjectCommand): Promise<SubjectDto> {
-    const em = this.orm.em;
+    const schoolRepo = Context.getRepository(SchoolRepository);
+    const groupRepo = Context.getRepository(GroupRepository);
+    const subjectRepo = Context.getRepository(SubjectRepository);
 
     const [school, group] = await Promise.all([
-      em
-        .createQueryBuilder(School)
-        .where({
-          id: schoolId,
-        })
-        .getSingleResult(),
-      em
-        .createQueryBuilder(Group)
-        .where({
-          id: payload.groupId,
-        })
-        .getSingleResult(),
+      schoolRepo.find(schoolId),
+      groupRepo.find(payload.groupId),
     ]);
 
     if (!school) {
@@ -79,7 +71,7 @@ export class CreateSubjectCommandHandler implements CommandHandler<CreateSubject
       now,
     });
 
-    em.persist(subject);
+    subjectRepo.add(subject);
 
     return new SubjectDto({
       id: subject.id.value,

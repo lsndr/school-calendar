@@ -1,17 +1,22 @@
+import { APP_INTERCEPTOR } from '@nestjs/core';
 import { Module } from '@nestjs/common';
-import { mikroormProvider } from './database';
-import { MikroORM } from '@mikro-orm/postgresql';
+import { PrismaClient } from '@prisma/client';
+import { prismaProvider, uowProvider, UowInterceptor } from './database';
 import { CqrsModule } from './cqrs';
 
 @Module({
   imports: [CqrsModule],
-  providers: [mikroormProvider],
-  exports: [mikroormProvider, CqrsModule],
+  providers: [
+    prismaProvider,
+    uowProvider,
+    { provide: APP_INTERCEPTOR, useClass: UowInterceptor },
+  ],
+  exports: [prismaProvider, uowProvider, CqrsModule],
 })
 export class SharedModule {
-  public constructor(private readonly orm: MikroORM) {}
+  public constructor(private readonly prisma: PrismaClient) {}
 
   public async beforeApplicationShutdown(): Promise<void> {
-    await this.orm.close();
+    await this.prisma.$disconnect();
   }
 }
