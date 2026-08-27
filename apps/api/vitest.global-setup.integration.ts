@@ -11,7 +11,7 @@ const POSTGRES_PORT = 5432;
 const ROOT = path.resolve(__dirname, '../..');
 
 function runMigrations(): void {
-  execSync('npx prisma db push --config prisma.config.ts', {
+  execSync('npx prisma migrate deploy --config prisma.config.ts', {
     cwd: ROOT,
     env: { ...process.env },
     stdio: 'inherit',
