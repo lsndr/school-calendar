@@ -24,6 +24,7 @@
     "test:integration": "nx run api:test:integration",
     "db:generate": "prisma generate --config prisma.config.ts",
     "db:migrate": "prisma migrate deploy --config prisma.config.ts",
+    "postinstall": "prisma generate --config prisma.config.ts",
     "prepare": "husky",
     "commitlint": "commitlint --edit"
   },
