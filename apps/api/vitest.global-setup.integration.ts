@@ -19,12 +19,6 @@ function runMigrations(): void {
 }
 
 export async function setup(): Promise<(() => Promise<void>) | void> {
-  if (process.env['DB_URL']) {
-    runMigrations();
-
-    return;
-  }
-
   const container = await new GenericContainer(POSTGRES_IMAGE)
     .withEnvironment({
       POSTGRES_USER,
