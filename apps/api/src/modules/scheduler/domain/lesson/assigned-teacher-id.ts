@@ -4,7 +4,7 @@ import { ValueObject } from '../../../shared/domain';
 export class AssignedTeacherId extends ValueObject<'AssignedTeacherId'> {
   public readonly value: string;
 
-  protected constructor(value: string) {
+  public constructor(value: string) {
     super();
 
     this.value = value;
@@ -12,9 +12,5 @@ export class AssignedTeacherId extends ValueObject<'AssignedTeacherId'> {
 
   public static create(): AssignedTeacherId {
     return new this(randomUUID());
-  }
-
-  public static fromValue(value: string): AssignedTeacherId {
-    return new this(value);
   }
 }

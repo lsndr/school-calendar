@@ -19,7 +19,7 @@ export class SchoolRepository extends Repository<School, Tx> {
     if (!r) return undefined;
 
     const school = new School({
-      id: SchoolId.fromValue(r.id),
+      id: new SchoolId(r.id),
       name: r.name,
       timeZone: TimeZone.create(r.timeZone),
       createdAt: DateTime.fromJSDate(r.createdAt),

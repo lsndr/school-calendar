@@ -4,7 +4,7 @@ import { ValueObject } from '../../../shared/domain';
 export class SubjectId extends ValueObject<'SubjectId'> {
   public readonly value: string;
 
-  protected constructor(value: string) {
+  public constructor(value: string) {
     super();
 
     this.value = value;
@@ -12,9 +12,5 @@ export class SubjectId extends ValueObject<'SubjectId'> {
 
   public static create(): SubjectId {
     return new this(randomUUID());
-  }
-
-  public static fromValue(value: string): SubjectId {
-    return new this(value);
   }
 }

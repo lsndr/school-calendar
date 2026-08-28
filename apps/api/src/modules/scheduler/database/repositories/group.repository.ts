@@ -17,9 +17,9 @@ export class GroupRepository extends Repository<Group, Tx> {
     if (!r) return undefined;
 
     const group = new Group({
-      id: GroupId.fromValue(r.id),
+      id: new GroupId(r.id),
       name: r.name,
-      schoolId: SchoolId.fromValue(r.schoolId),
+      schoolId: new SchoolId(r.schoolId),
       createdAt: DateTime.fromJSDate(r.createdAt),
       updatedAt: DateTime.fromJSDate(r.updatedAt),
     });

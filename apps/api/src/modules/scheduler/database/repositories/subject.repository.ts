@@ -33,10 +33,10 @@ export class SubjectRepository extends Repository<Subject, Tx> {
     if (!r) return undefined;
 
     const subject = new Subject({
-      id: SubjectId.fromValue(r.id),
+      id: new SubjectId(r.id),
       name: r.name,
-      schoolId: SchoolId.fromValue(r.schoolId),
-      groupId: GroupId.fromValue(r.groupId),
+      schoolId: new SchoolId(r.schoolId),
+      groupId: new GroupId(r.groupId),
       recurrence: this.restoreRecurrence(r),
       time: TimeInterval.create({
         startsAt: r.timeStartsAt,
@@ -60,10 +60,10 @@ export class SubjectRepository extends Repository<Subject, Tx> {
     if (!r) return undefined;
 
     const subject = new Subject({
-      id: SubjectId.fromValue(r.id),
+      id: new SubjectId(r.id),
       name: r.name,
-      schoolId: SchoolId.fromValue(r.schoolId),
-      groupId: GroupId.fromValue(r.groupId),
+      schoolId: new SchoolId(r.schoolId),
+      groupId: new GroupId(r.groupId),
       recurrence: this.restoreRecurrence(r),
       time: TimeInterval.create({
         startsAt: r.timeStartsAt,

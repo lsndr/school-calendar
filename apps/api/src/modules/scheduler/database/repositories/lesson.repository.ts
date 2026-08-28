@@ -38,9 +38,9 @@ export class LessonRepository extends Repository<Lesson, Tx> {
     if (!r) return undefined;
 
     const lesson = new Lesson({
-      id: LessonId.fromValue(r.id),
-      subjectId: SubjectId.fromValue(r.subjectId!),
-      schoolId: SchoolId.fromValue(r.schoolId),
+      id: new LessonId(r.id),
+      subjectId: new SubjectId(r.subjectId!),
+      schoolId: new SchoolId(r.schoolId),
       date: ExactDate.create({
         year: r.date.getUTCFullYear(),
         month: r.date.getUTCMonth() + 1,
@@ -53,8 +53,8 @@ export class LessonRepository extends Repository<Lesson, Tx> {
       assignedTeachers: r.teachers.map(
         (t) =>
           new AssignedTeacher({
-            id: AssignedTeacherId.fromValue(t.id),
-            teacherId: TeacherId.fromValue(t.teacherId),
+            id: new AssignedTeacherId(t.id),
+            teacherId: new TeacherId(t.teacherId),
             assignedAt: DateTime.fromJSDate(t.assignedAt),
           }),
       ),
@@ -76,9 +76,9 @@ export class LessonRepository extends Repository<Lesson, Tx> {
     if (!r) return undefined;
 
     const lesson = new Lesson({
-      id: LessonId.fromValue(r.id),
-      subjectId: SubjectId.fromValue(r.subjectId!),
-      schoolId: SchoolId.fromValue(r.schoolId),
+      id: new LessonId(r.id),
+      subjectId: new SubjectId(r.subjectId!),
+      schoolId: new SchoolId(r.schoolId),
       date: ExactDate.create({
         year: r.date.getUTCFullYear(),
         month: r.date.getUTCMonth() + 1,
@@ -91,8 +91,8 @@ export class LessonRepository extends Repository<Lesson, Tx> {
       assignedTeachers: r.teachers.map(
         (t) =>
           new AssignedTeacher({
-            id: AssignedTeacherId.fromValue(t.id),
-            teacherId: TeacherId.fromValue(t.teacherId),
+            id: new AssignedTeacherId(t.id),
+            teacherId: new TeacherId(t.teacherId),
             assignedAt: DateTime.fromJSDate(t.assignedAt),
           }),
       ),

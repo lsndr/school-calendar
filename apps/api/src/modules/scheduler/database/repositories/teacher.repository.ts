@@ -18,9 +18,9 @@ export class TeacherRepository extends Repository<Teacher, Tx> {
 
     return rows.map((r) => {
       const teacher = new Teacher({
-        id: TeacherId.fromValue(r.id),
+        id: new TeacherId(r.id),
         name: r.name,
-        schoolId: SchoolId.fromValue(r.schoolId),
+        schoolId: new SchoolId(r.schoolId),
         createdAt: DateTime.fromJSDate(r.createdAt),
         updatedAt: DateTime.fromJSDate(r.updatedAt),
       });
@@ -39,9 +39,9 @@ export class TeacherRepository extends Repository<Teacher, Tx> {
     if (!r) return undefined;
 
     const teacher = new Teacher({
-      id: TeacherId.fromValue(r.id),
+      id: new TeacherId(r.id),
       name: r.name,
-      schoolId: SchoolId.fromValue(r.schoolId),
+      schoolId: new SchoolId(r.schoolId),
       createdAt: DateTime.fromJSDate(r.createdAt),
       updatedAt: DateTime.fromJSDate(r.updatedAt),
     });
