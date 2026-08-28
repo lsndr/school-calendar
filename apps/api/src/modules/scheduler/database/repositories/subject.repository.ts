@@ -32,10 +32,14 @@ export class SubjectRepository extends Repository<Subject, Tx> {
 
     if (!r) return undefined;
 
+    // eslint-disable-next-line local/no-protected-constructor-usage -- state recovery
     const subject = new Subject({
+      // eslint-disable-next-line local/no-protected-constructor-usage -- state recovery
       id: new SubjectId(r.id),
       name: r.name,
+      // eslint-disable-next-line local/no-protected-constructor-usage -- state recovery
       schoolId: new SchoolId(r.schoolId),
+      // eslint-disable-next-line local/no-protected-constructor-usage -- state recovery
       groupId: new GroupId(r.groupId),
       recurrence: this.restoreRecurrence(r),
       time: TimeInterval.create({
@@ -59,10 +63,14 @@ export class SubjectRepository extends Repository<Subject, Tx> {
 
     if (!r) return undefined;
 
+    // eslint-disable-next-line local/no-protected-constructor-usage -- state recovery
     const subject = new Subject({
+      // eslint-disable-next-line local/no-protected-constructor-usage -- state recovery
       id: new SubjectId(r.id),
       name: r.name,
+      // eslint-disable-next-line local/no-protected-constructor-usage -- state recovery
       schoolId: new SchoolId(r.schoolId),
+      // eslint-disable-next-line local/no-protected-constructor-usage -- state recovery
       groupId: new GroupId(r.groupId),
       recurrence: this.restoreRecurrence(r),
       time: TimeInterval.create({

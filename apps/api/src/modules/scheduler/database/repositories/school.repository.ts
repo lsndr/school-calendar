@@ -18,7 +18,9 @@ export class SchoolRepository extends Repository<School, Tx> {
 
     if (!r) return undefined;
 
+    // eslint-disable-next-line local/no-protected-constructor-usage -- state recovery
     const school = new School({
+      // eslint-disable-next-line local/no-protected-constructor-usage -- state recovery
       id: new SchoolId(r.id),
       name: r.name,
       timeZone: TimeZone.create(r.timeZone),

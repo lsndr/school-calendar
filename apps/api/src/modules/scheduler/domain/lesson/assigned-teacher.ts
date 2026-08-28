@@ -7,6 +7,7 @@ export class AssignedTeacher {
   public teacherId: TeacherId;
   public assignedAt: DateTime;
 
+  /** @protected Use for state recovery only */
   public constructor(state: {
     id: AssignedTeacherId;
     teacherId: TeacherId;

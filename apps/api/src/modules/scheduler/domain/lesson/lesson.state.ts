@@ -27,6 +27,7 @@ export abstract class LessonState extends AggregateRoot {
   protected _createdAt: DateTime;
   protected _updatedAt: DateTime;
 
+  /** @protected Use for state recovery only */
   public constructor(state: CreateLessonState) {
     super();
 

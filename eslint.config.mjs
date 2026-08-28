@@ -5,6 +5,11 @@ import { createTypeScriptImportResolver } from 'eslint-import-resolver-typescrip
 import eslintJs from '@eslint/js';
 import * as importPlugin from 'eslint-plugin-import-x';
 import commentsPluginConfigs from '@eslint-community/eslint-plugin-eslint-comments/configs';
+import noProtectedConstructorUsage from './tools/eslint-rules/no-protected-constructor-usage.mjs';
+
+const localPlugin = {
+  rules: { 'no-protected-constructor-usage': noProtectedConstructorUsage },
+};
 
 export default defineConfig(
   {
@@ -33,6 +38,7 @@ export default defineConfig(
   },
   {
     files: ['**/*.ts'],
+    plugins: { local: localPlugin },
     languageOptions: {
       parserOptions: {
         project: './tsconfig.eslint.json',
@@ -59,6 +65,7 @@ export default defineConfig(
       '@typescript-eslint/no-unsafe-argument': 'off',
       '@typescript-eslint/no-unsafe-member-access': 'off',
       '@typescript-eslint/no-unsafe-return': 'off',
+      'local/no-protected-constructor-usage': 'error',
       'import-x/no-default-export': 'error',
       '@eslint-community/eslint-comments/require-description': 'error',
       '@typescript-eslint/consistent-type-imports': [

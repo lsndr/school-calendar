@@ -37,9 +37,13 @@ export class LessonRepository extends Repository<Lesson, Tx> {
 
     if (!r) return undefined;
 
+    // eslint-disable-next-line local/no-protected-constructor-usage -- state recovery
     const lesson = new Lesson({
+      // eslint-disable-next-line local/no-protected-constructor-usage -- state recovery
       id: new LessonId(r.id),
+      // eslint-disable-next-line local/no-protected-constructor-usage -- state recovery
       subjectId: new SubjectId(r.subjectId!),
+      // eslint-disable-next-line local/no-protected-constructor-usage -- state recovery
       schoolId: new SchoolId(r.schoolId),
       date: ExactDate.create({
         year: r.date.getUTCFullYear(),
@@ -52,8 +56,11 @@ export class LessonRepository extends Repository<Lesson, Tx> {
       }),
       assignedTeachers: r.teachers.map(
         (t) =>
+          // eslint-disable-next-line local/no-protected-constructor-usage -- state recovery
           new AssignedTeacher({
+            // eslint-disable-next-line local/no-protected-constructor-usage -- state recovery
             id: new AssignedTeacherId(t.id),
+            // eslint-disable-next-line local/no-protected-constructor-usage -- state recovery
             teacherId: new TeacherId(t.teacherId),
             assignedAt: DateTime.fromJSDate(t.assignedAt),
           }),
@@ -75,9 +82,13 @@ export class LessonRepository extends Repository<Lesson, Tx> {
 
     if (!r) return undefined;
 
+    // eslint-disable-next-line local/no-protected-constructor-usage -- state recovery
     const lesson = new Lesson({
+      // eslint-disable-next-line local/no-protected-constructor-usage -- state recovery
       id: new LessonId(r.id),
+      // eslint-disable-next-line local/no-protected-constructor-usage -- state recovery
       subjectId: new SubjectId(r.subjectId!),
+      // eslint-disable-next-line local/no-protected-constructor-usage -- state recovery
       schoolId: new SchoolId(r.schoolId),
       date: ExactDate.create({
         year: r.date.getUTCFullYear(),
@@ -90,8 +101,11 @@ export class LessonRepository extends Repository<Lesson, Tx> {
       }),
       assignedTeachers: r.teachers.map(
         (t) =>
+          // eslint-disable-next-line local/no-protected-constructor-usage -- state recovery
           new AssignedTeacher({
+            // eslint-disable-next-line local/no-protected-constructor-usage -- state recovery
             id: new AssignedTeacherId(t.id),
+            // eslint-disable-next-line local/no-protected-constructor-usage -- state recovery
             teacherId: new TeacherId(t.teacherId),
             assignedAt: DateTime.fromJSDate(t.assignedAt),
           }),

@@ -18,6 +18,7 @@ export abstract class SchoolState extends AggregateRoot {
   protected _createdAt: DateTime;
   protected _updatedAt: DateTime;
 
+  /** @protected Use for state recovery only */
   public constructor(state: CreateSchoolState) {
     super();
 

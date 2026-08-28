@@ -16,9 +16,12 @@ export class GroupRepository extends Repository<Group, Tx> {
 
     if (!r) return undefined;
 
+    // eslint-disable-next-line local/no-protected-constructor-usage -- state recovery
     const group = new Group({
+      // eslint-disable-next-line local/no-protected-constructor-usage -- state recovery
       id: new GroupId(r.id),
       name: r.name,
+      // eslint-disable-next-line local/no-protected-constructor-usage -- state recovery
       schoolId: new SchoolId(r.schoolId),
       createdAt: DateTime.fromJSDate(r.createdAt),
       updatedAt: DateTime.fromJSDate(r.updatedAt),

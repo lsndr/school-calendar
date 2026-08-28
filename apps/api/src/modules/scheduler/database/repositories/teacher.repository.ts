@@ -17,9 +17,12 @@ export class TeacherRepository extends Repository<Teacher, Tx> {
     });
 
     return rows.map((r) => {
+      // eslint-disable-next-line local/no-protected-constructor-usage -- state recovery
       const teacher = new Teacher({
+        // eslint-disable-next-line local/no-protected-constructor-usage -- state recovery
         id: new TeacherId(r.id),
         name: r.name,
+        // eslint-disable-next-line local/no-protected-constructor-usage -- state recovery
         schoolId: new SchoolId(r.schoolId),
         createdAt: DateTime.fromJSDate(r.createdAt),
         updatedAt: DateTime.fromJSDate(r.updatedAt),
@@ -38,6 +41,7 @@ export class TeacherRepository extends Repository<Teacher, Tx> {
 
     if (!r) return undefined;
 
+    /* eslint-disable local/no-protected-constructor-usage -- state recovery */
     const teacher = new Teacher({
       id: new TeacherId(r.id),
       name: r.name,
@@ -45,6 +49,7 @@ export class TeacherRepository extends Repository<Teacher, Tx> {
       createdAt: DateTime.fromJSDate(r.createdAt),
       updatedAt: DateTime.fromJSDate(r.updatedAt),
     });
+    /* eslint-enable local/no-protected-constructor-usage -- state recovery */
 
     this.vt.setVersion(teacher, r.version);
 

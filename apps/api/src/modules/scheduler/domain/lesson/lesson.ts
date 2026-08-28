@@ -111,6 +111,7 @@ export class Lesson extends LessonState {
     );
     this.assert(school.id.value === this.schoolId.value, 'wrong_school');
 
+    // eslint-disable-next-line local/no-protected-constructor-usage -- domain entity creation within aggregate
     const assignedTeacher = new AssignedTeacher({
       id: AssignedTeacherId.create(),
       assignedAt: now,
