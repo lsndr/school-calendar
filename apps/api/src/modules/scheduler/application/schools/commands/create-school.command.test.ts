@@ -1,7 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { Test } from '@nestjs/testing';
-import { MikroORM } from '@mikro-orm/postgresql';
-import { testMikroormProvider } from '../../../../shared/tests';
+import { PrismaClient } from '@prisma/client';
+import { Uow } from 'yuow/core';
+import {
+  testPrismaProvider,
+  testUowProvider,
+  setupUowContext,
+} from '../../../../shared/tests';
 import { CommandBus, QueryBus, CqrsModule } from '../../../../shared/cqrs';
 import {
   CreateSchoolCommand,
@@ -16,7 +21,7 @@ import {
 describe('CreateSchoolCommand', () => {
   let commandBus: CommandBus;
   let queryBus: QueryBus;
-  let orm: MikroORM;
+  let prisma: PrismaClient;
 
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
@@ -24,15 +29,19 @@ describe('CreateSchoolCommand', () => {
       providers: [
         CreateSchoolCommandHandler,
         FindSchoolQueryHandler,
-        testMikroormProvider,
+        testPrismaProvider,
+        testUowProvider,
       ],
     }).compile();
 
     commandBus = moduleRef.get(CommandBus);
     queryBus = moduleRef.get(QueryBus);
-    orm = moduleRef.get(MikroORM);
+    prisma = moduleRef.get(PrismaClient);
+    const uow = moduleRef.get(Uow);
 
     await moduleRef.createNestApplication().init();
+
+    setupUowContext({ commandBus, queryBus }, uow);
   });
 
   it('should create a school', async () => {
@@ -61,6 +70,6 @@ describe('CreateSchoolCommand', () => {
   });
 
   afterEach(async () => {
-    await orm.close();
+    await prisma.$disconnect();
   });
 });

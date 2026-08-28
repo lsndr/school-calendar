@@ -1,0 +1,112 @@
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model School {
+  id        String   @id
+  name      String
+  timeZone  String   @map("time_zone")
+  version   Int      @default(1)
+  createdAt DateTime @map("created_at") @db.Timestamp()
+  updatedAt DateTime @map("updated_at") @db.Timestamp()
+
+  @@map("school")
+}
+
+model Teacher {
+  id        String   @id
+  name      String
+  schoolId  String   @map("school_id")
+  version   Int      @default(1)
+  createdAt DateTime @map("created_at") @db.Timestamp()
+  updatedAt DateTime @map("updated_at") @db.Timestamp()
+
+  @@map("teacher")
+}
+
+model Group {
+  id        String   @id
+  name      String
+  schoolId  String   @map("school_id")
+  version   Int      @default(1)
+  createdAt DateTime @map("created_at") @db.Timestamp()
+  updatedAt DateTime @map("updated_at") @db.Timestamp()
+
+  @@map("group")
+}
+
+model Subject {
+  id               String   @id
+  name             String
+  schoolId         String   @map("school_id")
+  recurrenceType   String   @map("recurrence_type")
+  recurrenceDays   Int[]    @map("recurrence_days")
+  recurrenceWeek1  Int[]    @map("recurrence_week1")
+  recurrenceWeek2  Int[]    @map("recurrence_week2")
+  timeStartsAt     Int      @map("time_starts_at")
+  timeDuration     Int      @map("time_duration")
+  groupId          String   @map("group_id")
+  requiredTeachers Int      @map("required_teachers")
+  version          Int      @default(1)
+  createdAt        DateTime @map("created_at") @db.Timestamp()
+  updatedAt        DateTime @map("updated_at") @db.Timestamp()
+
+  @@map("subject")
+}
+
+model SubjectLog {
+  subjectId        String   @map("subject_id")
+  name             String
+  recurrenceType   String   @map("recurrence_type")
+  recurrenceDays   Int[]    @map("recurrence_days")
+  recurrenceWeek1  Int[]    @map("recurrence_week1")
+  recurrenceWeek2  Int[]    @map("recurrence_week2")
+  timeStartsAt     Int      @map("time_starts_at")
+  timeDuration     Int      @map("time_duration")
+  requiredTeachers Int      @map("required_teachers")
+  createdAt        DateTime @map("created_at") @db.Timestamp()
+
+  @@id([subjectId, createdAt])
+  @@map("subject_log")
+}
+
+model Lesson {
+  id           String          @id
+  subjectId    String?         @map("subject_id")
+  date         DateTime        @db.Date
+  schoolId     String          @map("school_id")
+  timeStartsAt Int             @map("time_starts_at")
+  timeDuration Int             @map("time_duration")
+  version      Int             @default(1)
+  createdAt    DateTime        @map("created_at") @db.Timestamp()
+  updatedAt    DateTime        @map("updated_at") @db.Timestamp()
+  teachers     LessonTeacher[]
+
+  @@unique([subjectId, date])
+  @@map("lesson")
+}
+
+model LessonTeacher {
+  id         String   @id
+  lessonId   String?  @map("lesson_id")
+  teacherId  String   @map("teacher_id")
+  assignedAt DateTime @map("assigned_at") @db.Timestamp()
+  lesson     Lesson?  @relation(fields: [lessonId], references: [id])
+
+  @@unique([lessonId, teacherId])
+  @@map("lesson_teacher")
+}
+
+model Outbox {
+  id          String    @id
+  topic       String
+  payload     Json
+  createdAt   DateTime  @map("created_at") @db.Timestamp()
+  processedAt DateTime? @map("processed_at") @db.Timestamp()
+
+  @@map("outbox")
+}

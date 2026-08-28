@@ -1,21 +1,16 @@
-import { ArrayType, Embeddable, Property } from '@mikro-orm/core';
 import { BaseRecurrence } from './base';
-import { RecurrenceType, WeekDays } from './types';
+import { RecurrenceType, type WeekDays } from './types';
 
 export interface CreateBiWeeklyRecurrence {
   week1: (typeof WeekDays)[number][];
   week2: (typeof WeekDays)[number][];
 }
 
-@Embeddable({ discriminatorValue: RecurrenceType.BiWeekly })
 export class BiWeeklyRecurrence extends BaseRecurrence<
   RecurrenceType.BiWeekly,
   'BiWeeklyRecurrence'
 > {
-  @Property({ type: ArrayType })
   public readonly week1: readonly (typeof WeekDays)[number][];
-
-  @Property({ type: ArrayType })
   public readonly week2: readonly (typeof WeekDays)[number][];
 
   protected constructor(

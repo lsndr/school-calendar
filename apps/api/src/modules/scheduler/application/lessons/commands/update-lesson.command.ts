@@ -1,16 +1,16 @@
-import { MikroORM } from '@mikro-orm/postgresql';
+import { Context, Transactional } from 'yuow/core';
 import { Command, CommandHandler } from '../../../../shared/cqrs';
 import { LessonDto } from '../dtos/lesson.dto';
-import {
-  Lesson,
-  School,
-  Subject,
-  Teacher,
-  TimeInterval,
-} from '../../../domain';
+import { TimeInterval } from '../../../domain';
 import { DateTime } from 'luxon';
 import { UpdateLessonDto } from '../dtos/update-lesson.dto';
 import { TimeIntervalDto } from '../../shared';
+import {
+  LessonRepository,
+  SchoolRepository,
+  SubjectRepository,
+  TeacherRepository,
+} from '../../../database';
 
 export class UpdateLessonCommand extends Command<LessonDto> {
   public constructor(
@@ -25,34 +25,25 @@ export class UpdateLessonCommand extends Command<LessonDto> {
 
 @CommandHandler(UpdateLessonCommand)
 export class UpdateLessonCommandHandler implements CommandHandler<UpdateLessonCommand> {
-  public constructor(private readonly orm: MikroORM) {}
-
+  @Transactional()
   public async execute({
     schoolId,
     subjectId,
     date,
     payload,
   }: UpdateLessonCommand): Promise<LessonDto> {
-    const em = this.orm.em;
+    const lessonRepo = Context.getRepository(LessonRepository);
+    const schoolRepo = Context.getRepository(SchoolRepository);
+    const subjectRepo = Context.getRepository(SubjectRepository);
+    const teacherRepo = Context.getRepository(TeacherRepository);
 
     const [lesson, school, subject, teachers] = await Promise.all([
-      em
-        .createQueryBuilder(Lesson)
-        .where({
-          subjectId,
-          date,
-          schoolId,
-        })
-        .getSingleResult(),
-      em.createQueryBuilder(School).where({ id: schoolId }).getSingleResult(),
-      em
-        .createQueryBuilder(Subject)
-        .where({ id: subjectId, schoolId: schoolId })
-        .getSingleResult(),
-      em
-        .createQueryBuilder(Teacher)
-        .where({ id: { $in: payload.teacherIds }, schoolId: schoolId })
-        .getResult(),
+      lessonRepo.findBySubjectAndDate(subjectId, date, schoolId),
+      schoolRepo.find(schoolId),
+      subjectRepo.findBySchool(subjectId, schoolId),
+      payload.teacherIds
+        ? teacherRepo.findMany(payload.teacherIds, schoolId)
+        : Promise.resolve([]),
     ]);
 
     if (!lesson) {
@@ -75,21 +66,19 @@ export class UpdateLessonCommandHandler implements CommandHandler<UpdateLessonCo
     }
 
     if (payload.teacherIds !== undefined) {
-      const teachersMap = teachers.reduce<Map<string, Teacher>>(
-        (map, teacher) => {
+      const teacherMap = new Map(
+        teachers.map((teacher) => {
           lesson.assignTeacher(teacher, subject, school, now);
-
-          return map.set(teacher.id.value, teacher);
-        },
-        new Map(),
+          return [teacher.id.value, teacher];
+        }),
       );
 
-      for (const teacher of lesson.assignedTeachers) {
-        if (teachersMap.has(teacher.teacherId.value)) {
+      for (const at of lesson.assignedTeachers) {
+        if (teacherMap.has(at.teacherId.value)) {
           continue;
         }
 
-        lesson.unassignTeacher(teacher.teacherId.value, school, now);
+        lesson.unassignTeacher(at.teacherId.value, school, now);
       }
     }
 

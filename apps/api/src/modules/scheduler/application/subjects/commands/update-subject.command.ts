@@ -1,12 +1,12 @@
-import { MikroORM } from '@mikro-orm/postgresql';
+import { Context, Transactional } from 'yuow/core';
 import { Command, CommandHandler, CommandProps } from '../../../../shared/cqrs';
-import { RequiredTeachers, Subject, TimeInterval } from '../../../domain';
+import { RequiredTeachers, TimeInterval } from '../../../domain';
 import { DateTime } from 'luxon';
 import { SubjectDto } from '../dtos/subject.dto';
 import { mapDtoToRecurrence, mapRecurrenceToDto } from '../helpers/mappers';
 import { UpdateSubjectDto } from '../dtos/update-subject.dto';
 import { TimeIntervalDto } from '../../shared';
-import { Transactional } from '../../../../shared/database';
+import { SubjectRepository } from '../../../database';
 
 export class UpdateSubjectCommand extends Command<SubjectDto | undefined> {
   public readonly id: string;
@@ -24,24 +24,16 @@ export class UpdateSubjectCommand extends Command<SubjectDto | undefined> {
 
 @CommandHandler(UpdateSubjectCommand)
 export class UpdateSubjectCommandHandler implements CommandHandler<UpdateSubjectCommand> {
-  public constructor(private readonly orm: MikroORM) {}
-
   @Transactional()
   public async execute({
     id,
     schoolId,
     payload,
   }: UpdateSubjectCommand): Promise<SubjectDto | undefined> {
-    const em = this.orm.em;
+    const subjectRepo = Context.getRepository(SubjectRepository);
     const now = DateTime.now();
 
-    const subject = await em
-      .createQueryBuilder(Subject)
-      .where({
-        id,
-        school_id: schoolId,
-      })
-      .getSingleResult();
+    const subject = await subjectRepo.findBySchool(id, schoolId);
 
     if (!subject) {
       return;

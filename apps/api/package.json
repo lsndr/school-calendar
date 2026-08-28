@@ -1,5 +1,16 @@
 {
   "name": "@apps/api",
   "version": "0.0.0",
-  "private": true
+  "private": true,
+  "scripts": {
+    "postinstall": "npx nx run api:db:generate"
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "^7.9.1",
+    "@prisma/client": "^7.0.0",
+    "yuow": "1.0.0-alpha.60"
+  },
+  "devDependencies": {
+    "prisma": "^7.0.0"
+  }
 }

@@ -1,4 +1,4 @@
-import { MikroORM } from '@mikro-orm/postgresql';
+import { PrismaClient } from '@prisma/client';
 import { Query, QueryHandler } from '../../../../shared/cqrs';
 import { SchoolDto } from '../dtos/school.dto';
 
@@ -6,27 +6,20 @@ export class FindSchoolsQuery extends Query<SchoolDto[]> {}
 
 @QueryHandler(FindSchoolsQuery)
 export class FindSchoolsQueryHandler implements QueryHandler<FindSchoolsQuery> {
-  public constructor(private readonly orm: MikroORM) {}
+  public constructor(private readonly prisma: PrismaClient) {}
 
   public async execute(): Promise<SchoolDto[]> {
-    const knex = this.orm.em.getConnection().getKnex();
+    const records = await this.prisma.school.findMany({
+      select: { id: true, name: true, timeZone: true },
+    });
 
-    const records = await knex
-      .select(['id', 'time_zone', 'name'])
-      .from('school');
-
-    const schools: SchoolDto[] = [];
-
-    for (const record of records) {
-      schools.push(
+    return records.map(
+      (r) =>
         new SchoolDto({
-          id: record.id,
-          name: record.name,
-          timeZone: record.time_zone,
+          id: r.id,
+          name: r.name,
+          timeZone: r.timeZone,
         }),
-      );
-    }
-
-    return schools;
+    );
   }
 }

@@ -1,4 +1,4 @@
-import { MikroORM } from '@mikro-orm/postgresql';
+import { PrismaClient } from '@prisma/client';
 import { Injectable } from '@nestjs/common';
 import { DateTime } from 'luxon';
 import { extractDatesFromRecurrence } from '../../../domain';
@@ -25,72 +25,63 @@ interface SubjectVersionRow {
   group_id: string;
   name: string;
   time_starts_at: number;
-  recurrence_type: any;
-  recurrence_week1: any;
-  recurrence_week2: any;
-  recurrence_days: any;
+  recurrence_type: string;
+  recurrence_week1: number[] | null;
+  recurrence_week2: number[] | null;
+  recurrence_days: number[] | null;
   time_duration: number;
   required_teachers: number;
-  active_since: DateTime;
-  active_till: DateTime | null;
-  created_at: DateTime;
+  active_since: Date;
+  active_till: Date | null;
+  created_at: Date;
 }
 
 @Injectable()
 export class SubjectVersionsLoader {
-  public constructor(private readonly orm: MikroORM) {}
+  public constructor(private readonly prisma: PrismaClient) {}
 
   public async load(
     options: SubjectVersionsLoaderOptions,
   ): Promise<Generator<SubjectVersion>> {
-    const knex = this.orm.em.getConnection().getKnex();
-    const handledVersions = new Set<string>();
+    const fromSql = options.from.toUTC().toSQL();
+    const toSql = options.to.toUTC().toSQL();
 
-    const subjects = (await knex
-      .select('*')
-      .from(
-        knex
-          .select([
-            'subject.id',
-            'subject.group_id',
-            'subject_log.name',
-            'subject_log.time_starts_at',
-            'subject_log.recurrence_type',
-            'subject_log.recurrence_week1',
-            'subject_log.recurrence_week2',
-            'subject_log.recurrence_days',
-            'subject_log.time_duration',
-            'subject_log.required_teachers',
-            'subject_log.created_at as active_since',
-            knex.raw(
-              'LEAD(subject_log.created_at) OVER (PARTITION BY subject_log.subject_id ORDER BY subject_log.created_at ASC) as active_till',
-            ),
-            'subject.created_at',
-          ])
-          .innerJoin('subject_log', 'subject_log.subject_id', 'subject.id')
-          .from('subject')
-          .where('subject.school_id', options.schoolId)
-          .as('version'),
+    const subjects = await this.prisma.$queryRaw<SubjectVersionRow[]>`
+      SELECT *
+      FROM (
+        SELECT
+          subject.id,
+          subject.group_id,
+          subject_log.name,
+          subject_log.time_starts_at,
+          subject_log.recurrence_type,
+          subject_log.recurrence_week1,
+          subject_log.recurrence_week2,
+          subject_log.recurrence_days,
+          subject_log.time_duration,
+          subject_log.required_teachers,
+          subject_log.created_at AS active_since,
+          LEAD(subject_log.created_at) OVER (
+            PARTITION BY subject_log.subject_id
+            ORDER BY subject_log.created_at ASC
+          ) AS active_till,
+          subject.created_at
+        FROM subject
+        INNER JOIN subject_log ON subject_log.subject_id = subject.id
+        WHERE subject.school_id = ${options.schoolId}
+      ) version
+      WHERE (
+        (active_since >= ${fromSql}::timestamptz AND active_since < ${toSql}::timestamptz)
+        OR (active_till >= ${fromSql}::timestamptz AND active_till < ${toSql}::timestamptz)
+        OR (active_till IS NULL AND active_since < ${toSql}::timestamptz)
       )
-      .where((query1) => {
-        query1
-          .where((query2) => {
-            query2
-              .where('active_since', '>=', options.from.toUTC().toSQL())
-              .andWhere('active_since', '<', options.to.toUTC().toSQL());
-          })
-          .orWhere((query2) => {
-            query2
-              .where('active_till', '>=', options.from.toUTC().toSQL())
-              .andWhere('active_till', '<', options.to.toUTC().toSQL());
-          })
-          .orWhere((query2) => {
-            query2
-              .whereNull('active_till')
-              .andWhere('active_since', '<', options.to.toUTC().toSQL());
-          });
-      })
-      .orderBy('active_since', 'desc')) as SubjectVersionRow[];
+      ORDER BY active_since DESC
+    `;
+
+    const handledVersions = new Set<string>();
+    const timeZone = options.timeZone;
+    const optionsFrom = options.from;
+    const optionsTo = options.to;
 
     return (function* () {
       for (const subject of subjects) {
@@ -99,35 +90,40 @@ export class SubjectVersionsLoader {
           days: subject.recurrence_days,
           week1: subject.recurrence_week1,
           week2: subject.recurrence_week2,
-        };
+        } as any;
 
-        const calculateSince = subject.created_at
-          .setZone(options.timeZone)
+        const activeSince = DateTime.fromJSDate(subject.active_since);
+        const activeTill = subject.active_till
+          ? DateTime.fromJSDate(subject.active_till)
+          : null;
+        const subjectCreatedAt = DateTime.fromJSDate(subject.created_at);
+
+        const calculateSince = subjectCreatedAt
+          .setZone(timeZone)
           .startOf('day');
-        const calculateTill = subject.active_till
-          ? subject.active_till.setZone(options.timeZone).endOf('day')
+        const calculateTill = activeTill
+          ? activeTill.setZone(timeZone).endOf('day')
           : undefined;
 
         const datesFrom = (
-          subject.active_since.toMillis() > options.from.toMillis()
-            ? subject.active_since
-            : options.from
+          activeSince.toMillis() > optionsFrom.toMillis()
+            ? activeSince
+            : optionsFrom
         )
-          .setZone(options.timeZone)
+          .setZone(timeZone)
           .startOf('day');
-        const datesTo = options.to;
+        const datesTo = optionsTo;
 
         const dates = extractDatesFromRecurrence(datesFrom, datesTo, {
-          timeZone: options.timeZone,
+          timeZone,
           calculateSince,
           calculateTill,
           recurrence,
         });
 
         for (const date of dates) {
-          const activeSince = subject.active_since;
           const start = date
-            .setZone(options.timeZone)
+            .setZone(timeZone)
             .startOf('day')
             .plus({ minutes: subject.time_starts_at });
 

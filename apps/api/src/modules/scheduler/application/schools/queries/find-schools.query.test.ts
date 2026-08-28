@@ -1,9 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { Test } from '@nestjs/testing';
-import { School, SchoolId, TimeZone } from '../../../domain';
+import { PrismaClient } from '@prisma/client';
+import { Uow } from 'yuow/core';
 import { DateTime } from 'luxon';
-import { MikroORM } from '@mikro-orm/postgresql';
-import { testMikroormProvider } from '../../../../shared/tests';
+import {
+  testPrismaProvider,
+  testUowProvider,
+  setupUowContext,
+} from '../../../../shared/tests';
 import { CqrsModule, QueryBus } from '../../../../shared/cqrs';
 import {
   FindSchoolsQuery,
@@ -12,23 +16,26 @@ import {
 
 describe('FindSchoolsQuery', () => {
   let queryBus: QueryBus;
-  let orm: MikroORM;
+  let prisma: PrismaClient;
 
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
       imports: [CqrsModule],
-      providers: [FindSchoolsQueryHandler, testMikroormProvider],
+      providers: [FindSchoolsQueryHandler, testPrismaProvider, testUowProvider],
     }).compile();
 
     queryBus = moduleRef.get(QueryBus);
-    orm = moduleRef.get(MikroORM);
+    prisma = moduleRef.get(PrismaClient);
+    const uow = moduleRef.get(Uow);
 
     await moduleRef.createNestApplication().init();
+
+    setupUowContext({ queryBus }, uow);
   });
 
   it('should find schools', async () => {
     // arrange
-    await seed(orm);
+    await seed(prisma);
 
     // act
     const result = await queryBus.execute(new FindSchoolsQuery());
@@ -49,35 +56,36 @@ describe('FindSchoolsQuery', () => {
   });
 
   afterEach(async () => {
-    await orm.close();
+    await prisma.$disconnect();
   });
 });
 
-async function seed(orm: MikroORM) {
-  const em = orm.em.fork();
+async function seed(prisma: PrismaClient) {
+  const now1 = DateTime.fromISO('2023-02-05T19:48:34', {
+    zone: 'Europe/Moscow',
+  }).toJSDate();
+  const now2 = DateTime.fromISO('2023-02-07T10:12:56', {
+    zone: 'Europe/London',
+  }).toJSDate();
 
-  const school1 = School.create({
-    id: SchoolId.create(),
-    name: 'School 1',
-    timeZone: TimeZone.create('Europe/Moscow'),
-    now: DateTime.fromISO('2023-02-05T19:48:34', {
-      zone: 'Europe/Moscow',
-    }),
+  await prisma.school.createMany({
+    data: [
+      {
+        id: crypto.randomUUID(),
+        name: 'School 1',
+        timeZone: 'Europe/Moscow',
+        version: 1,
+        createdAt: now1,
+        updatedAt: now1,
+      },
+      {
+        id: crypto.randomUUID(),
+        name: 'School 2',
+        timeZone: 'Europe/London',
+        version: 1,
+        createdAt: now2,
+        updatedAt: now2,
+      },
+    ],
   });
-
-  const school2 = School.create({
-    id: SchoolId.create(),
-    name: 'School 2',
-    timeZone: TimeZone.create('Europe/London'),
-    now: DateTime.fromISO('2023-02-07T10:12:56', {
-      zone: 'Europe/London',
-    }),
-  });
-
-  await em.persistAndFlush([school1, school2]);
-
-  return {
-    school1,
-    school2,
-  };
 }

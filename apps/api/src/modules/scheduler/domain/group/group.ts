@@ -1,8 +1,7 @@
-import { Entity } from '@mikro-orm/core';
-import { DateTime } from 'luxon';
-import { GroupId } from './group-id';
+import { type DateTime } from 'luxon';
+import { type GroupId } from './group-id';
 import { GroupState } from './group.state';
-import { School, SchoolId } from './../school';
+import { type School, type SchoolId } from './../school';
 
 export interface CreateGroup {
   id: GroupId;
@@ -11,7 +10,6 @@ export interface CreateGroup {
   now: DateTime;
 }
 
-@Entity()
 export class Group extends GroupState {
   public get id(): GroupId {
     return this._id;
@@ -34,14 +32,12 @@ export class Group extends GroupState {
   }
 
   public static create(data: CreateGroup): Group {
-    const group = new this({
+    return new this({
       id: data.id,
       name: data.name,
       schoolId: data.school.id,
       createdAt: data.now,
       updatedAt: data.now,
     });
-
-    return group;
   }
 }

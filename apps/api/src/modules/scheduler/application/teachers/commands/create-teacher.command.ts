@@ -1,10 +1,10 @@
-import { MikroORM } from '@mikro-orm/postgresql';
+import { Context, Transactional } from 'yuow/core';
 import { Command, CommandHandler, CommandProps } from '../../../../shared/cqrs';
-import { School, Teacher, TeacherId } from '../../../domain';
+import { Teacher, TeacherId } from '../../../domain';
 import { DateTime } from 'luxon';
 import { TeacherDto } from '../dtos/teacher.dto';
 import { CreateTeacherDto } from '../dtos/create-teacher.dto';
-import { Transactional } from '../../../../shared/database';
+import { SchoolRepository, TeacherRepository } from '../../../database';
 
 export class CreateTeacherCommand extends Command<TeacherDto> {
   public readonly schoolId: string;
@@ -20,21 +20,15 @@ export class CreateTeacherCommand extends Command<TeacherDto> {
 
 @CommandHandler(CreateTeacherCommand)
 export class CreateTeacherCommandHandler implements CommandHandler<CreateTeacherCommand> {
-  public constructor(private readonly orm: MikroORM) {}
-
   @Transactional()
   public async execute({
     schoolId,
     payload,
   }: CreateTeacherCommand): Promise<TeacherDto> {
-    const em = this.orm.em;
+    const schoolRepo = Context.getRepository(SchoolRepository);
+    const teacherRepo = Context.getRepository(TeacherRepository);
 
-    const school = await em
-      .createQueryBuilder(School)
-      .where({
-        id: schoolId,
-      })
-      .getSingleResult();
+    const school = await schoolRepo.find(schoolId);
 
     if (!school) {
       throw new Error('School not found');
@@ -46,11 +40,11 @@ export class CreateTeacherCommandHandler implements CommandHandler<CreateTeacher
     const teacher = Teacher.create({
       id,
       name,
-      school: school,
+      school,
       now: DateTime.now(),
     });
 
-    em.persist(teacher);
+    teacherRepo.add(teacher);
 
     return new TeacherDto({
       id: teacher.id.value,

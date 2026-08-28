@@ -46,22 +46,18 @@
         "cwd": "{projectRoot}"
       }
     },
-    "migration:create": {
+    "db:generate": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "mikro-orm migration:create --blank"
+        "command": "prisma generate --config prisma.config.ts",
+        "cwd": "{projectRoot}"
       }
     },
-    "migration:up": {
+    "db:migrate": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "mikro-orm migration:up"
-      }
-    },
-    "migration:down": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "mikro-orm migration:down"
+        "command": "prisma migrate deploy --config prisma.config.ts",
+        "cwd": "{projectRoot}"
       }
     }
   }

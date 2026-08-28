@@ -1,4 +1,4 @@
-import { MikroORM } from '@mikro-orm/postgresql';
+import { PrismaClient } from '@prisma/client';
 import { Injectable } from '@nestjs/common';
 import { DateTime } from 'luxon';
 import { LessonsLoader, Assignment } from './lessons.loader';
@@ -22,7 +22,7 @@ export class TeachersCalendarLoader {
   public constructor(
     private readonly subjectVersionsLoader: SubjectVersionsLoader,
     private readonly lessonsLoader: LessonsLoader,
-    private readonly orm: MikroORM,
+    private readonly prisma: PrismaClient,
   ) {}
 
   public async forPeriod(
@@ -101,11 +101,11 @@ export class TeachersCalendarLoader {
   }
 
   private async getTeachers(schoolId: string): Promise<CalendarTeacherDto[]> {
-    const knex = this.orm.em.getConnection().getKnex();
+    const records = await this.prisma.teacher.findMany({
+      where: { schoolId },
+      select: { id: true, name: true },
+    });
 
-    return await knex
-      .select(['id', 'name'])
-      .from('teacher')
-      .where('school_id', schoolId);
+    return records.map((r) => ({ id: r.id, name: r.name }));
   }
 }

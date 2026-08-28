@@ -1,10 +1,10 @@
-import { MikroORM } from '@mikro-orm/postgresql';
+import { Context, Transactional } from 'yuow/core';
 import { Command, CommandProps, CommandHandler } from '../../../../shared/cqrs';
 import { School, SchoolId, TimeZone } from '../../../domain';
 import { DateTime } from 'luxon';
 import { SchoolDto } from '../dtos/school.dto';
 import { CreateSchoolDto } from '../dtos/create-school.dto';
-import { Transactional } from '../../../../shared/database';
+import { SchoolRepository } from '../../../database';
 
 export class CreateSchoolCommand extends Command<SchoolDto> {
   public readonly payload: CreateSchoolDto;
@@ -18,11 +18,9 @@ export class CreateSchoolCommand extends Command<SchoolDto> {
 
 @CommandHandler(CreateSchoolCommand)
 export class CreateSchoolCommandHandler implements CommandHandler<CreateSchoolCommand> {
-  public constructor(private readonly orm: MikroORM) {}
-
   @Transactional()
   public execute({ payload }: CreateSchoolCommand): SchoolDto {
-    const em = this.orm.em;
+    const repo = Context.getRepository(SchoolRepository);
 
     const id = SchoolId.create();
     const name = payload.name;
@@ -36,7 +34,7 @@ export class CreateSchoolCommandHandler implements CommandHandler<CreateSchoolCo
       now,
     });
 
-    em.persist(school);
+    repo.add(school);
 
     return new SchoolDto({
       id: school.id.value,

@@ -1,8 +1,7 @@
-import { Entity } from '@mikro-orm/core';
-import { DateTime } from 'luxon';
-import { TeacherId } from './teacher-id';
+import { type DateTime } from 'luxon';
+import { type TeacherId } from './teacher-id';
 import { TeacherState } from './teacher.state';
-import { School, SchoolId } from './../school';
+import { type School, type SchoolId } from './../school';
 
 export interface CreateTeacher {
   id: TeacherId;
@@ -11,7 +10,6 @@ export interface CreateTeacher {
   now: DateTime;
 }
 
-@Entity()
 export class Teacher extends TeacherState {
   public get id(): TeacherId {
     return this._id;
@@ -34,14 +32,12 @@ export class Teacher extends TeacherState {
   }
 
   public static create(data: CreateTeacher): Teacher {
-    const teacher = new this({
+    return new this({
       id: data.id,
       name: data.name,
       schoolId: data.school.id,
       createdAt: data.now,
       updatedAt: data.now,
     });
-
-    return teacher;
   }
 }

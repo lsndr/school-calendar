@@ -1,9 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { Test } from '@nestjs/testing';
-import { School, SchoolId, TimeZone } from '../../../domain';
+import { PrismaClient } from '@prisma/client';
+import { Uow } from 'yuow/core';
 import { DateTime } from 'luxon';
-import { MikroORM } from '@mikro-orm/postgresql';
-import { testMikroormProvider } from '../../../../shared/tests';
+import {
+  testPrismaProvider,
+  testUowProvider,
+  setupUowContext,
+} from '../../../../shared/tests';
 import { CommandBus, QueryBus, CqrsModule } from '../../../../shared/cqrs';
 import {
   CreateGroupCommand,
@@ -18,7 +22,7 @@ import { CreateGroupDto } from '../dtos/create-group.dto';
 describe('CreateGroupCommand', () => {
   let commandBus: CommandBus;
   let queryBus: QueryBus;
-  let orm: MikroORM;
+  let prisma: PrismaClient;
 
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
@@ -26,34 +30,36 @@ describe('CreateGroupCommand', () => {
       providers: [
         CreateGroupCommandHandler,
         FindGroupQueryHandler,
-        testMikroormProvider,
+        testPrismaProvider,
+        testUowProvider,
       ],
     }).compile();
 
     commandBus = moduleRef.get(CommandBus);
     queryBus = moduleRef.get(QueryBus);
-    orm = moduleRef.get(MikroORM);
+    prisma = moduleRef.get(PrismaClient);
+    const uow = moduleRef.get(Uow);
 
     await moduleRef.createNestApplication().init();
+
+    setupUowContext({ commandBus, queryBus }, uow);
   });
 
   it('should create a group', async () => {
     // arrange
-    const school = await seedSchool(orm);
+    const school = await seedSchool(prisma);
 
     // act
     const result = await commandBus.execute(
       new CreateGroupCommand({
-        schoolId: school.id.value,
-        payload: new CreateGroupDto({
-          name: 'Test Group',
-        }),
+        schoolId: school.id,
+        payload: new CreateGroupDto({ name: 'Test Group' }),
       }),
     );
 
     // assert
     const result2 = await queryBus.execute(
-      new FindGroupQuery({ schoolId: school.id.value, id: result.id }),
+      new FindGroupQuery({ schoolId: school.id, id: result.id }),
     );
 
     expect(result).toEqual(result2);
@@ -69,9 +75,7 @@ describe('CreateGroupCommand', () => {
       commandBus.execute(
         new CreateGroupCommand({
           schoolId: 'wrong-school-id',
-          payload: new CreateGroupDto({
-            name: 'Test Group',
-          }),
+          payload: new CreateGroupDto({ name: 'Test Group' }),
         }),
       );
 
@@ -80,20 +84,21 @@ describe('CreateGroupCommand', () => {
   });
 
   afterEach(async () => {
-    await orm.close();
+    await prisma.$disconnect();
   });
 });
 
-async function seedSchool(orm: MikroORM) {
-  const oschool = School.create({
-    id: SchoolId.create(),
-    name: 'Test School',
-    timeZone: TimeZone.create('Europe/Moscow'),
-    now: DateTime.now(),
+async function seedSchool(prisma: PrismaClient) {
+  const now = DateTime.now().toJSDate();
+
+  return prisma.school.create({
+    data: {
+      id: crypto.randomUUID(),
+      name: 'Test School',
+      timeZone: 'Europe/Moscow',
+      version: 1,
+      createdAt: now,
+      updatedAt: now,
+    },
   });
-
-  const oschoolRepository = orm.em.fork();
-  await oschoolRepository.persistAndFlush(oschool);
-
-  return oschool;
 }

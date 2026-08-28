@@ -1,24 +1,9 @@
-import { MikroORM } from '@mikro-orm/postgresql';
-import { DateTime } from 'luxon';
+import { PrismaClient } from '@prisma/client';
 import { Query, QueryHandler, QueryProps } from '../../../../shared/cqrs';
 import { SubjectDto } from '../dtos/subject.dto';
 import { mapRawRecurrenceToDto } from '../helpers/mappers';
 import { TimeIntervalDto } from '../../shared';
-
-interface SubjectRow {
-  id: string;
-  name: string;
-  recurrence_type: string;
-  recurrence_days: string[] | null;
-  recurrence_week1: string[] | null;
-  recurrence_week2: string[] | null;
-  time_starts_at: number;
-  time_duration: number;
-  group_id: string;
-  required_teachers: number;
-  created_at: DateTime;
-  updated_at: DateTime;
-}
+import { DateTime } from 'luxon';
 
 export class FindSubjectQuery extends Query<SubjectDto | undefined> {
   public readonly id: string;
@@ -34,33 +19,15 @@ export class FindSubjectQuery extends Query<SubjectDto | undefined> {
 
 @QueryHandler(FindSubjectQuery)
 export class FindSubjectQueryHandler implements QueryHandler<FindSubjectQuery> {
-  public constructor(private readonly orm: MikroORM) {}
+  public constructor(private readonly prisma: PrismaClient) {}
 
   public async execute({
     id,
     schoolId,
   }: FindSubjectQuery): Promise<SubjectDto | undefined> {
-    const knex = this.orm.em.getConnection().getKnex();
-
-    const record = (await knex
-      .select([
-        'id',
-        'name',
-        'recurrence_type',
-        'recurrence_days',
-        'recurrence_week1',
-        'recurrence_week2',
-        'time_starts_at',
-        'time_duration',
-        'group_id',
-        'required_teachers',
-        'created_at',
-        'updated_at',
-      ])
-      .from('subject')
-      .where('id', id)
-      .andWhere('school_id', schoolId)
-      .first()) as SubjectRow | undefined;
+    const record = await this.prisma.subject.findFirst({
+      where: { id, schoolId },
+    });
 
     if (!record) {
       return;
@@ -69,19 +36,19 @@ export class FindSubjectQueryHandler implements QueryHandler<FindSubjectQuery> {
     return new SubjectDto({
       id: record.id,
       name: record.name,
-      recurrence: mapRawRecurrenceToDto(record.recurrence_type, {
-        days: record.recurrence_days,
-        week1: record.recurrence_week1,
-        week2: record.recurrence_week2,
+      recurrence: mapRawRecurrenceToDto(record.recurrenceType, {
+        days: record.recurrenceDays,
+        week1: record.recurrenceWeek1,
+        week2: record.recurrenceWeek2,
       }),
       time: new TimeIntervalDto({
-        startsAt: record.time_starts_at,
-        duration: record.time_duration,
+        startsAt: record.timeStartsAt,
+        duration: record.timeDuration,
       }),
-      groupId: record.group_id,
-      requiredTeachers: record.required_teachers,
-      createdAt: record.created_at.toISO(),
-      updatedAt: record.updated_at.toISO(),
+      groupId: record.groupId,
+      requiredTeachers: record.requiredTeachers,
+      createdAt: DateTime.fromJSDate(record.createdAt).toISO(),
+      updatedAt: DateTime.fromJSDate(record.updatedAt).toISO(),
     });
   }
 }

@@ -1,42 +1,153 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { Test } from '@nestjs/testing';
-import {
-  Group,
-  GroupId,
-  DailyRecurrence,
-  School,
-  SchoolId,
-  RequiredTeachers,
-  TimeInterval,
-  TimeZone,
-  Subject,
-  SubjectId,
-  WeeklyRecurrence,
-} from '../../../domain';
 import { DateTime } from 'luxon';
+import { PrismaClient } from '@prisma/client';
 import { SubjectVersionsLoader } from './subject-versions.loader';
-import { MikroORM } from '@mikro-orm/postgresql';
-import { testMikroormProvider } from '../../../../shared/tests';
+import { testPrismaProvider } from '../../../../shared/tests';
 
 describe('SubjectVersionsLoader', () => {
   let loader: SubjectVersionsLoader;
-  let orm: MikroORM;
+  let prisma: PrismaClient;
+
+  let schoolId: string;
+  let groupId: string;
+  let subject1Id: string;
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
-      controllers: [],
-      providers: [SubjectVersionsLoader, testMikroormProvider],
+      providers: [SubjectVersionsLoader, testPrismaProvider],
     }).compile();
 
     loader = moduleRef.get(SubjectVersionsLoader);
-    orm = moduleRef.get(MikroORM);
+    prisma = moduleRef.get(PrismaClient);
+  });
+
+  beforeAll(async () => {
+    const now = DateTime.fromISO('2023-01-25T11:48:38', {
+      zone: 'Europe/Moscow',
+    });
+
+    schoolId = crypto.randomUUID();
+    groupId = crypto.randomUUID();
+    subject1Id = crypto.randomUUID();
+    const subject2Id = crypto.randomUUID();
+
+    const subject1CreatedAt = now.minus({ days: 2 }).toUTC().toJSDate();
+    const subject2CreatedAt = now.minus({ weeks: 4 }).toUTC().toJSDate();
+    const subject1UpdatedAt = now.toUTC().toJSDate();
+
+    await prisma.school.create({
+      data: {
+        id: schoolId,
+        name: 'Test School',
+        timeZone: 'Europe/Moscow',
+        version: 1,
+        createdAt: subject1CreatedAt,
+        updatedAt: subject1CreatedAt,
+      },
+    });
+
+    await prisma.group.create({
+      data: {
+        id: groupId,
+        name: 'Test Group',
+        schoolId,
+        version: 1,
+        createdAt: subject1CreatedAt,
+        updatedAt: subject1CreatedAt,
+      },
+    });
+
+    await prisma.subject.create({
+      data: {
+        id: subject1Id,
+        name: 'Subject 1 Version 2',
+        schoolId,
+        groupId,
+        recurrenceType: 'daily',
+        recurrenceDays: [],
+        recurrenceWeek1: [],
+        recurrenceWeek2: [],
+        timeStartsAt: 120,
+        timeDuration: 600,
+        requiredTeachers: 2,
+        version: 2,
+        createdAt: subject1CreatedAt,
+        updatedAt: subject1UpdatedAt,
+      },
+    });
+
+    await prisma.subject.create({
+      data: {
+        id: subject2Id,
+        name: 'Subject 2',
+        schoolId,
+        groupId,
+        recurrenceType: 'weekly',
+        recurrenceDays: [0, 4],
+        recurrenceWeek1: [],
+        recurrenceWeek2: [],
+        timeStartsAt: 960,
+        timeDuration: 120,
+        requiredTeachers: 1,
+        version: 1,
+        createdAt: subject2CreatedAt,
+        updatedAt: subject2CreatedAt,
+      },
+    });
+
+    // subject1 v1 log entry
+    await prisma.subjectLog.create({
+      data: {
+        subjectId: subject1Id,
+        name: 'Subject 1',
+        recurrenceType: 'daily',
+        recurrenceDays: [],
+        recurrenceWeek1: [],
+        recurrenceWeek2: [],
+        timeStartsAt: 720,
+        timeDuration: 60,
+        requiredTeachers: 2,
+        createdAt: subject1CreatedAt,
+      },
+    });
+
+    // subject2 v1 log entry
+    await prisma.subjectLog.create({
+      data: {
+        subjectId: subject2Id,
+        name: 'Subject 2',
+        recurrenceType: 'weekly',
+        recurrenceDays: [0, 4],
+        recurrenceWeek1: [],
+        recurrenceWeek2: [],
+        timeStartsAt: 960,
+        timeDuration: 120,
+        requiredTeachers: 1,
+        createdAt: subject2CreatedAt,
+      },
+    });
+
+    // subject1 v2 log entry (after update)
+    await prisma.subjectLog.create({
+      data: {
+        subjectId: subject1Id,
+        name: 'Subject 1 Version 2',
+        recurrenceType: 'daily',
+        recurrenceDays: [],
+        recurrenceWeek1: [],
+        recurrenceWeek2: [],
+        timeStartsAt: 120,
+        timeDuration: 600,
+        requiredTeachers: 2,
+        createdAt: subject1UpdatedAt,
+      },
+    });
   });
 
   it('should load subject 1 since subject 1 version 2 starts later', async () => {
-    const { school, group, subject1 } = await seed(orm);
-
     const subjects = await loader.load({
-      schoolId: school.id.value,
+      schoolId,
       timeZone: 'Europe/Moscow',
       from: DateTime.fromISO('2023-01-25T00:00:00', {
         zone: 'Europe/Moscow',
@@ -48,12 +159,12 @@ describe('SubjectVersionsLoader', () => {
 
     expect(Array.from(subjects)).toEqual([
       {
-        groupId: group.id.value,
+        groupId,
         date: DateTime.fromISO('2023-01-25T00:00:00', {
           zone: 'Europe/Moscow',
         }),
         duration: 60,
-        id: subject1.id.value,
+        id: subject1Id,
         name: 'Subject 1',
         startsAt: 720,
         requiredTeachers: 2,
@@ -62,94 +173,6 @@ describe('SubjectVersionsLoader', () => {
   });
 
   afterAll(async () => {
-    await orm.close();
+    await prisma.$disconnect();
   });
 });
-
-async function seed(orm: MikroORM) {
-  const em = orm.em.fork();
-  const now = DateTime.fromISO('2023-01-25T11:48:38', {
-    zone: 'Europe/Moscow',
-  });
-
-  const schoolRepository = em.getRepository(School);
-  const groupRepository = em.getRepository(Group);
-  const subjectRepository = em.getRepository(Subject);
-
-  const school = School.create({
-    id: SchoolId.create(),
-    name: 'Test School',
-    timeZone: TimeZone.create('Europe/Moscow'),
-    now,
-  });
-
-  const group = Group.create({
-    id: GroupId.create(),
-    school,
-    name: 'Test Group',
-    now,
-  });
-
-  const subject1 = Subject.create({
-    id: SubjectId.create(),
-    school,
-    name: 'Subject 1',
-    recurrence: DailyRecurrence.create(),
-    time: TimeInterval.create({
-      startsAt: 720,
-      duration: 60,
-    }),
-    group,
-    requiredTeachers: RequiredTeachers.create(2),
-    now: now.minus({ days: 2 }),
-  });
-
-  const subject2 = Subject.create({
-    id: SubjectId.create(),
-    school,
-    name: 'Subject 2',
-    recurrence: WeeklyRecurrence.create([0, 4]),
-    time: TimeInterval.create({
-      startsAt: 960,
-      duration: 120,
-    }),
-    group,
-    requiredTeachers: RequiredTeachers.create(1),
-    now: now.minus({ weeks: 4 }),
-  });
-
-  schoolRepository.persist(school);
-  groupRepository.persist(group);
-  subjectRepository.persist(subject1);
-  subjectRepository.persist(subject2);
-
-  await em.flush();
-
-  const subject = await subjectRepository
-    .createQueryBuilder()
-    .where({
-      id: subject1.id.value,
-    })
-    .getSingleResult();
-
-  if (!subject) {
-    throw new Error('Subject Not found');
-  }
-
-  subject.setName('Subject 1 Version 2', now);
-  subject.setTime(
-    TimeInterval.create({
-      startsAt: 120,
-      duration: 600,
-    }),
-    now,
-  );
-
-  await em.flush();
-
-  return {
-    school,
-    group,
-    subject1,
-  };
-}

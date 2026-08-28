@@ -1,1 +1,2 @@
-export * from './test-mikroorm.provider';
+export * from './test-prisma.provider';
+export * from './setup-uow-context';

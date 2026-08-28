@@ -22,23 +22,15 @@
     "format:fix": "nx format:write",
     "test": "nx run api:test",
     "test:integration": "nx run api:test:integration",
-    "migration:create": "nx run api:migration:create",
-    "migration:up": "nx run api:migration:up",
-    "migration:down": "nx run api:migration:down",
     "prepare": "husky",
     "commitlint": "commitlint --edit"
   },
   "dependencies": {
-    "@mikro-orm/cli": "^5.6.9",
-    "@mikro-orm/core": "^5.6.9",
-    "@mikro-orm/migrations": "^5.6.9",
-    "@mikro-orm/postgresql": "^5.6.9",
     "@nestjs/common": "^11.1.27",
     "@nestjs/core": "^11.1.27",
     "@nestjs/cqrs": "^11.0.3",
     "@nestjs/platform-express": "^11.1.27",
     "@nestjs/swagger": "^11.4.5",
-    "async-retry": "^1.3.3",
     "class-transformer": "^0.5.1",
     "class-validator": ">=0.14.1",
     "dotenv": "^16.0.3",
@@ -57,12 +49,10 @@
     "@commitlint/config-conventional": "^20.0.0",
     "@eslint-community/eslint-plugin-eslint-comments": "^4.5.0",
     "@eslint/js": "^9.27.0",
-    "@mikro-orm/sqlite": "^5.6.9",
     "@nestjs/testing": "^11.1.27",
     "@nx/eslint": "^22.6.1",
     "@nx/js": "22.7.3",
     "@swc/core": "^1.15.43",
-    "@types/async-retry": "^1.4.5",
     "@types/express": "^4.17.11",
     "@types/luxon": "^3.2.0",
     "@types/node": "^24.0.0",
@@ -74,19 +64,11 @@
     "husky": "^9.0.11",
     "nx": "22.6.1",
     "prettier": "^3.5.3",
-    "sqlite3": "^5.1.7",
     "testcontainers": "^12.1.0",
     "ts-node": "^10.9.1",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.32.1",
     "unplugin-swc": "^1.5.9",
     "vitest": "^4.1.10"
-  },
-  "mikro-orm": {
-    "useTsNode": true,
-    "tsConfigPath": "./apps/api/tsconfig.cli.json",
-    "configPaths": [
-      "./apps/api/mikro-orm.config.ts"
-    ]
   }
 }

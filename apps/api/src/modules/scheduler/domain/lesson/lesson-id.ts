@@ -4,7 +4,8 @@ import { ValueObject } from '../../../shared/domain';
 export class LessonId extends ValueObject<'LessonId'> {
   public readonly value: string;
 
-  protected constructor(value: string) {
+  /** @protected Use for state recovery only */
+  public constructor(value: string) {
     super();
 
     this.value = value;

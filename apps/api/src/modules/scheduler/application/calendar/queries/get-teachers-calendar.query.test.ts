@@ -1,23 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { MikroORM } from '@mikro-orm/postgresql';
 import { Test } from '@nestjs/testing';
+import { PrismaClient } from '@prisma/client';
 import { DateTime } from 'luxon';
-import { testMikroormProvider } from '../../../../shared/tests';
-import {
-  Group,
-  GroupId,
-  DailyRecurrence,
-  Teacher,
-  TeacherId,
-  School,
-  SchoolId,
-  RequiredTeachers,
-  TimeInterval,
-  TimeZone,
-  Subject,
-  SubjectId,
-  WeeklyRecurrence,
-} from '../../../domain';
+import { testPrismaProvider } from '../../../../shared/tests';
 import { LessonsLoader } from './../services/lessons.loader';
 import { TeachersCalendarLoader } from './../services/teachers-calendar.loader';
 import { TeachersCalendarFiltersDto } from '../dtos/teachers-calendar-filters.dto';
@@ -30,7 +15,7 @@ import { SubjectVersionsLoader } from '../services/subject-versions.loader';
 
 describe('GetTeachersCalendarQuery', () => {
   let queryBus: QueryBus;
-  let orm: MikroORM;
+  let prisma: PrismaClient;
 
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
@@ -40,27 +25,27 @@ describe('GetTeachersCalendarQuery', () => {
         LessonsLoader,
         SubjectVersionsLoader,
         TeachersCalendarLoader,
-        testMikroormProvider,
+        testPrismaProvider,
       ],
     }).compile();
 
     queryBus = moduleRef.get(QueryBus);
-    orm = moduleRef.get(MikroORM);
+    prisma = moduleRef.get(PrismaClient);
 
     await moduleRef.createNestApplication().init();
   });
 
   afterEach(async () => {
-    await orm.close();
+    await prisma.$disconnect();
   });
 
   describe('Day', () => {
     it('should properly load events for 2023-01-02', async () => {
-      const { school1, dailySubject1, teacher1 } = await seedDay(orm);
+      const { school1Id, dailySubject1Id, teacher1Id } = await seedDay(prisma);
 
       const result = await queryBus.execute(
         new GetTeachersCalendarQuery({
-          schoolId: school1.id.value,
+          schoolId: school1Id,
           filters: new TeachersCalendarFiltersDto({
             startDate: '2023-01-02',
             days: 1,
@@ -71,7 +56,7 @@ describe('GetTeachersCalendarQuery', () => {
       expect(result).toEqual({
         teachers: [
           {
-            id: teacher1.id.value,
+            id: teacher1Id,
             name: 'Teacher 1',
           },
         ],
@@ -82,7 +67,7 @@ describe('GetTeachersCalendarQuery', () => {
             name: 'Daily Subject 1',
             requiredTeachers: 3,
             startsAt: '2023-01-02T16:00:00.000+03:00',
-            subjectId: dailySubject1.id.value,
+            subjectId: dailySubject1Id,
           },
           {
             assignedTeachers: 0,
@@ -90,7 +75,7 @@ describe('GetTeachersCalendarQuery', () => {
             name: 'Daily Subject 1',
             requiredTeachers: 3,
             startsAt: '2023-01-02T16:00:00.000+03:00',
-            subjectId: dailySubject1.id.value,
+            subjectId: dailySubject1Id,
           },
           {
             assignedTeachers: 0,
@@ -98,19 +83,19 @@ describe('GetTeachersCalendarQuery', () => {
             name: 'Daily Subject 1',
             requiredTeachers: 3,
             startsAt: '2023-01-02T16:00:00.000+03:00',
-            subjectId: dailySubject1.id.value,
+            subjectId: dailySubject1Id,
           },
         ],
       });
     });
 
     it('should properly load events for 2023-01-09', async () => {
-      const { school1, dailySubject1, weeklySubject1, teacher1 } =
-        await seedDay(orm);
+      const { school1Id, dailySubject1Id, weeklySubject1Id, teacher1Id } =
+        await seedDay(prisma);
 
       const result = await queryBus.execute(
         new GetTeachersCalendarQuery({
-          schoolId: school1.id.value,
+          schoolId: school1Id,
           filters: new TeachersCalendarFiltersDto({
             startDate: '2023-01-09',
             days: 1,
@@ -121,7 +106,7 @@ describe('GetTeachersCalendarQuery', () => {
       expect(result).toEqual({
         teachers: [
           {
-            id: teacher1.id.value,
+            id: teacher1Id,
             name: 'Teacher 1',
           },
         ],
@@ -133,7 +118,7 @@ describe('GetTeachersCalendarQuery', () => {
             name: 'Weekly Subject 1',
             requiredTeachers: 1,
             startsAt: '2023-01-09T16:00:00.000+03:00',
-            subjectId: weeklySubject1.id.value,
+            subjectId: weeklySubject1Id,
           },
           {
             assignedTeachers: 0,
@@ -142,7 +127,7 @@ describe('GetTeachersCalendarQuery', () => {
             name: 'Daily Subject 1',
             requiredTeachers: 3,
             startsAt: '2023-01-09T16:00:00.000+03:00',
-            subjectId: dailySubject1.id.value,
+            subjectId: dailySubject1Id,
           },
           {
             assignedTeachers: 0,
@@ -151,7 +136,7 @@ describe('GetTeachersCalendarQuery', () => {
             name: 'Daily Subject 1',
             requiredTeachers: 3,
             startsAt: '2023-01-09T16:00:00.000+03:00',
-            subjectId: dailySubject1.id.value,
+            subjectId: dailySubject1Id,
           },
           {
             assignedTeachers: 0,
@@ -160,7 +145,7 @@ describe('GetTeachersCalendarQuery', () => {
             name: 'Daily Subject 1',
             requiredTeachers: 3,
             startsAt: '2023-01-09T16:00:00.000+03:00',
-            subjectId: dailySubject1.id.value,
+            subjectId: dailySubject1Id,
           },
         ],
       });
@@ -168,81 +153,135 @@ describe('GetTeachersCalendarQuery', () => {
   });
 });
 
-async function seedDay(orm: MikroORM) {
-  const em = orm.em.fork();
+async function seedDay(prisma: PrismaClient) {
+  const school1Id = crypto.randomUUID();
+  const group1Id = crypto.randomUUID();
+  const teacher1Id = crypto.randomUUID();
+  const dailySubject1Id = crypto.randomUUID();
+  const weeklySubject1Id = crypto.randomUUID();
 
-  const school1 = School.create({
-    id: SchoolId.create(),
-    name: 'School 1',
-    now: DateTime.fromISO('2022-12-05T09:12:56', {
-      zone: 'Europe/Moscow',
-    }),
-    timeZone: TimeZone.create('Europe/Moscow'),
+  const school1CreatedAt = DateTime.fromISO('2022-12-05T09:12:56', {
+    zone: 'Europe/Moscow',
+  }).toJSDate();
+  const group1CreatedAt = DateTime.fromISO('2022-12-05T09:23:12', {
+    zone: 'Europe/Moscow',
+  }).toJSDate();
+  const teacher1CreatedAt = DateTime.fromISO('2022-12-05T09:25:09', {
+    zone: 'Europe/Moscow',
+  }).toJSDate();
+  const dailySubject1CreatedAt = DateTime.fromISO('2022-12-05T12:04:04', {
+    zone: 'Europe/Moscow',
+  }).toJSDate();
+  const weeklySubject1CreatedAt = DateTime.fromISO('2023-01-03T13:00:00', {
+    zone: 'Europe/Moscow',
+  }).toJSDate();
+
+  await prisma.school.create({
+    data: {
+      id: school1Id,
+      name: 'School 1',
+      timeZone: 'Europe/Moscow',
+      version: 1,
+      createdAt: school1CreatedAt,
+      updatedAt: school1CreatedAt,
+    },
   });
 
-  const group1 = Group.create({
-    id: GroupId.create(),
-    school: school1,
-    name: 'Group 1',
-    now: DateTime.fromISO('2022-12-05T09:23:12', {
-      zone: 'Europe/Moscow',
-    }),
+  await prisma.group.create({
+    data: {
+      id: group1Id,
+      name: 'Group 1',
+      schoolId: school1Id,
+      version: 1,
+      createdAt: group1CreatedAt,
+      updatedAt: group1CreatedAt,
+    },
   });
 
-  const teacher1 = Teacher.create({
-    id: TeacherId.create(),
-    school: school1,
-    name: 'Teacher 1',
-    now: DateTime.fromISO('2022-12-05T09:25:09', {
-      zone: 'Europe/Moscow',
-    }),
+  await prisma.teacher.create({
+    data: {
+      id: teacher1Id,
+      name: 'Teacher 1',
+      schoolId: school1Id,
+      version: 1,
+      createdAt: teacher1CreatedAt,
+      updatedAt: teacher1CreatedAt,
+    },
   });
 
-  const dailySubject1 = Subject.create({
-    id: SubjectId.create(),
-    name: 'Daily Subject 1',
-    school: school1,
-    group: group1,
-    recurrence: DailyRecurrence.create(),
-    time: TimeInterval.create({
-      startsAt: 960,
-      duration: 120,
-    }),
-    requiredTeachers: RequiredTeachers.create(3),
-    now: DateTime.fromISO('2022-12-05T12:04:04', {
-      zone: 'Europe/Moscow',
-    }),
+  await prisma.subject.create({
+    data: {
+      id: dailySubject1Id,
+      name: 'Daily Subject 1',
+      schoolId: school1Id,
+      groupId: group1Id,
+      recurrenceType: 'daily',
+      recurrenceDays: [],
+      recurrenceWeek1: [],
+      recurrenceWeek2: [],
+      timeStartsAt: 960,
+      timeDuration: 120,
+      requiredTeachers: 3,
+      version: 1,
+      createdAt: dailySubject1CreatedAt,
+      updatedAt: dailySubject1CreatedAt,
+    },
   });
 
-  const weeklySubject1 = Subject.create({
-    id: SubjectId.create(),
-    name: 'Weekly Subject 1',
-    school: school1,
-    group: group1,
-    recurrence: WeeklyRecurrence.create([0]),
-    time: TimeInterval.create({
-      startsAt: 960,
-      duration: 120,
-    }),
-    requiredTeachers: RequiredTeachers.create(1),
-    now: DateTime.fromISO('2023-01-03T13:00:00', {
-      zone: 'Europe/Moscow',
-    }),
+  await prisma.subjectLog.create({
+    data: {
+      subjectId: dailySubject1Id,
+      name: 'Daily Subject 1',
+      recurrenceType: 'daily',
+      recurrenceDays: [],
+      recurrenceWeek1: [],
+      recurrenceWeek2: [],
+      timeStartsAt: 960,
+      timeDuration: 120,
+      requiredTeachers: 3,
+      createdAt: dailySubject1CreatedAt,
+    },
   });
 
-  em.persist(school1);
-  em.persist(group1);
-  em.persist(teacher1);
-  em.persist(dailySubject1);
-  em.persist(weeklySubject1);
+  await prisma.subject.create({
+    data: {
+      id: weeklySubject1Id,
+      name: 'Weekly Subject 1',
+      schoolId: school1Id,
+      groupId: group1Id,
+      recurrenceType: 'weekly',
+      recurrenceDays: [0],
+      recurrenceWeek1: [],
+      recurrenceWeek2: [],
+      timeStartsAt: 960,
+      timeDuration: 120,
+      requiredTeachers: 1,
+      version: 1,
+      createdAt: weeklySubject1CreatedAt,
+      updatedAt: weeklySubject1CreatedAt,
+    },
+  });
 
-  await em.flush();
+  await prisma.subjectLog.create({
+    data: {
+      subjectId: weeklySubject1Id,
+      name: 'Weekly Subject 1',
+      recurrenceType: 'weekly',
+      recurrenceDays: [0],
+      recurrenceWeek1: [],
+      recurrenceWeek2: [],
+      timeStartsAt: 960,
+      timeDuration: 120,
+      requiredTeachers: 1,
+      createdAt: weeklySubject1CreatedAt,
+    },
+  });
 
   return {
-    school1,
-    group1,
-    teacher1,
-    dailySubject1,
-    weeklySubject1,
+    school1Id,
+    group1Id,
+    teacher1Id,
+    dailySubject1Id,
+    weeklySubject1Id,
   };
 }

@@ -1,1 +1,2 @@
-export * from './mikroorm.provider';
+export * from './prisma.provider';
+export * from './uow.provider';

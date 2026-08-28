@@ -4,7 +4,8 @@ import { ValueObject } from '../../../shared/domain';
 export class GroupId extends ValueObject<'GroupId'> {
   public readonly value: string;
 
-  protected constructor(value: string) {
+  /** @protected Use for state recovery only */
+  public constructor(value: string) {
     super();
 
     this.value = value;
