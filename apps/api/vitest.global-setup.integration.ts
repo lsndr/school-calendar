@@ -8,11 +8,11 @@ const POSTGRES_PASSWORD = 'test';
 const POSTGRES_DB = 'test';
 const POSTGRES_PORT = 5432;
 
-const ROOT = path.resolve(__dirname, '../..');
+const API_DIR = path.resolve(__dirname);
 
 function runMigrations(): void {
   execSync('npx prisma migrate deploy --config prisma.config.ts', {
-    cwd: ROOT,
+    cwd: API_DIR,
     env: { ...process.env },
     stdio: 'inherit',
   });
